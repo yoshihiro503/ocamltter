@@ -1,0 +1,34 @@
+INSTALLATION
+============
+
+	See the file INSTALL
+
+
+HOW TO USE
+==========
+
+	1. In the interactive loop, type the declaration:
+
+	      open Top;;
+
+	2. You can use following commands:
+
+	   - l();;     	       list timeline
+	   - u "TEXT";;	       post a new message
+	   - (* re ID "TEXT";;    *)
+	   - (* rt ID;;		  *)
+	   - help();;	       print a list of commands
+	   
+	3. You may modify the top.ml
+	   - You can set your twitter id
+	   - You can define your function
+
+
+BUGS REPORT
+===========
+
+   Send your bug reports at
+
+        y.imai at ocaml.jp
+
+	

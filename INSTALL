@@ -1,0 +1,19 @@
+REQUIREMENT
+===========
+	
+	You need:
+
+	    - ObjectiveCaml
+	      (available at http://caml.inria.fr/)
+       
+
+BUILD
+=====
+
+	$ ./compile
+
+
+RUN
+===
+
+	$ ./ocamltter
