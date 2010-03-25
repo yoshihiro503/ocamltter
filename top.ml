@@ -9,10 +9,10 @@ module TwitterApi = TwitterApi
 (*===================================*)
 
 (* let username = ref "YOUR TWITTER ID" *)
-let username = ref "yoshihiro503"
+let username = ref ""
 let password = ref ""
 
-let coffee_break = 30.0 (* second *)
+let coffee_break = 40.0 (* second *)
 
 (*===================================*)
 (*===================================*)

@@ -5,8 +5,9 @@ open Json
 type timeline = {
     date: int * int;
     sname: string;
-    id: int64;
-    text: string
+    id: string;
+    clientname: string;
+    text: string;
   }
 
 let parse_date s =
@@ -19,7 +20,7 @@ let date_lt (h1,m1) (h2,m2) =
 
 let show tl =
   let h,m = tl.date in
-  !%"%d:%d %s: %s" h m tl.sname tl.text
+  !%"%d:%d %s: %s %s" h m tl.sname tl.text tl.id
 
 let get_timeline j =
   let post j =
@@ -30,12 +31,15 @@ let get_timeline j =
       Json.getf "text" j +> Json.as_string
     in
     let id =
-      Json.getf "id" j +> Json.as_float +> Int64.of_float
+      Json.getf "id" j +> Json.as_float +> Int64.of_float +> Int64.to_string
     in
     let sname =
       Json.getf "user" j +> Json.getf "screen_name" +> Json.as_string
     in
-    {date=date; sname=sname; text=text; id=id}
+    let client =
+      Json.getf "source" j +> Json.as_string
+    in
+    {date=date; sname=sname; text=text; id=id; clientname=client}
   in
   Json.as_list j +> List.map post
 
