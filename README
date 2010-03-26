@@ -19,7 +19,7 @@ HOW TO USE
 	   - (* rt ID;;		  *)
 	   - help();;	       print a list of commands
 	   
-	3. You may modify the top.ml
+	3. You may modify the top.ml (you need recompilation).
 	   - You can set your twitter id
 	   - You can define your function
 

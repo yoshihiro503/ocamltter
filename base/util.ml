@@ -113,3 +113,37 @@ let to_hex n =
   in
   if n < 0 then raise (Invalid_argument (!%"to_hex: (%d)" n))
   else string_of_chars @@ iter [] n
+
+open Unix
+module Date = struct
+  type t = float
+  let make year mon day h m s =
+    fst (mktime { tm_sec=s; tm_min=m; tm_hour=h;
+      tm_mday=day; tm_mon=mon-1; tm_year=year-1900;
+      tm_wday=0; tm_yday=0; tm_isdst=false
+    })
+  let make_from_gmt year mon day h m s =
+    let diff =  fst (mktime (gmtime 0.)) in
+    make year mon day h m s -. diff
+  let year t = (localtime t).tm_year + 1900
+  let mon t = (localtime t).tm_mon + 1
+  let hour t = (localtime t).tm_hour
+  let min t = (localtime t).tm_min
+  let sec t = (localtime t).tm_sec
+  let lt d1 d2 = d1 < d2
+  let to_string t = ""
+  let pmonth = function
+    | "Jan" ->  1
+    | "Feb" ->  2
+    | "Mar" ->  3
+    | "Apr" ->  4
+    | "May" ->  5
+    | "Jun" ->  6
+    | "Jul" ->  7
+    | "Aug" ->  8
+    | "Sep" ->  9
+    | "Oct" -> 10
+    | "Nov" -> 11
+    | "Dec" -> 12
+    | unknown -> raise (Invalid_argument ("Date.pmonth:"^unknown))
+end

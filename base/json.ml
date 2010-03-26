@@ -37,6 +37,14 @@ let getf field t =
       | _ -> raise (JSON_InvalidField (field))
       end
   | _ -> raise (JSON_NotObject t)
+
+let getf_opt field t =
+  match t with
+  | Object o ->
+      begin try Some (List.assoc field o) with
+      | _ -> None
+      end
+  | _ -> None
       
 let as_bool = function
   | Bool true -> true

@@ -1,4 +1,5 @@
 include Util
+open Util.Date
 open TwitterApi
 
 module Http = Http
@@ -17,12 +18,12 @@ let coffee_break = 40.0 (* second *)
 (*===================================*)
 (*===================================*)
 
-let l =
+let print_tl =
   let latest = ref None in
   fun () ->
     let is_new_post p =
       match !latest with
-      | Some l -> date_lt l p.date
+      | Some l -> Date.lt l p.date
       | None -> true
     in
     let tl =
@@ -35,8 +36,12 @@ let l =
 	latest := Some newest.date
     end;
     List.rev tl +> List.map show
-      
-let print_tl () = List.iter print_endline @@ l ()
+      +> List.iter print_endline
+
+let l ?(c=20) () =
+  TwitterApi.home_timeline ~count:c (!username, !password)
+    +> List.rev +> List.map show
+    +> List.iter print_endline
 
 let u text = TwitterApi.update (!username, !password) text
 
@@ -66,6 +71,7 @@ let help () =
 print_string
 "commands:
   l()\tlist timeline
+  l ~c:COUNT ()\tlist timeline
   u \"TEXT\"\tpost a new message
   help()\tprint this help
 "
