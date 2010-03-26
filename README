@@ -14,14 +14,20 @@ HOW TO USE
 	2. You can use following commands:
 
 	   - l();;     	       list timeline
+	   - l ~c:COUNT();;    list timeline
 	   - u "TEXT";;	       post a new message
-	   - (* re ID "TEXT";;    *)
-	   - (* rt ID;;		  *)
+	   - re ID "TEXT";;    reply to ID
+	   - rt ID;;	       retweet ID
+	   - qt ID "TEXT";;    qt ID
 	   - help();;	       print a list of commands
 	   
 	3. You may modify the top.ml (you need recompilation).
 	   - You can set your twitter id
-	   - You can define your function
+	   - You can define your own function
+
+	4. Quit
+
+	      #quit;;
 
 
 BUGS REPORT
