@@ -54,14 +54,20 @@ let conn meth ?user ?pass url f =
 	^ s
 	^ "\r\n"
   in
+  let debug = ref "" in
   let ic, oc = Unix.open_connection sa in
-  output_string oc msg; flush oc;
   try
+    output_string oc msg; flush oc;
+    debug := "send";
     let header = read_header ic in
+    debug := "read_header";
     let x = f header ic in
+    debug := "apply f";
     Unix.shutdown_connection ic;
+    debug := "shdowned";
     x
   with e ->
+    prerr_endline (!%"Http.conn [%s](%s)" (Printexc.to_string e) !debug);
     Unix.shutdown_connection ic;
     raise e
 

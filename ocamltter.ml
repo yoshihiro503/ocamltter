@@ -11,22 +11,31 @@ let coffee_break = ref 30.0
 let print_tl =
   let latest = ref None in
   fun ?(c=10) () ->
+    let debug = ref "" in
+try
     let is_new_post p =
       match !latest with
       | Some l -> Date.lt l p.date
       | None -> true
     in
+    debug := !debug ^ "get-tl";
     let tl =
       TwitterApi.home_timeline ~count:c (!username, !password)
 	+> List.filter is_new_post
     in
+    debug := !debug ^ " update-date";
     begin match tl with
     | [] -> ()
     | newest::_ ->
 	latest := Some newest.date
     end;
+    debug := !debug ^ " print";
     List.rev tl +> List.map show
       +> List.iter print_endline
+with
+| e ->
+    prerr_endline (!%"Ocamltter.print_tl [%s] (%s)" (Printexc.to_string e) !debug);
+    raise e
 
 let l ?(c=20) () =
   TwitterApi.home_timeline ~count:c (!username, !password)

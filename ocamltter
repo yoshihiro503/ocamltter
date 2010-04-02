@@ -1,0 +1,5 @@
+#!/bin/sh
+dir=`dirname $0`
+ocamlc -c -I +threads -I ${dir} -I ${dir}/base unix.cma str.cma threads.cma ${dir}/base/util.ml ${dir}/base/base64.ml ${dir}/base/utf16.ml ${dir}/base/llist.ml ${dir}/base/parserMonad.ml ${dir}/base/json.ml ${dir}/base/http.ml ${dir}/twitterApi.ml ${dir}/ocamltter.ml ${dir}/top.ml
+
+ocaml -I +threads -I ${dir} -I ${dir}/base unix.cma str.cma threads.cma ${dir}/base/util.cmo ${dir}/base/base64.cmo ${dir}/base/utf16.cmo ${dir}/base/llist.cmo ${dir}/base/parserMonad.cmo ${dir}/base/json.cmo ${dir}/base/http.cmo ${dir}/twitterApi.cmo ${dir}/ocamltter.cmo -init ${dir}/top.ml
