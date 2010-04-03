@@ -47,9 +47,9 @@ let json2timeline j =
   in
   Json.as_list j +> List.map post
 
-let twitter (f: unit -> string) =
+let catch_twerr (f: 'a -> Json.t) (x : 'a) =
   try
-    let j = Json.parse @@ f () in
+    let j = f x in
     match Json.getf_opt "error" j with
     | Some err ->
 	let msg = Json.as_string err in
@@ -60,16 +60,26 @@ let twitter (f: unit -> string) =
   | TwErr m as e -> raise e
   | e -> failwith ("twitter error: "^Printexc.to_string e)
 
-let home_timeline ?since_id ?(count=20) (user, pass) =
-  twitter begin fun () ->
-    let since = match since_id with
-    | Some since -> "&since_id=" ^ since
-    | None -> ""
-    in
-    Http.conn GET ~user:user ~pass:pass
-      (!%"twitter.com/statuses/home_timeline.json?count=%d%s" count since)
-      (fun _ ch -> slist "\n" id (read_all ch))
-  end
+let twitter (user,pass) cmd params is_get =
+  let get () =
+    Json.parse
+      begin if is_get then
+	Http.conn "twitter.com" GET ~user:user ~pass:pass cmd params
+	  (fun _ ch -> slist "\n" id (read_all ch))
+      else
+	Http.conn "twitter.com" (POST params) ~user:user ~pass:pass cmd []
+	  (fun _ ch -> slist "\n" id (read_all ch))
+      end
+  in
+  catch_twerr get ()
+
+let home_timeline ?since_id ?count acc =
+  let params = [("since_id",since_id); ("count", option_map sint count)]
+      +> list_filter_map (function
+	| (key, Some v) -> Some (key, v)
+	| (_, None) -> None)
+  in
+  twitter acc "/statuses/home_timeline.json" params true
     +> json2timeline
 
 let get_aline acc status_id =
@@ -78,25 +88,21 @@ let get_aline acc status_id =
     +> (List.hd $ List.filter (fun tl -> tl.id = Int64.to_string status_id))
 
 
-let update ?(in_reply_to_status_id) (user, pass) text =
-  twitter begin fun () ->
-    let reply, text = match in_reply_to_status_id with
-    | Some id ->
-	let tl = get_aline (user,pass) (Int64.of_string id) in
-	(!%"&in_reply_to_status_id=%s" id, !%"@%s %s" tl.sname text)
-    | None -> "",text
-    in
-    let arg =
-      !%"status=%s%s" (Http.url_encode text) reply
-    in
-    Http.conn (POST arg) ~user:user ~pass:pass
-      "twitter.com/statuses/update.json"
-      (fun _ ch -> slist "\n" id (read_all ch))
-  end
+let update ?(in_reply_to_status_id) acc text =
+  let text = match in_reply_to_status_id with
+  | Some id ->
+      let tl = get_aline acc (Int64.of_string id) in
+      !%"@%s %s" tl.sname text
+  | None -> text
+  in
+  let params = [("in_reply_to_status_id", in_reply_to_status_id);
+		("status",Some text)]
+      +> list_filter_map (function
+	| (key, Some v) -> Some (key, v)
+	| (_, None) -> None)
+  in
+  twitter acc "/statuses/update.json" params false
 
-let retweet (user, pass) status_id =
-  twitter begin fun () ->
-    Http.conn (POST ("")) ~user:user ~pass:pass
-      (!%"twitter.com/statuses/retweet/%s.json" status_id)
-      (fun _ ch -> slist "\n" id (read_all ch))
-  end
+let retweet acc status_id =
+  twitter acc (!%"/statuses/retweet/%s.json" status_id) [] false
+

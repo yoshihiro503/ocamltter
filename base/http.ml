@@ -1,12 +1,22 @@
 open Unix
 open Util
 
+let url_encode s =
+  let ss = string_foldr (fun c store -> match c with
+    | 'a'..'z' | 'A'..'Z' | '0'..'9' as c -> string1 c :: store
+    | c -> ("%" ^ to_hex (int_of_char c)) :: store) s []
+  in
+  String.concat "" (ss)
+    
 type header = {
     code : string;
     fields : (string, string) Hashtbl.t
   }
 
-type meth = GET | POST of string
+type params = (string * string) list
+type meth = GET | POST of params
+let params2string ps =
+  String.concat "&" @@ List.map (fun (k,v) -> k^"="^url_encode v) ps
 
 let read_header in_ch =
   let rec iter store =
@@ -24,15 +34,9 @@ let read_all_and_count ic =
   in
   loop [] 0
 
-let split2 r s : string * string =
-  match Str.split (Str.regexp r) s with
-  | [] -> "",""
-  | [s1] -> s1, ""
-  | s1::ss -> s1, String.concat r ss
-
-let conn meth ?user ?pass url f =
-  let hostname, path = split2 "/" url in
+let conn hostname meth ?user ?pass path ps f =
   let host_entry = Unix.gethostbyname hostname in
+  let path = if ps<>[] then path ^ "?" ^ params2string ps else path in
   let inet_addr = host_entry.h_addr_list.(0) in
   let sa = Unix.ADDR_INET (inet_addr, 80) in
   let auth = match user,pass with
@@ -46,7 +50,8 @@ let conn meth ?user ?pass url f =
 	!%"GET /%s HTTP/1.0\r\n" path
 	^ auth
 	^ "\r\n"
-    | POST s ->
+    | POST ps ->
+	let s = params2string ps in
 	!%"POST /%s HTTP/1.0\r\n" path
 	^ !%"Content-Length: %d\r\n" (String.length s)
 	^ auth
@@ -76,11 +81,3 @@ let usage =
 Examples:
   twitter.com/statuses/user_timeline.json/?screen_name=yoshihiro503
 "
-
-let url_encode s =
-  let ss = string_foldr (fun c store -> match c with
-    | 'a'..'z' | 'A'..'Z' | '0'..'9' as c -> string1 c :: store
-    | c -> ("%" ^ to_hex (int_of_char c)) :: store) s []
-  in
-  String.concat "" (ss)
-    

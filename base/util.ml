@@ -23,6 +23,10 @@ let rec repeat n f x =
     (f x; repeat (n-1) f x)
   else ()
 
+let sint   = string_of_int
+let sfloat = string_of_float
+let sbool  = string_of_bool
+
 let string_foldr f s a0 =
   let rec iter i a =
     if i >= 0 then
@@ -53,6 +57,12 @@ let mapi f l =
 type ('l, 'r) either = Inl of 'l | Inr of 'r
 
 let list_of_hash t = Hashtbl.fold (fun k v store -> (k,v) :: store) t []
+
+let list_filter_map f xs =
+  List.rev @@ List.fold_left (fun ys x ->
+    match f x with
+    | Some y -> y::ys
+    | None -> ys) [] xs
 
 let maybe f x =
   try `Val (f x) with e -> `Err e
