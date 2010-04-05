@@ -1,0 +1,3 @@
+print_endline "ocamlinit!";;
+open Top;;
+#install_printer print;;

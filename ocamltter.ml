@@ -30,7 +30,7 @@ try
 	latest := Some newest.date
     end;
     debug := !debug ^ " print";
-    List.rev tl +> List.map show
+    List.rev tl +> List.map show_tl
       +> List.iter print_endline
 with
 | e ->
@@ -39,7 +39,7 @@ with
 
 let l ?(c=20) () =
   TwitterApi.home_timeline ~count:c (!username, !password)
-    +> List.rev +> List.map show
+    +> List.rev +> List.map show_tl
     +> List.iter print_endline
 
 let u text =

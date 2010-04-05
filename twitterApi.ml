@@ -22,12 +22,11 @@ let parse_date st =
   let year = int_of_string @@ String.sub st 26 4 in
   Date.make_from_gmt year mon day h m s
 
-let show tl =
+let show_tl tl =
   let h,m = hour tl.date, min tl.date in
   !%" [%02d:%02d] %s: %s %sL" h m tl.sname tl.text tl.id
 
-let json2timeline j =
-  let post j =
+let json2status j =
     let date =
       Json.getf "created_at" j +> Json.as_string +> parse_date
     in
@@ -44,8 +43,9 @@ let json2timeline j =
       Json.getf "source" j +> Json.as_string
     in
     {date=date; sname=sname; text=text; id=id; clientname=client}
-  in
-  Json.as_list j +> List.map post
+
+let json2timeline j =
+  Json.as_list j +> List.map json2status
 
 let catch_twerr (f: 'a -> Json.t) (x : 'a) =
   try
@@ -81,6 +81,19 @@ let home_timeline ?since_id ?count acc =
   in
   twitter acc "/statuses/home_timeline.json" params true
     +> json2timeline
+
+let user_timeline ?since_id ?count acc sname =
+  let params = [("since_id",since_id); ("count", option_map sint count);
+		("screen_name", Some sname)]
+      +> list_filter_map (function
+	| (key, Some v) -> Some (key, v)
+	| (_, None) -> None)
+  in
+  twitter acc "/statuses/friend_timeline.json" params true
+    +> json2timeline
+
+let show acc status_id =
+  twitter acc (!%"/statuses/show/%s.json" status_id) [] true
 
 let get_aline acc status_id =
   let prev = Int64.to_string (Int64.pred status_id) in
