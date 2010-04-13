@@ -12,6 +12,6 @@ let main =
   (* username := "YOUR-TWITTER-ID" *)
   username := "";
   password := "";
-  coffee_break := 30.0; (* second *)
+  coffee_break := 40.0; (* second *)
 
   init ()

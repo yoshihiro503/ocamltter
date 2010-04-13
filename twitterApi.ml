@@ -60,18 +60,18 @@ let catch_twerr (f: 'a -> Json.t) (x : 'a) =
   | TwErr m as e -> raise e
   | e -> failwith ("twitter error: "^Printexc.to_string e)
 
-let twitter (user,pass) cmd params is_get =
-  let get () =
+let twitter ?(host="twitter.com") (user,pass) cmd params is_get =
+  let f () =
     Json.parse
       begin if is_get then
-	Http.conn "twitter.com" GET ~user:user ~pass:pass cmd params
+	Http.conn host GET ~user:user ~pass:pass cmd params
 	  (fun _ ch -> slist "\n" id (read_all ch))
       else
-	Http.conn "twitter.com" (POST params) ~user:user ~pass:pass cmd []
+	Http.conn host (POST params) ~user:user ~pass:pass cmd []
 	  (fun _ ch -> slist "\n" id (read_all ch))
       end
   in
-  catch_twerr get ()
+  catch_twerr f ()
 
 let home_timeline ?since_id ?count acc =
   let params = [("since_id",since_id); ("count", option_map sint count)]
@@ -118,4 +118,9 @@ let update ?(in_reply_to_status_id) acc text =
 
 let retweet acc status_id =
   twitter acc (!%"/statuses/retweet/%s.json" status_id) [] false
+
+let search acc word =
+  twitter acc ~host:"search.twitter.com" "/search.json" [("q",word)] true
+    +> Json.getf "results"
+    +> Json.as_list
 

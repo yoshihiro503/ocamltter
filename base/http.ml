@@ -47,12 +47,13 @@ let conn hostname meth ?user ?pass path ps f =
   let msg =
     match meth with
     | GET ->
-	!%"GET /%s HTTP/1.0\r\n" path
+	!%"GET %s HTTP/1.0\r\n" path
 	^ auth
+	^ "Host: " ^ hostname ^ "\r\n"
 	^ "\r\n"
     | POST ps ->
 	let s = params2string ps in
-	!%"POST /%s HTTP/1.0\r\n" path
+	!%"POST %s HTTP/1.0\r\n" path
 	^ !%"Content-Length: %d\r\n" (String.length s)
 	^ auth
 	^ "\r\n"
@@ -76,8 +77,3 @@ let conn hostname meth ?user ?pass path ps f =
     Unix.shutdown_connection ic;
     raise e
 
-let usage =
-"Usage: ./wget <hostname>
-Examples:
-  twitter.com/statuses/user_timeline.json/?screen_name=yoshihiro503
-"

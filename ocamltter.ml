@@ -45,8 +45,9 @@ let l ?(c=20) () =
 let u text =
   let text' =
     if String.length text > 140 then
-      (prerr_endline "140 over!";
-      String.sub text 0 137 ^ "...")
+      (prerr_endline "may 140 over!";
+(*      String.sub text 0 137 ^ "...")*)
+       text)
     else text
   in
   TwitterApi.update (!username, !password) text'
@@ -94,3 +95,6 @@ print_string
   qt ID \"TEXT\"\tqt ID
   help()\tprint this help
 "
+
+let acc () = !username, !password
+  
