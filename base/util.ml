@@ -155,5 +155,6 @@ module Date = struct
     | "Oct" -> 10
     | "Nov" -> 11
     | "Dec" -> 12
-    | unknown -> raise (Invalid_argument ("Date.pmonth:"^unknown))
+    | unknown ->
+	raise (Invalid_argument ("Date.pmonth: unknown month ["^unknown^"]"))
 end
