@@ -25,7 +25,7 @@ HOW TO USE
            - l();;             list timeline
            - l ~c:COUNT();;    list timeline
            - u "TEXT";;        post a new message
-	   - re ID "TEXT";;    reply to ID
+           - re ID "TEXT";;    reply to ID
            - rt ID;;           retweet ID
            - qt ID "TEXT";;    qt ID
            - help();;          print a list of commands
