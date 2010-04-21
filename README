@@ -1,40 +1,49 @@
+
+              THE OCAMLTTER TWITTER CLIENT
+              ============================
+
+REQUIREMENT
+===========
+	
+	You need:
+
+	    - Objective Caml
+	      (available at http://caml.inria.fr/)
+       
+
 INSTALLATION
 ============
 
-	See the file INSTALL
+        Nothing to do.
 
 
 HOW TO USE
 ==========
 
-	1. In the interactive loop, type the declaration:
+        1. You can use following commands:
 
-	      open Top;;
-
-	2. You can use following commands:
-
-	   - l();;     	       list timeline
-	   - l ~c:COUNT();;    list timeline
-	   - u "TEXT";;	       post a new message
+           - l();;             list timeline
+           - l ~c:COUNT();;    list timeline
+           - u "TEXT";;        post a new message
 	   - re ID "TEXT";;    reply to ID
-	   - rt ID;;	       retweet ID
-	   - qt ID "TEXT";;    qt ID
-	   - help();;	       print a list of commands
+           - rt ID;;           retweet ID
+           - qt ID "TEXT";;    qt ID
+           - help();;          print a list of commands
 	   
-	3. You may modify the top.ml (you need recompilation).
-	   - You can set your twitter id
-	   - You can define your own function
+        2. You may modify the top.ml (you need recompilation).
+           - You can set your twitter id
+           - You can define your own function
 
-	4. Quit
+        3. Quit
 
-	      #quit;;
+            #quit;;
 
 
 BUGS REPORT
 ===========
 
-   Send your bug reports at
+        Send your bug reports at
 
-        y.imai at ocaml.jp
+          y.imai at ocaml.jp
 
 	

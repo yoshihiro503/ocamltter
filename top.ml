@@ -1,17 +1,17 @@
 include Util
 include Ocamltter
 
-module Http = Http
-module Json = Json
-module TwitterApi = TwitterApi
-
 let print p s = Format.print_string ("\"" ^ s ^ "\"");;
+
+let ptl p (tl:TwitterApi.timeline) =
+  Format.print_string (TwitterApi.show_tl tl);;
 
 let main =
 
   (* username := "YOUR-TWITTER-ID" *)
-  username := "";
-  password := "";
-  coffee_break := 40.0; (* second *)
+  let username = "" in
+  let password = "" in
+  let coffee_break = 40.0 in (* second *)
 
-  init ()
+  init (username, password);
+  polling coffee_break

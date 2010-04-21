@@ -13,7 +13,14 @@ type timeline = {
     text: string;
   }
 
-let parse_date st =
+
+
+(*
+Wed Apr 21 02:29:17 +0000 2010
+012345678901234567890123456789
+*)
+
+let parse_date01 st =
   let mon = pmonth @@ String.sub st 4 3 in
   let day = int_of_string @@ String.sub st 8 2 in
   let h = int_of_string @@ String.sub st 11 2 in
@@ -21,6 +28,22 @@ let parse_date st =
   let s = int_of_string @@ String.sub st 17 2 in
   let year = int_of_string @@ String.sub st 26 4 in
   Date.make_from_gmt year mon day h m s
+(*
+Sat, 17 Apr 2010 08:23:55 +0000
+0123456789012345678901234567890
+*)
+let parse_date02 st =
+  let mon = pmonth @@ String.sub st 8 3 in
+  let day = int_of_string @@ String.sub st 5 2 in
+  let h = int_of_string @@ String.sub st 17 2 in
+  let m = int_of_string @@ String.sub st 20 2 in
+  let s = int_of_string @@ String.sub st 23 2 in
+  let year = int_of_string @@ String.sub st 12 4 in
+  Date.make_from_gmt year mon day h m s
+
+let parse_date st =
+  try parse_date01 st with
+  | _ -> parse_date02 st
 
 let show_tl tl =
   let h,m = hour tl.date, min tl.date in
@@ -89,7 +112,7 @@ let user_timeline ?since_id ?count acc sname =
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
   in
-  twitter acc "/statuses/friend_timeline.json" params true
+  twitter acc "/statuses/user_timeline.json" params true
     +> json2timeline
 
 let show acc status_id =
@@ -123,4 +146,10 @@ let search acc word =
   twitter acc ~host:"search.twitter.com" "/search.json" [("q",word)] true
     +> Json.getf "results"
     +> Json.as_list
+    +> List.map (fun j ->
+      let d = parse_date @@ Json.as_string @@ Json.getf "created_at" j in
+      let sname = Json.as_string @@ Json.getf "from_user" j in
+      let text = Json.as_string @@ Json.getf "text" j in
+      let id = string_of_float @@ Json.as_float @@ Json.getf"id" j in
+      { date=d; sname=sname; id=id; clientname=""; text=text })
 

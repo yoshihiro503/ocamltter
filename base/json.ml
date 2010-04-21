@@ -116,8 +116,8 @@ let lit_string =
       let n = int_of_string ("0x" ^ Utf16.utf16c_to_utf8c s) in
       let m, n1 = n / (16*16), n mod (16*16) in
       let n3,n2 = m / (16*16), m mod (16*16) in
-      return (string_of_chars (List.map char_of_int [n3;n2;n1]))
-
+      let cs = List.map char_of_int @@ if n3=0 then [n2;n1] else [n3;n2;n1] in
+      return (string_of_chars cs)
   in
   let lit_char =
     char1 >>= function
