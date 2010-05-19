@@ -46,8 +46,8 @@ let parse_date st =
   | _ -> parse_date02 st
 
 let show_tl tl =
-  let h,m = hour tl.date, min tl.date in
-  !%" [%02d:%02d] %s: %s %sL" h m tl.sname tl.text tl.id
+  let mo,d,h,m = Date.mon tl.date, Date.day tl.date, hour tl.date, min tl.date in
+  !%" [%02d/%02d %02d:%02d] %s: %s %sL" mo d h m tl.sname tl.text tl.id
 
 let json2status j =
     let date =
@@ -143,13 +143,16 @@ let retweet acc status_id =
   twitter acc (!%"/statuses/retweet/%s.json" status_id) [] false
 
 let search acc word =
-  twitter acc ~host:"search.twitter.com" "/search.json" [("q",word)] true
+  let ps = [("q",word);("rpp","100")] in
+  twitter acc ~host:"search.twitter.com" "/search.json" ps true
     +> Json.getf "results"
     +> Json.as_list
     +> List.map (fun j ->
       let d = parse_date @@ Json.as_string @@ Json.getf "created_at" j in
       let sname = Json.as_string @@ Json.getf "from_user" j in
       let text = Json.as_string @@ Json.getf "text" j in
-      let id = string_of_float @@ Json.as_float @@ Json.getf"id" j in
+      let id = Int64.to_string @@ Int64.of_float @@ Json.as_float
+	@@ Json.getf"id" j
+      in
       { date=d; sname=sname; id=id; clientname=""; text=text })
 

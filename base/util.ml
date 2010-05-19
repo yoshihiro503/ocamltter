@@ -23,6 +23,8 @@ let rec repeat n f x =
     (f x; repeat (n-1) f x)
   else ()
 
+let list_concatmap f xs = List.concat (List.map f xs)
+
 let sint   = string_of_int
 let sfloat = string_of_float
 let sbool  = string_of_bool
@@ -137,6 +139,7 @@ module Date = struct
     make year mon day h m s -. diff
   let year t = (localtime t).tm_year + 1900
   let mon t = (localtime t).tm_mon + 1
+  let day t = (localtime t).tm_mday
   let hour t = (localtime t).tm_hour
   let min t = (localtime t).tm_min
   let sec t = (localtime t).tm_sec

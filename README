@@ -20,23 +20,32 @@ INSTALLATION
 HOW TO USE
 ==========
 
-        1. You can use following commands:
+        1. Run
+
+           $ ./ocamltter
+
+        2. You can use following commands:
 
            - l();;             list timeline
            - l ~c:COUNT();;    list timeline
+           - lc COUNT;;        list timeline
+           - l ~u:"NAME"();;   list NAME's timeline
+           - lu "NAME";;       list NAME's timeline
            - u "TEXT";;        post a new message
            - re ID "TEXT";;    reply to ID
            - rt ID;;           retweet ID
            - qt ID "TEXT";;    qt ID
-           - help();;          print a list of commands
+           - s "WORD";;        search by a WORD
+           - login NAME;;      login
+           - let CMD = ...;;   define a your own command CMD
+           - help;;            print a list of commands
 	   
-        2. You may modify the top.ml (you need recompilation).
+        3. You may modify the config.ml
            - You can set your twitter id
-           - You can define your own function
 
-        3. Quit
+        4. Quit
 
-            #quit;;
+            #quit;;  or  ^D
 
 
 BUGS REPORT
