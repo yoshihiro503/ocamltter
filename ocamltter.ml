@@ -95,7 +95,7 @@ let start_polling () =
   let cash = Cash.init () in
   let rec loop () =
     begin try
-      let tl = List.filter (Cash.is_new cash) (get_timeline()) in
+      let tl = List.filter (Cash.is_new cash) (get_timeline ~c:200 ()) in
       List.iter (Cash.add cash) tl;
       print_timeline tl
     with e -> print_endline (Printexc.to_string e)

@@ -116,12 +116,10 @@ let user_timeline ?since_id ?count acc sname =
     +> json2timeline
 
 let show acc status_id =
-  twitter acc (!%"/statuses/show/%s.json" status_id) [] true
+  twitter acc (!%"/statuses/show/%Ld.json" status_id) [] true
+    +> json2status
 
-let get_aline acc status_id =
-  let prev = Int64.to_string (Int64.pred status_id) in
-  home_timeline ~since_id:prev ~count:200 acc
-    +> (List.hd $ List.filter (fun tl -> tl.id = Int64.to_string status_id))
+let get_aline = show
 
 
 let update ?(in_reply_to_status_id) acc text =
