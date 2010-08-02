@@ -54,7 +54,11 @@ let string_of_chars = slist "" (String.make 1)
 let string1 c = String.make 1 c
 
 let mapi f l =
+  List.rev @@ snd @@
   List.fold_left (fun (i,store) b -> (i+1,f i b::store)) (0,[]) l
+
+let iteri f l =
+  ignore @@ List.fold_left (fun i x -> f i x; (i+1)) 0 l
 
 type ('l, 'r) either = Inl of 'l | Inr of 'r
 
@@ -137,6 +141,7 @@ module Date = struct
   let make_from_gmt year mon day h m s =
     let diff =  fst (mktime (gmtime 0.)) in
     make year mon day h m s -. diff
+  let now : unit -> t = Unix.time
   let year t = (localtime t).tm_year + 1900
   let mon t = (localtime t).tm_mon + 1
   let day t = (localtime t).tm_mday

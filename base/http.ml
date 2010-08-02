@@ -34,11 +34,11 @@ let read_all_and_count ic =
   in
   loop [] 0
 
-let conn hostname meth ?user ?pass path ps f =
+let conn ?(port=80) hostname meth ?user ?pass path ps f =
   let host_entry = Unix.gethostbyname hostname in
   let path = if ps<>[] then path ^ "?" ^ params2string ps else path in
   let inet_addr = host_entry.h_addr_list.(0) in
-  let sa = Unix.ADDR_INET (inet_addr, 80) in
+  let sa = Unix.ADDR_INET (inet_addr, port) in
   let auth = match user,pass with
   | Some user, Some pass ->
       !%"Authorization: Basic %s\r\n" (Base64.encode (user ^ ":" ^ pass))
@@ -60,17 +60,20 @@ let conn hostname meth ?user ?pass path ps f =
 	^ s
 	^ "\r\n"
   in
+(*print_endline msg;*)
   let debug = ref "" in
   let ic, oc = Unix.open_connection sa in
   try
+    debug := "write output"; flush oc;
     output_string oc msg; flush oc;
-    debug := "send";
+    debug := "read header";
     let header = read_header ic in
-    debug := "read_header";
+    debug := "apply custom function f";
     let x = f header ic in
-    debug := "apply f";
-    Unix.shutdown_connection ic;
-    debug := "shdowned";
+    debug := "shutdown_connection";
+    (try Unix.shutdown_connection ic with e ->
+      (*prerr_endline ("Http.conn shutdown error: "^Printexc.to_string e);*)
+      ());
     x
   with e ->
     prerr_endline (!%"Http.conn [%s](%s)" (Printexc.to_string e) !debug);

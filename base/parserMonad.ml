@@ -33,6 +33,17 @@ let (>>=) : 'a parser -> ('a -> 'b parser) -> 'b parser =
 let (>>) : 'a parser -> 'b parser -> 'b parser =
     fun p1 p2 ->
       p1 >>= fun _ -> p2
+
+let (<<) : 'a parser -> 'b parser -> 'a parser =
+    fun p1 p2 ->
+      p1 >>= fun x -> p2 >> return x
+
+let ( ^? ) : 'a parser -> string -> 'a parser =
+    fun p msg ->
+      fun state code ->
+	match p state code with
+	| Inl l -> Inl l
+	| Inr (st,msg0) -> Inr (st,msg ^": "^msg0)
     
     (* (<|>) : 'a m -> 'a m -> 'a m *)
 let (<|>) : 'a parser -> 'a parser -> 'a parser =
@@ -80,12 +91,14 @@ let char1 state = function
   | Nil -> Inr (state,"(Nil)")
   | Cons (x,xs) ->
       match x, state with
-	| _, (line,pos) ->
-	    Inl (x,(line, pos+1),!$xs)
+      | '\n', (line,pos) ->
+	  Inl (x,(line+1,-1), !$xs)
+      | _, (line,pos) ->
+	  Inl (x,(line, pos+1),!$xs)
 
 let char_when f = char1 >>= fun c ->
   if f c then return c
-  else error (!%"(char:%c)" c)
+  else error (!%"(char:'%c')" c)
 
 let char c = char_when ((=) c)
 
@@ -113,7 +126,7 @@ let int =
 let run p state ts =
   match p state ts with
   | Inl (x,state',xs) -> x
-  | Inr err -> failwith ("ERROR:"^(showerr err))
+  | Inr err -> failwith ("ParseError:"^(showerr err))
 
 let init_state = (1, 0)
 
