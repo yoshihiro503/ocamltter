@@ -106,5 +106,4 @@ let start_polling () =
 
 let main =
   login ~pass:!password !username;
-  prind_endline "connecting..."; flush stdout;
   start_polling()
