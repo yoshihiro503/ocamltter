@@ -60,9 +60,7 @@ let s word = TwitterApi.search (acc()) word
 let help =
 "commands:
   l()                list timeline
-  l ~c:N ()          list timeline
-  lc N               list timeline
-  l ~u:\"NAME\"()      list NAME's timeline
+  lc N               list timeline(N lines)
   lu \"NAME\"          list NAME's timeline
   u \"TEXT\"           post a new message
   re ID \"TEXT\"       reply to ID
@@ -108,4 +106,5 @@ let start_polling () =
 
 let main =
   login ~pass:!password !username;
+  prind_endline "connecting..."; flush stdout;
   start_polling()

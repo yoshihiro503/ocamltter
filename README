@@ -27,9 +27,7 @@ HOW TO USE
         2. You can use following commands:
 
            - l();;             list timeline
-           - l ~c:COUNT();;    list timeline
-           - lc COUNT;;        list timeline
-           - l ~u:"NAME"();;   list NAME's timeline
+           - lc COUNT;;        list timeline (COUNT lines)
            - lu "NAME";;       list NAME's timeline
            - u "TEXT";;        post a new message
            - re ID "TEXT";;    reply to ID
@@ -38,10 +36,12 @@ HOW TO USE
            - s "WORD";;        search by a WORD
            - login NAME;;      login
            - let CMD = ...;;   define a your own command CMD
-           - help;;            print a list of commands
+           - help;;            print the help
 	   
         3. You may modify the config.ml
            - You can set your twitter id
+	   - You can set your interesting keywords
+	   - You can set ignored users
 
         4. Quit
 
