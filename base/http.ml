@@ -63,6 +63,11 @@ let conn ?(port=80) hostname meth ?user ?pass path ps f =
 (*print_endline msg;*)
   let debug = ref "" in
   let ic, oc = Unix.open_connection sa in
+  let close () =
+    ignore @@ maybe Unix.shutdown_connection ic;
+    ignore @@ maybe close_in  ic;
+    ignore @@ maybe close_out oc;
+  in
   try
     debug := "write output"; flush oc;
     output_string oc msg; flush oc;
@@ -71,12 +76,10 @@ let conn ?(port=80) hostname meth ?user ?pass path ps f =
     debug := "apply custom function f";
     let x = f header ic in
     debug := "shutdown_connection";
-    (try Unix.shutdown_connection ic with e ->
-      (*prerr_endline ("Http.conn shutdown error: "^Printexc.to_string e);*)
-      ());
+    close();
     x
   with e ->
     prerr_endline (!%"Http.conn [%s](%s)" (Printexc.to_string e) !debug);
-    Unix.shutdown_connection ic;
+    close();
     raise e
 
