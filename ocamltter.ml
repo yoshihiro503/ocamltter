@@ -87,7 +87,7 @@ let help =
   re ID \"TEXT\"       reply to ID
   rt ID              retweet ID
   qt ID \"TEXT\"       qt ID
-  s \"WORD\"           search by a WORD
+  s \"WORD\"           search tweets by a WORD
   let CMD = ...      define a your own command CMD
   setup()            (re)authorize ocamltter
   help               print this help

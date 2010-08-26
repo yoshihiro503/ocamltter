@@ -36,8 +36,8 @@ HOW TO USE
            - re ID "TEXT";;    reply to ID
            - rt ID;;           retweet ID
            - qt ID "TEXT";;    qt ID
-           - s "WORD";;        search by a WORD
-           - login NAME;;      login
+           - s "WORD";;        search tweets by a WORD
+           - setup ();;        (re)authorize ocamltter
            - let CMD = ...;;   define a your own command CMD
            - help;;            print the help
 	   
