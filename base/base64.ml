@@ -1,76 +1,404 @@
-open Util
-open List
+type nat =
+  | O
+  | S of nat
 
-let grps make xs =
-  let rec iter store = function
-    | [] -> store
-    | xs -> let g, xs = make xs in
-      iter (g :: store) xs
-  in
-  List.rev @@ iter [] xs
+type ('a, 'b) sum =
+  | Inl of 'a
+  | Inr of 'b
 
-let f : bool list -> (bool*bool*bool*bool*bool*bool) list=
-  let z = false in
-  grps (function
-    | [] -> failwith "must not happen"
-    | a::[]             -> (a,z,z,z,z,z), []
-    | a::b::[]          -> (a,b,z,z,z,z), []
-    | a::b::c::[]       -> (a,b,c,z,z,z), []
-    | a::b::c::d::[]    -> (a,b,c,d,z,z), []
-    | a::b::c::d::e::[] -> (a,b,c,d,e,z), []
-    | a::b::c::d::e::f::xs ->
-	((a,b,c,d,e,f), xs))
+type ('a, 'b) prod =
+  | Pair of 'a * 'b
 
-let g : char list -> (char*char*char*char) list =
-  let x = '=' in
-  grps (function
-    | [] -> failwith "must not happen"
-    | a::[] -> (a,x,x,x),[]
-    | a::b::[] -> (a,b,x,x),[]
-    | a::b::c::[] -> (a,b,c,x),[]
-    | a::b::c::d::xs -> (a,b,c,d),xs)
+(** val fst : ('a1, 'a2) prod -> 'a1 **)
 
-let pow2 n =
-  int_of_float (2. ** float n)
+let fst = function
+  | Pair (x, y) -> x
 
-let digits (x:int) : bool list =
-  let digit n x =
-    let p = int_of_float (2. ** float n) in
-    (p =  x land p)
-  in
-  map (fun i -> digit i x) (7--0)
+(** val snd : ('a1, 'a2) prod -> 'a2 **)
 
-let table = function
-  | b5,b4,b3,b2,b1,b0 ->
-      let p n = function
-	| true  -> pow2 n
-	| false -> 0
-      in
-      let x = 
-	p 0 b0 + p 1 b1 + p 2 b2 +
-	  p 3 b3 + p 4 b4 + p 5 b5
-      in
-      let c =
-	match x with
-	| x when 0 <= x && x <= 25 -> int_of_char 'A' + x
-	| x when 26 <= x && x <= 51 -> int_of_char 'a' + (x - 26)
-	| x when 52 <= x && x <= 61 -> int_of_char '0' + (x - 52)
-	| 62 -> int_of_char '+'
-	| 63 -> int_of_char '/'
-	| _ -> failwith "MNH"
-      in
-      char_of_int c
+let snd = function
+  | Pair (x, y) -> y
+
+type 'a sig0 = 'a
+  (* singleton inductive, whose constructor was exist *)
+
+(** val plus : nat -> nat -> nat **)
+
+let rec plus n m =
+  match n with
+    | O -> m
+    | S p -> S (plus p m)
+
+(** val mult : nat -> nat -> nat **)
+
+let rec mult n m =
+  match n with
+    | O -> O
+    | S p -> plus m (mult p m)
+
+(** val minus : nat -> nat -> nat **)
+
+let rec minus n m =
+  match n with
+    | O -> n
+    | S k -> (match m with
+                | O -> n
+                | S l -> minus k l)
+
+(** val length : 'a1 list -> nat **)
+
+let rec length = function
+  | [] -> O
+  | a :: m -> S (length m)
+
+(** val app : 'a1 list -> 'a1 list -> 'a1 list **)
+
+let rec app l m =
+  match l with
+    | [] -> m
+    | a :: l1 -> a :: (app l1 m)
+
+(** val map : ('a1 -> 'a2) -> 'a1 list -> 'a2 list **)
+
+let rec map f = function
+  | [] -> []
+  | a :: t -> (f a) :: (map f t)
+
+type positive =
+  | XI of positive
+  | XO of positive
+  | XH
+
+(** val psucc : positive -> positive **)
+
+let rec psucc = function
+  | XI p -> XO (psucc p)
+  | XO p -> XI p
+  | XH -> XO XH
+
+(** val p_of_succ_nat : nat -> positive **)
+
+let rec p_of_succ_nat = function
+  | O -> XH
+  | S x -> psucc (p_of_succ_nat x)
+
+type ascii =
+  | Ascii of bool * bool * bool * bool * bool * bool * bool * bool
+
+(** val zero : ascii **)
+
+let zero =
+  Ascii (false, false, false, false, false, false, false, false)
+
+(** val one : ascii **)
+
+let one =
+  Ascii (true, false, false, false, false, false, false, false)
+
+(** val app2 : (bool -> bool -> bool) -> ascii -> ascii -> ascii **)
+
+let app2 f a b =
+  let Ascii (a1, a2, a3, a4, a5, a6, a7, a8) = a in
+  let Ascii (b1, b2, b3, b4, b5, b6, b7, b8) = b in
+  Ascii ((f a1 b1), (f a2 b2), (f a3 b3), (f a4 b4), 
+  (f a5 b5), (f a6 b6), (f a7 b7), (f a8 b8))
+
+(** val shift : bool -> ascii -> ascii **)
+
+let shift c = function
+  | Ascii (a1, a2, a3, a4, a5, a6, a7, a8) -> Ascii (c, a1, a2, a3, a4, a5,
+      a6, a7)
+
+(** val ascii_of_pos_aux : ascii -> ascii -> positive -> nat -> ascii **)
+
+let rec ascii_of_pos_aux res acc z = function
+  | O -> res
+  | S n1 ->
+      (match z with
+         | XI z' ->
+             ascii_of_pos_aux
+               (app2 (fun b1 b2 -> if b1 then true else b2) res acc)
+               (shift false acc) z' n1
+         | XO z' -> ascii_of_pos_aux res (shift false acc) z' n1
+         | XH -> app2 (fun b1 b2 -> if b1 then true else b2) res acc)
+
+(** val ascii_of_pos : positive -> ascii **)
+
+let ascii_of_pos a =
+  ascii_of_pos_aux zero one a (S (S (S (S (S (S (S (S O))))))))
+
+(** val ascii_of_nat : nat -> ascii **)
+
+let ascii_of_nat = function
+  | O -> zero
+  | S a' -> ascii_of_pos (p_of_succ_nat a')
+
+(** val nat_of_ascii : ascii -> nat **)
+
+let nat_of_ascii = function
+  | Ascii (a1, a2, a3, a4, a5, a6, a7, a8) ->
+      plus
+        (mult (S (S O))
+          (plus
+            (mult (S (S O))
+              (plus
+                (mult (S (S O))
+                  (plus
+                    (mult (S (S O))
+                      (plus
+                        (mult (S (S O))
+                          (plus
+                            (mult (S (S O))
+                              (plus (mult (S (S O)) (if a8 then S O else O))
+                                (if a7 then S O else O)))
+                            (if a6 then S O else O)))
+                        (if a5 then S O else O))) (
+                    if a4 then S O else O))) (if a3 then S O else O)))
+            (if a2 then S O else O))) (if a1 then S O else O)
+
+(** val eq_nat_dec : nat -> nat -> bool **)
+
+let rec eq_nat_dec n m =
+  match n with
+    | O -> (match m with
+              | O -> true
+              | S m0 -> false)
+    | S n0 -> (match m with
+                 | O -> false
+                 | S m0 -> eq_nat_dec n0 m0)
+
+(** val le_lt_dec : nat -> nat -> bool **)
+
+let rec le_lt_dec n m =
+  match n with
+    | O -> true
+    | S n0 -> (match m with
+                 | O -> false
+                 | S m0 -> le_lt_dec n0 m0)
+
+(** val replicate : nat -> 'a1 -> 'a1 list **)
+
+let rec replicate n x =
+  match n with
+    | O -> []
+    | S m -> x :: (replicate m x)
+
+type 'a vec =
+  | VNil
+  | VCons of nat * 'a * 'a vec
+
+(** val vec_of_list : nat -> 'a1 list -> 'a1 vec **)
+
+let rec vec_of_list n = function
+  | [] -> VNil
+  | x :: xs0 -> VCons ((length xs0), x, (vec_of_list (length xs0) xs0))
+
+(** val list_of_vec : nat -> 'a1 vec -> 'a1 list **)
+
+let rec list_of_vec n = function
+  | VNil -> []
+  | VCons (n0, x, xs) -> x :: (list_of_vec n0 xs)
+
+(** val split_dec :
+    nat -> 'a1 list -> (('a1 vec, 'a1 list) prod, 'a1 list) sum **)
+
+let rec split_dec n xs =
+  match n with
+    | O -> Inl (Pair (VNil, xs))
+    | S m ->
+        (match xs with
+           | [] -> Inr xs
+           | x :: xs0 ->
+               (match split_dec m xs0 with
+                  | Inl p ->
+                      let Pair (xs1, xs2) = p in
+                      Inl (Pair ((VCons (m, x, xs1)), xs2))
+                  | Inr s -> Inr (x :: s)))
+
+(** val grp_aux_terminate :
+    nat -> 'a1 list -> ('a1 vec list, 'a1 list) prod **)
+
+let rec grp_aux_terminate n = function
+  | [] -> Pair ([], [])
+  | x :: xs0 ->
+      (match split_dec n (x :: xs0) with
+         | Inl p ->
+             let Pair (v, tail) = p in
+             let Pair (vs, rest) = grp_aux_terminate n tail in
+             Pair ((v :: (Obj.magic vs)), rest)
+         | Inr r -> Pair ([], r))
+
+(** val grp_aux : nat -> 'a1 list -> ('a1 vec list, 'a1 list) prod **)
+
+let grp_aux x x0 =
+  grp_aux_terminate x x0
+
+(** val g1 : nat -> 'a1 list -> 'a1 vec list **)
+
+let g1 n xs =
+  fst (grp_aux n xs)
+
+(** val g2 : nat -> 'a1 list -> 'a1 list **)
+
+let g2 n xs =
+  snd (grp_aux n xs)
+
+(** val gfill : 'a1 -> nat -> 'a1 list -> 'a1 vec list **)
+
+let gfill default n xs =
+  let ys = g2 n xs in
+  app (g1 n xs)
+    ((vec_of_list n (app ys (replicate (minus n (length ys)) default))) ::
+    [])
+
+(** val cm : nat -> 'a1 vec list -> 'a1 list **)
+
+let rec cm n = function
+  | [] -> []
+  | v :: vs0 -> app (list_of_vec n v) (cm n vs0)
+
+type mlchar = char
+
+type mlint = int
+
+type mlstring = string
+
+(** val mlint_of_nat : nat -> mlint **)
+
+let mlint_of_nat = let rec iter = function O -> 0 | S p -> succ (iter p) in iter
+
+(** val nat_of_mlint : mlint -> nat **)
+
+let nat_of_mlint = let rec iter = function 0 -> O | n -> S (iter (pred n)) in iter
+
+(** val mlchar_of_mlint : mlint -> mlchar **)
+
+let mlchar_of_mlint = char_of_int
+
+(** val mlint_of_mlchar : mlchar -> mlint **)
+
+let mlint_of_mlchar = int_of_char
+
+(** val ascii_of_mlchar : mlchar -> ascii **)
+
+let ascii_of_mlchar x =
+  ascii_of_nat (nat_of_mlint (mlint_of_mlchar x))
+
+(** val mlchar_of_ascii : ascii -> mlchar **)
+
+let mlchar_of_ascii x =
+  mlchar_of_mlint (mlint_of_nat (nat_of_ascii x))
+
+(** val mlstring_of_list : ('a1 -> mlchar) -> 'a1 list -> mlstring **)
+
+let mlstring_of_list = (fun f s -> String.concat ""
+     (List.map (fun x -> String.make 1 (f x)) s))
+
+(** val list_of_mlstring : (mlchar -> 'a1) -> mlstring -> 'a1 list **)
+
+let list_of_mlstring = 
+(fun f s ->
+  let rec explode_rec n =
+    if n >= String.length s then
+      []
+    else 
+      f (String.get s n) :: explode_rec (succ n)
+  in 
+  explode_rec 0)
+
+
+(** val mlstring_of_asciilist : ascii list -> mlstring **)
+
+let mlstring_of_asciilist x =
+  mlstring_of_list mlchar_of_ascii x
+
+(** val asciilist_of_mlstring : mlstring -> ascii list **)
+
+let asciilist_of_mlstring x =
+  list_of_mlstring ascii_of_mlchar x
+
+(** val ascii_of_bool6 : bool vec -> ascii **)
+
+let ascii_of_bool6 = function
+  | VNil -> assert false (* absurd case *)
+  | VCons (n, h, h0) ->
+      (match h0 with
+         | VNil -> assert false (* absurd case *)
+         | VCons (n0, h2, h3) ->
+             (match h3 with
+                | VNil -> assert false (* absurd case *)
+                | VCons (n1, h5, h6) ->
+                    (match h6 with
+                       | VNil -> assert false (* absurd case *)
+                       | VCons (n2, h8, h9) ->
+                           (match h9 with
+                              | VNil -> assert false (* absurd case *)
+                              | VCons (n3, h11, h12) ->
+                                  (match h12 with
+                                     | VNil -> assert false (* absurd case *)
+                                     | VCons (n4, h14, h15) -> Ascii (h14,
+                                         h11, h8, h5, h2, h, false, false))))))
+
+(** val tblaux : nat -> nat **)
+
+let tblaux n =
+  if le_lt_dec n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+       (S (S (S (S (S O)))))))))))))))))))))))))
+  then plus
+         (nat_of_ascii (Ascii (true, false, false, false, false, false, true,
+           false))) n
+  else if le_lt_dec n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+            (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+            (S (S (S (S (S (S (S (S (S (S (S
+            O)))))))))))))))))))))))))))))))))))))))))))))))))))
+       then plus
+              (nat_of_ascii (Ascii (true, false, false, false, false, true,
+                true, false)))
+              (minus n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                (S (S (S (S (S (S (S (S O)))))))))))))))))))))))))))
+       else if le_lt_dec n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                 (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                 (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                 (S (S (S (S
+                 O)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+            then plus
+                   (nat_of_ascii (Ascii (false, false, false, false, true,
+                     true, false, false)))
+                   (minus n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                     (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                     (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                     O)))))))))))))))))))))))))))))))))))))))))))))))))))))
+            else if eq_nat_dec n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                      (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                      (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                      (S (S (S (S (S (S (S (S (S (S (S
+                      O))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+                 then nat_of_ascii (Ascii (true, true, false, true, false,
+                        true, false, false))
+                 else nat_of_ascii (Ascii (true, true, true, true, false,
+                        true, false, false))
+
+(** val tbl : bool vec -> ascii **)
+
+let tbl bs =
+  ascii_of_nat (tblaux (nat_of_ascii (ascii_of_bool6 bs)))
+
+(** val digit : ascii -> bool vec **)
+
+let digit = function
+  | Ascii (a, b, c, d, e, f, g, h) ->
+      vec_of_list (S (S (S (S (S (S (S (S O)))))))) (h :: (g :: (f :: (e ::
+        (d :: (c :: (b :: (a :: []))))))))
+
+(** val encode : mlstring -> mlstring **)
 
 let encode s =
-  chars_of_string s
-    |> map int_of_char
-    |> map digits
-    |> concat
-    |> f
-    |> map table
-    |> g
-    |> map (fun (a,b,c,d) -> [a;b;c;d])
-    |> concat
-    |> string_of_chars
-
+  mlstring_of_asciilist
+    (cm (S (S (S (S O))))
+      (gfill (Ascii (true, false, true, true, true, true, false, false)) (S
+        (S (S (S O))))
+        (map tbl
+          (gfill false (S (S (S (S (S (S O))))))
+            (cm (S (S (S (S (S (S (S (S O))))))))
+              (map digit (asciilist_of_mlstring s)))))))
 
