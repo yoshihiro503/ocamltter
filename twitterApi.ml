@@ -9,16 +9,13 @@ open Oauth
 
 exception TwErr of string
 
-type timeline = {
+type tweet = {
     date: Date.t;
     sname: string;
-    id: string;
+    id: int64;
     clientname: string;
     text: string;
   }
-
-
-
 
 let parse_date01 st = (* Wed Apr 21 02:29:17 +0000 2010 *)
   let mon = pmonth @@ String.sub st 4 3 in
@@ -42,9 +39,9 @@ let parse_date st =
   try parse_date01 st with
   | _ -> parse_date02 st
 
-let show_tl tl =
-  let mo,d,h,m = Date.mon tl.date, Date.day tl.date, hour tl.date, min tl.date in
-  !%" [%02d/%02d %02d:%02d] %s: %s %sL" mo d h m tl.sname tl.text tl.id
+let show_tweet t =
+  let mo,d,h,m = Date.mon t.date, Date.day t.date, hour t.date, min t.date in
+  !%" [%02d/%02d %02d:%02d] %s: %s %LdL" mo d h m t.sname t.text t.id
 
 let json2status j =
     let date =
@@ -54,7 +51,7 @@ let json2status j =
       Json.getf "text" j +> Json.as_string
     in
     let id =
-      Json.getf "id" j +> Json.as_float +> Int64.of_float +> Int64.to_string
+      Json.getf "id" j +> Json.as_float +> Int64.of_float
     in
     let sname =
       Json.getf "user" j +> Json.getf "screen_name" +> Json.as_string
@@ -93,6 +90,13 @@ let twitter (tok,sec,verif) ?(host="api.twitter.com") meth cmd params =
   in
   catch_twerr f ()
 
+let twitter_without_auth ?(host="api.twitter.com") meth cmd params =
+  let f () =
+    Http.conn host meth cmd params (fun _ ch -> slist "" id (read_all ch))
+      +> Json.parse
+  in
+  catch_twerr f ()
+
 let home_timeline ?since_id ?count oauth =
   let params = [("since_id",since_id); ("count", option_map sint count)]
       +> list_filter_map (function
@@ -112,18 +116,17 @@ let user_timeline ?since_id ?count oauth sname =
   twitter oauth GET "/statuses/user_timeline.json" params
     +> json2timeline
 
-let show oauth status_id =
-  twitter oauth GET (!%"/statuses/show/%Ld.json" status_id) []
+let show status_id =
+  twitter_without_auth GET (!%"/statuses/show/%Ld.json" status_id) []
     +> json2status
 
-let get_aline = show
-
+let get_tweet = show
 
 let update ?(in_reply_to_status_id) oauth text =
   let text = match in_reply_to_status_id with
   | Some id ->
-      let tl = get_aline oauth (Int64.of_string id) in
-      !%"@%s %s" tl.sname text
+      let t = get_tweet (Int64.of_string id) in
+      !%"@%s %s" t.sname text
   | None -> text
   in
   let params = [("in_reply_to_status_id", in_reply_to_status_id);
@@ -137,21 +140,18 @@ let update ?(in_reply_to_status_id) oauth text =
 let retweet oauth status_id =
   twitter oauth POST (!%"/statuses/retweet/%s.json" status_id) []
 
-(*
-let search acc word =
+let search word =
   let ps = [("q",word);("rpp","100")] in
-  twitter GET ~host:"search.twitter.com" "/search.json" ps
+  twitter_without_auth GET ~host:"search.twitter.com" "/search.json" ps
     +> Json.getf "results"
     +> Json.as_list
     +> List.map (fun j ->
       let d = parse_date @@ Json.as_string @@ Json.getf "created_at" j in
       let sname = Json.as_string @@ Json.getf "from_user" j in
       let text = Json.as_string @@ Json.getf "text" j in
-      let id = Int64.to_string @@ Int64.of_float @@ Json.as_float
-	@@ Json.getf"id" j
-      in
+      let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
       { date=d; sname=sname; id=id; clientname=""; text=text })
-*)
+
 let host = "api.twitter.com"
 
 

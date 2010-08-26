@@ -1,7 +1,7 @@
 let print p s = Format.print_string ("\"" ^ s ^ "\"");;
 
-let ptl p (tl:TwitterApi.timeline) =
-  Format.print_string (TwitterApi.show_tl tl);;
+let ptl p (tw:TwitterApi.tweet) =
+  Format.print_string (TwitterApi.show_tweet tw);;
 print_endline "load .ocamlinit";;
 open Ocamltter;;
 #install_printer print;;

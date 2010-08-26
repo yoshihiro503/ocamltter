@@ -45,7 +45,7 @@ let conn ?(port=80) hostname meth ?headers ?user ?pass path ps f =
   in
   let hds = match headers with
   | None -> ""
-  | Some hds -> slist"\r\n" (fun (k,v) -> k^": "^v) hds
+  | Some hds -> slist"\r\n" (fun (k,v) -> k^": "^v) hds ^ "\r\n"
   in
   let msg =
     match meth with
@@ -53,7 +53,7 @@ let conn ?(port=80) hostname meth ?headers ?user ?pass path ps f =
 	let path = if ps<>[] then path ^ "?" ^ params2string ps else path in
 	!%"GET %s HTTP/1.0\r\n" path
 	^ auth
-	^ hds ^ "\r\n"
+	^ hds
 	^ "Host: " ^ hostname ^ "\r\n"
 	^ "\r\n"
     | POST ->
@@ -61,7 +61,7 @@ let conn ?(port=80) hostname meth ?headers ?user ?pass path ps f =
 	!%"POST %s HTTP/1.0\r\n" path
 	^ !%"Content-Length: %d\r\n" (String.length s)
 	^ auth
-	^ hds ^ "\r\n"
+	^ hds
 	^ "Host: " ^ hostname ^ "\r\n"
 	^ "\r\n"
 	^ s

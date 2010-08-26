@@ -17,12 +17,12 @@ let authorize () =
   open_out_with conffile (fun ch -> output_string ch (acc_tok^"\n"^acc_sec^"\n"^verif^"\n"));
   (acc_tok, acc_sec, verif)
 
-module Cash = struct
-  type t = (string, timeline) Hashtbl.t
+module Cache = struct
+  type t = (int64, tweet) Hashtbl.t
   let init () : t = Hashtbl.create 100
-  let is_new (cash : t) (x : timeline) =
-    not (Hashtbl.mem cash x.id)
-  let add cash (p: timeline) = Hashtbl.add cash p.id p
+  let is_new (cache: t) (tw: tweet) =
+    not (Hashtbl.mem cache tw.id)
+  let add cache (tw: tweet) = Hashtbl.add cache tw.id tw
 end
 
 let load () = open_in_with conffile (fun ch -> let tok=input_line ch in let sec=input_line ch in let verif=input_line ch in
@@ -42,8 +42,7 @@ try
       List.filter Config.filter @@ TwitterApi.home_timeline ~count:c (oauth())
     in
     let tl2 =
-(*      list_concatmap (TwitterApi.search (oauth())) Config.watching_words*)
-      []
+      list_concatmap TwitterApi.search Config.watching_words
     in
     let post_comp p1 p2 = compare p1.date p2.date in
     List.sort post_comp @@ (tl1@tl2)
@@ -52,13 +51,13 @@ with
     prerr_endline (!%"Ocamltter.print_tl [%s]" (Printexc.to_string e));
     raise e
 
-let print_timeline tl =
-  List.iter print_endline @@ List.map show_tl tl
+let print_timeline tw =
+  List.iter print_endline @@ List.map show_tweet tw
 
 let lc count = get_timeline ~c:count ()
 let lu user = TwitterApi.user_timeline (oauth()) user
 
-let l ?(c=20) ?u () : TwitterApi.timeline list =
+let l ?(c=20) ?u () : TwitterApi.tweet list =
   match u with
   | None -> lc c
   | Some user -> lu user
@@ -74,11 +73,11 @@ let re status_id text =
     (oauth()) text
 
 let qt status_id text =
-  let tl = get_aline (oauth()) status_id in
-  u (!%"%s QT @%s: %s" text tl.sname tl.text)
-(*
-let s word = TwitterApi.search (oauth()) word
-  *)
+  let tw = get_tweet status_id in
+  re tw.id (!%"%s QT @%s: %s" text tw.sname tw.text)
+
+let s word = TwitterApi.search word
+
 let help =
 "commands:
   l()                list timeline
@@ -95,11 +94,11 @@ let help =
 "
 
 let start_polling () =
-  let cash = Cash.init () in
+  let cache = Cache.init () in
   let rec loop () =
     begin try
-      let tl = List.filter (Cash.is_new cash) (get_timeline ~c:200 ()) in
-      List.iter (Cash.add cash) tl;
+      let tl = List.filter (Cache.is_new cache) (get_timeline ~c:200 ()) in
+      List.iter (Cache.add cache) tl;
       print_timeline tl
     with e -> print_endline (Printexc.to_string e)
     end;
