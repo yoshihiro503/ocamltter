@@ -4,7 +4,7 @@ let id x = x
 let p = Printf.printf
 let pr = print_endline
 let tee f x = ignore @@ f x; x
-let (+>) x f = f x
+let (|>) x f = f x
 let const c = fun _ -> c
 
 let (!%) = Printf.sprintf

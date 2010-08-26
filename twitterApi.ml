@@ -45,24 +45,24 @@ let show_tweet t =
 
 let json2status j =
     let date =
-      Json.getf "created_at" j +> Json.as_string +> parse_date
+      Json.getf "created_at" j |> Json.as_string |> parse_date
     in
     let text =
-      Json.getf "text" j +> Json.as_string
+      Json.getf "text" j |> Json.as_string
     in
     let id =
-      Json.getf "id" j +> Json.as_float +> Int64.of_float
+      Json.getf "id" j |> Json.as_float |> Int64.of_float
     in
     let sname =
-      Json.getf "user" j +> Json.getf "screen_name" +> Json.as_string
+      Json.getf "user" j |> Json.getf "screen_name" |> Json.as_string
     in
     let client =
-      Json.getf "source" j +> Json.as_string
+      Json.getf "source" j |> Json.as_string
     in
     {date=date; sname=sname; text=text; id=id; clientname=client}
 
 let json2timeline j =
-  Json.as_list j +> List.map json2status
+  Json.as_list j |> List.map json2status
 
 let catch_twerr (f: 'a -> Json.t) (x : 'a) =
   try
@@ -93,32 +93,32 @@ let twitter (tok,sec,verif) ?(host="api.twitter.com") meth cmd params =
 let twitter_without_auth ?(host="api.twitter.com") meth cmd params =
   let f () =
     Http.conn host meth cmd params (fun _ ch -> slist "" id (read_all ch))
-      +> Json.parse
+      |> Json.parse
   in
   catch_twerr f ()
 
 let home_timeline ?since_id ?count oauth =
   let params = [("since_id",since_id); ("count", option_map sint count)]
-      +> list_filter_map (function
+      |> list_filter_map (function
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
   in
   twitter oauth GET "/statuses/home_timeline.json" params
-    +> json2timeline
+    |> json2timeline
 
 let user_timeline ?since_id ?count oauth sname =
   let params = [("since_id",since_id); ("count", option_map sint count);
 		("screen_name", Some sname)]
-      +> list_filter_map (function
+      |> list_filter_map (function
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
   in
   twitter oauth GET "/statuses/user_timeline.json" params
-    +> json2timeline
+    |> json2timeline
 
 let show status_id =
   twitter_without_auth GET (!%"/statuses/show/%Ld.json" status_id) []
-    +> json2status
+    |> json2status
 
 let get_tweet = show
 
@@ -131,7 +131,7 @@ let update ?(in_reply_to_status_id) oauth text =
   in
   let params = [("in_reply_to_status_id", in_reply_to_status_id);
 		("status",Some text)]
-      +> list_filter_map (function
+      |> list_filter_map (function
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
   in
@@ -143,9 +143,9 @@ let retweet oauth status_id =
 let search word =
   let ps = [("q",word);("rpp","100")] in
   twitter_without_auth GET ~host:"search.twitter.com" "/search.json" ps
-    +> Json.getf "results"
-    +> Json.as_list
-    +> List.map (fun j ->
+    |> Json.getf "results"
+    |> Json.as_list
+    |> List.map (fun j ->
       let d = parse_date @@ Json.as_string @@ Json.getf "created_at" j in
       let sname = Json.as_string @@ Json.getf "from_user" j in
       let text = Json.as_string @@ Json.getf "text" j in
@@ -157,7 +157,7 @@ let host = "api.twitter.com"
 
 let read_lines ch = slist "\n" id (read_all ch)
 let parse_http_params s = 
-  Str.split(Str.regexp"&") s +> 
+  Str.split(Str.regexp"&") s |> 
   List.map (fun s -> 
     let l = Str.split (Str.regexp "=") s 
     in try List.hd l, List.hd (List.tl l) with Failure _ -> raise (Failure ("can't parse"^s)))

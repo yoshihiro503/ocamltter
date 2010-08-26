@@ -63,14 +63,14 @@ let table = function
 
 let encode s =
   chars_of_string s
-    +> map int_of_char
-    +> map digits
-    +> concat
-    +> f
-    +> map table
-    +> g
-    +> map (fun (a,b,c,d) -> [a;b;c;d])
-    +> concat
-    +> string_of_chars
+    |> map int_of_char
+    |> map digits
+    |> concat
+    |> f
+    |> map table
+    |> g
+    |> map (fun (a,b,c,d) -> [a;b;c;d])
+    |> concat
+    |> string_of_chars
 
 
