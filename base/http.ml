@@ -71,7 +71,7 @@ let conn ?(port=80) hostname meth ?headers ?user ?pass path ps f =
   let debug = ref "" in
   let ic, oc = Unix.open_connection sa in
   let close () =
-    ignore @@ maybe Unix.shtudown_connection ic;
+    ignore @@ maybe Unix.shutdown_connection ic;
     ignore @@ maybe close_in  ic;
     ignore @@ maybe close_out oc;
   in
