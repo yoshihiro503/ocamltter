@@ -7,9 +7,12 @@ REQUIREMENT
 	
 	You need:
 
-	    - Objective Caml
-	      (available at http://caml.inria.fr/)
-       
+           - Objective Caml
+             (available at http://caml.inria.fr/)
+
+           - Cryptokit
+             (available at http://pauillac.inria.fr/~xleroy/software.html)
+
 
 INSTALLATION
 ============

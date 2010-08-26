@@ -96,6 +96,7 @@ let open_with (opn, close) filepath f =
   let ch = opn filepath in
   value @@ tee (fun _ -> close ch) (maybe f ch)
 let open_in_with filepath f = open_with (open_in, close_in) filepath f
+let open_out_with filepath f = open_with (open_out, close_out) filepath f
 
 let read_all ch =
   let rec iter store =

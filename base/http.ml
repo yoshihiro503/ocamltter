@@ -3,7 +3,7 @@ open Util
 
 let url_encode s =
   let ss = string_foldr (fun c store -> match c with
-    | 'a'..'z' | 'A'..'Z' | '0'..'9' as c -> string1 c :: store
+    | 'a'..'z' | 'A'..'Z' | '0'..'9' | '-' | '.' | '_' | '~' as c -> string1 c :: store
     | c -> ("%" ^ to_hex (int_of_char c)) :: store) s []
   in
   String.concat "" (ss)
@@ -14,7 +14,7 @@ type header = {
   }
 
 type params = (string * string) list
-type meth = GET | POST of params
+type meth = GET | POST
 let params2string ps =
   String.concat "&" @@ List.map (fun (k,v) -> k^"="^url_encode v) ps
 
@@ -34,9 +34,8 @@ let read_all_and_count ic =
   in
   loop [] 0
 
-let conn ?(port=80) hostname meth ?user ?pass path ps f =
+let conn ?(port=80) hostname meth ?headers ?user ?pass path ps f =
   let host_entry = Unix.gethostbyname hostname in
-  let path = if ps<>[] then path ^ "?" ^ params2string ps else path in
   let inet_addr = host_entry.h_addr_list.(0) in
   let sa = Unix.ADDR_INET (inet_addr, port) in
   let auth = match user,pass with
@@ -44,30 +43,33 @@ let conn ?(port=80) hostname meth ?user ?pass path ps f =
       !%"Authorization: Basic %s\r\n" (Base64.encode (user ^ ":" ^ pass))
   | _ -> ""
   in
+  let hds = match headers with
+  | None -> ""
+  | Some hds -> slist"\r\n" (fun (k,v) -> k^": "^v) hds
+  in
   let msg =
     match meth with
     | GET ->
+	let path = if ps<>[] then path ^ "?" ^ params2string ps else path in
 	!%"GET %s HTTP/1.0\r\n" path
 	^ auth
+	^ hds ^ "\r\n"
 	^ "Host: " ^ hostname ^ "\r\n"
 	^ "\r\n"
-    | POST ps ->
+    | POST ->
 	let s = params2string ps in
 	!%"POST %s HTTP/1.0\r\n" path
 	^ !%"Content-Length: %d\r\n" (String.length s)
 	^ auth
+	^ hds ^ "\r\n"
+	^ "Host: " ^ hostname ^ "\r\n"
 	^ "\r\n"
 	^ s
 	^ "\r\n"
   in
-(*print_endline msg;*)
+  (* print_endline msg; *)
   let debug = ref "" in
   let ic, oc = Unix.open_connection sa in
-  let close () =
-    ignore @@ maybe Unix.shutdown_connection ic;
-    ignore @@ maybe close_in  ic;
-    ignore @@ maybe close_out oc;
-  in
   try
     debug := "write output"; flush oc;
     output_string oc msg; flush oc;
@@ -76,10 +78,12 @@ let conn ?(port=80) hostname meth ?user ?pass path ps f =
     debug := "apply custom function f";
     let x = f header ic in
     debug := "shutdown_connection";
-    close();
+    (try Unix.shutdown_connection ic with e ->
+      (*prerr_endline ("Http.conn shutdown error: "^Printexc.to_string e);*)
+      ());
     x
   with e ->
     prerr_endline (!%"Http.conn [%s](%s)" (Printexc.to_string e) !debug);
-    close();
+    Unix.shutdown_connection ic;
     raise e
 

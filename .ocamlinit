@@ -6,3 +6,6 @@ print_endline "load .ocamlinit";;
 open Ocamltter;;
 #install_printer print;;
 #install_printer ptl;;
+setup();;
+start_polling ();;
+

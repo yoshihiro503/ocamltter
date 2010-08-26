@@ -1,7 +1,11 @@
+let ocamltter_consumer_key = "vS0nKAS6ieWL76zZaQgF4A"
+let ocamltter_consumer_secret = "XHa1ZiPcNRsYKw4mdIv8wHUiNulpBFxKT1ntXXuJgo"
+
 open Util
 open Util.Date
 open Http
 open Json
+open Oauth
 
 exception TwErr of string
 
@@ -15,12 +19,8 @@ type timeline = {
 
 
 
-(*
-Wed Apr 21 02:29:17 +0000 2010
-012345678901234567890123456789
-*)
 
-let parse_date01 st =
+let parse_date01 st = (* Wed Apr 21 02:29:17 +0000 2010 *)
   let mon = pmonth @@ String.sub st 4 3 in
   let day = int_of_string @@ String.sub st 8 2 in
   let h = int_of_string @@ String.sub st 11 2 in
@@ -28,11 +28,8 @@ let parse_date01 st =
   let s = int_of_string @@ String.sub st 17 2 in
   let year = int_of_string @@ String.sub st 26 4 in
   Date.make_from_gmt year mon day h m s
-(*
-Sat, 17 Apr 2010 08:23:55 +0000
-0123456789012345678901234567890
-*)
-let parse_date02 st =
+
+let parse_date02 st = (* Sat, 17 Apr 2010 08:23:55 +0000 *)
   let mon = pmonth @@ String.sub st 8 3 in
   let day = int_of_string @@ String.sub st 5 2 in
   let h = int_of_string @@ String.sub st 17 2 in
@@ -83,49 +80,49 @@ let catch_twerr (f: 'a -> Json.t) (x : 'a) =
   | TwErr m as e -> raise e
   | e -> failwith ("twitter error: "^Printexc.to_string e)
 
-let twitter ?(host="twitter.com") (user,pass) cmd params is_get =
+let twitter (tok,sec,verif) ?(host="api.twitter.com") meth cmd params =
+  let oauth = {
+    Oauth.consumer_key = ocamltter_consumer_key;
+    Oauth.consumer_secret = ocamltter_consumer_secret;
+    Oauth.access_token=tok;
+    Oauth.access_token_secret=sec;
+    Oauth.verif=verif
+  } in
   let f () =
-    Json.parse
-      begin if is_get then
-	Http.conn host GET ~user:user ~pass:pass cmd params
-	  (fun _ ch -> slist "\n" id (read_all ch))
-      else
-	Http.conn host (POST params) ~user:user ~pass:pass cmd []
-	  (fun _ ch -> slist "\n" id (read_all ch))
-      end
+    Json.parse (Oauth.access oauth meth host cmd params)
   in
   catch_twerr f ()
 
-let home_timeline ?since_id ?count acc =
+let home_timeline ?since_id ?count oauth =
   let params = [("since_id",since_id); ("count", option_map sint count)]
       +> list_filter_map (function
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
   in
-  twitter acc "/statuses/home_timeline.json" params true
+  twitter oauth GET "/statuses/home_timeline.json" params
     +> json2timeline
 
-let user_timeline ?since_id ?count acc sname =
+let user_timeline ?since_id ?count oauth sname =
   let params = [("since_id",since_id); ("count", option_map sint count);
 		("screen_name", Some sname)]
       +> list_filter_map (function
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
   in
-  twitter acc "/statuses/user_timeline.json" params true
+  twitter oauth GET "/statuses/user_timeline.json" params
     +> json2timeline
 
-let show acc status_id =
-  twitter acc (!%"/statuses/show/%Ld.json" status_id) [] true
+let show oauth status_id =
+  twitter oauth GET (!%"/statuses/show/%Ld.json" status_id) []
     +> json2status
 
 let get_aline = show
 
 
-let update ?(in_reply_to_status_id) acc text =
+let update ?(in_reply_to_status_id) oauth text =
   let text = match in_reply_to_status_id with
   | Some id ->
-      let tl = get_aline acc (Int64.of_string id) in
+      let tl = get_aline oauth (Int64.of_string id) in
       !%"@%s %s" tl.sname text
   | None -> text
   in
@@ -135,14 +132,15 @@ let update ?(in_reply_to_status_id) acc text =
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
   in
-  twitter acc "/statuses/update.json" params false
+  twitter oauth POST "/statuses/update.json" params
 
-let retweet acc status_id =
-  twitter acc (!%"/statuses/retweet/%s.json" status_id) [] false
+let retweet oauth status_id =
+  twitter oauth POST (!%"/statuses/retweet/%s.json" status_id) []
 
+(*
 let search acc word =
   let ps = [("q",word);("rpp","100")] in
-  twitter acc ~host:"search.twitter.com" "/search.json" ps true
+  twitter GET ~host:"search.twitter.com" "/search.json" ps
     +> Json.getf "results"
     +> Json.as_list
     +> List.map (fun j ->
@@ -153,4 +151,51 @@ let search acc word =
 	@@ Json.getf"id" j
       in
       { date=d; sname=sname; id=id; clientname=""; text=text })
+*)
+let host = "api.twitter.com"
+
+
+let read_lines ch = slist "\n" id (read_all ch)
+let parse_http_params s = 
+  Str.split(Str.regexp"&") s +> 
+  List.map (fun s -> 
+    let l = Str.split (Str.regexp "=") s 
+    in try List.hd l, List.hd (List.tl l) with Failure _ -> raise (Failure ("can't parse"^s)))
+let read_params ch = parse_http_params (read_lines ch)
+let assoc key dic = try List.assoc key dic with Not_found -> raise (Failure (key ^ " not found"))
+
+let fetch_request_token () = 
+      Oauth.fetch_request_token 
+        ~host:host
+        ~path:"/oauth/request_token"
+        ~oauth_consumer_key:ocamltter_consumer_key
+        ~oauth_consumer_secret:ocamltter_consumer_secret
+        ()
+    (fun _ ch ->
+  let res = read_params ch in
+  let token, secret = assoc "oauth_token" res, assoc "oauth_token_secret" res in
+    "http://twitter.com/oauth/authorize?oauth_token="^token, token, secret)
+
+
+
+let fetch_access_token req_token req_secret verif = 
+  fetch_access_token 
+    ~http_method:GET
+    ~host:host
+    ~path:"/oauth/access_token"
+    ~oauth_consumer_key:ocamltter_consumer_key
+    ~oauth_consumer_secret:ocamltter_consumer_secret
+    ~oauth_token:req_token
+    ~oauth_token_secret:req_secret
+    ~verif:verif
+    ()
+    (fun _ ch -> 
+      let res = read_params ch in
+      let acc_token, acc_secret, user = 
+        assoc "oauth_token" res, 
+        assoc "oauth_token_secret" res,
+        assoc "screen_name" res
+      in user, acc_token, acc_secret
+    )
+
 
