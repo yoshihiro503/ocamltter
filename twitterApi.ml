@@ -158,6 +158,9 @@ let search word =
       let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
       { date=d; sname=sname; id=id; clientname=""; text=text })
 
+let rate_limit_status () =
+  twitter_without_auth GET "/1/account/rate_limit_status.json" []
+
 let host = "api.twitter.com"
 
 

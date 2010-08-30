@@ -94,6 +94,8 @@ let qt status_id text =
 
 let s word = List.sort tw_compare @@ Tw.search word
 
+let limit () = Tw.rate_limit_status ()
+
 let help =
 "commands:
   l()                list timeline
