@@ -32,6 +32,7 @@ HOW TO USE
            - l();;             list timeline
            - lc COUNT;;        list timeline (COUNT lines)
            - lu "NAME";;       list NAME's timeline
+           - m();;             list mentions (tweet containing @YOU)
            - u "TEXT";;        post a new message
            - re ID "TEXT";;    reply to ID
            - rt ID;;           retweet ID

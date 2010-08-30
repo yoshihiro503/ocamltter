@@ -1,20 +1,25 @@
-open Util
+include Util
 open Util.Date
-open TwitterApi
-open Http
+include TwitterApi
+include Http
+module Tw = TwitterApi
 
 let oauth_acc : (string * string * string) option ref = ref None
 let conffile = ".ocamltter"
 
 let authorize () = 
-  let url, req_tok, req_sec = TwitterApi.fetch_request_token () in
-  print_endline ("Please grant access to ocamltter ant get a PIN at :\n\t" ^ url);
-  print_endline "Give me a PIN : ";
+  let url, req_tok, req_sec = Tw.fetch_request_token () in
+  print_endline "Please grant access to ocamltter ant get a PIN at :";
+  print_endline ("  " ^ url);
+  print_string "Give me a PIN: "; flush stdout;
   let verif = read_line () in
-  let username, acc_tok, acc_sec = TwitterApi.fetch_access_token req_tok req_sec verif in
+  let username, acc_tok, acc_sec =
+    Tw.fetch_access_token req_tok req_sec verif
+  in
   oauth_acc := Some (acc_tok, acc_sec, verif);
-  print_string ("Grant Success! Hello, @"^username^" !");
-  open_out_with conffile (fun ch -> output_string ch (acc_tok^"\n"^acc_sec^"\n"^verif^"\n"));
+  print_endline ("Grant Success! Hello, @"^username^" !");
+  open_out_with conffile (fun ch ->
+    output_string ch (acc_tok^"\n"^acc_sec^"\n"^verif^"\n"));
   (acc_tok, acc_sec, verif)
 
 module Cache = struct
@@ -25,8 +30,10 @@ module Cache = struct
   let add cache (tw: tweet) = Hashtbl.add cache tw.id tw
 end
 
-let load () = open_in_with conffile (fun ch -> let tok=input_line ch in let sec=input_line ch in let verif=input_line ch in
-  let acc=(tok,sec,verif) in oauth_acc := Some acc; acc)
+let load () = open_in_with conffile (fun ch ->
+  let tok = input_line ch in let sec=input_line ch in let verif=input_line ch in
+  let acc=(tok,sec,verif) in
+  oauth_acc := Some acc; acc)
 
 let oauth () =
   match !oauth_acc with
@@ -35,17 +42,17 @@ let oauth () =
 
 let setup () = ignore(oauth())
 
+let tw_sort = List.sort Tw.tw_compare
 
 let get_timeline ?(c=20) () =
 try
     let tl1 =
-      List.filter Config.filter @@ TwitterApi.home_timeline ~count:c (oauth())
+      List.filter Config.filter @@ Tw.home_timeline ~count:c (oauth())
     in
     let tl2 =
-      list_concatmap TwitterApi.search Config.watching_words
+      list_concatmap Tw.search Config.watching_words
     in
-    let post_comp p1 p2 = compare p1.date p2.date in
-    List.sort post_comp @@ (tl1@tl2)
+    tw_sort (tl1 @ tl2)
 with
 | e ->
     prerr_endline (!%"Ocamltter.print_tl [%s]" (Printexc.to_string e));
@@ -54,35 +61,45 @@ with
 let print_timeline tw =
   List.iter print_endline @@ List.map show_tweet tw
 
-let lc count = get_timeline ~c:count ()
-let lu user = TwitterApi.user_timeline (oauth()) user
+let reload () =
+  print_endline "loading..."; flush stdout;
+  get_timeline ()
 
-let l ?(c=20) ?u () : TwitterApi.tweet list =
+let l ?(c=20) ?u () : Tw.tweet list =
+  print_endline "loading..."; flush stdout;
   match u with
-  | None -> lc c
-  | Some user -> lu user
+  | None -> tw_sort @@ Tw.home_timeline ~count:c (oauth())
+  | Some user -> tw_sort @@ Tw.user_timeline (oauth()) user
 
+let lc count = l ~c:count ()
+let lu user  = l ~u:user  ()
+
+let m ?(c=20) () : Tw.tweet list =
+  print_endline "loading..."; flush stdout;
+  tw_sort @@ Tw.mentions (oauth()) c
+    
 let u text =
-  ignore @@ TwitterApi.update (oauth()) text
+  ignore @@ Tw.update (oauth()) text
 
 let rt status_id =
-  ignore @@ TwitterApi.retweet (oauth()) (Int64.to_string status_id)
+  ignore @@ Tw.retweet (oauth()) (Int64.to_string status_id)
 
 let re status_id text =
-  ignore @@ TwitterApi.update ~in_reply_to_status_id:(Int64.to_string status_id)
+  ignore @@ Tw.update ~in_reply_to_status_id:(Int64.to_string status_id)
     (oauth()) text
 
 let qt status_id text =
   let tw = get_tweet status_id in
   re tw.id (!%"%s QT @%s: %s" text tw.sname tw.text)
 
-let s word = TwitterApi.search word
+let s word = List.sort tw_compare @@ Tw.search word
 
 let help =
 "commands:
   l()                list timeline
   lc N               list timeline(N lines)
   lu \"NAME\"          list NAME's timeline
+  m()                list mentions (tweet containing @YOU)
   u \"TEXT\"           post a new message
   re ID \"TEXT\"       reply to ID
   rt ID              retweet ID
@@ -107,3 +124,5 @@ let start_polling () =
   in
   let t = Thread.create loop in
   t ()
+
+(* see .ocamlinit *)

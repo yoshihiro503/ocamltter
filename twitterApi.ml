@@ -43,6 +43,8 @@ let show_tweet t =
   let mo,d,h,m = Date.mon t.date, Date.day t.date, hour t.date, min t.date in
   !%" [%02d/%02d %02d:%02d] %s: %s %LdL" mo d h m t.sname t.text t.id
 
+let tw_compare t1 t2 = compare t1.date t2.date
+    
 let json2status j =
     let date =
       Json.getf "created_at" j |> Json.as_string |> parse_date
@@ -70,7 +72,6 @@ let catch_twerr (f: 'a -> Json.t) (x : 'a) =
     match Json.getf_opt "error" j with
     | Some err ->
 	let msg = Json.as_string err in
-(*      let req = Json.as_string @@ Json.getf "request" j in*)
 	raise (TwErr msg)
     | None -> j
   with
@@ -121,6 +122,11 @@ let show status_id =
     |> json2status
 
 let get_tweet = show
+
+let mentions oauth count =
+  let params = [("count", !%"%d" count)] in
+  twitter oauth GET "/1/statuses/mentions.json" params
+    |> json2timeline
 
 let update ?(in_reply_to_status_id) oauth text =
   let text = match in_reply_to_status_id with

@@ -7,9 +7,7 @@ let filter post =
   not (List.mem post.sname ignores)
 
 let watching_words =
-  ["#Coq"; "OCamltter"; "ProofCafe"; "#OCaml"; "CoqUn"; "Coq庵"]
+  ["#Coq"; "OCamltter"; "ProofCafe"; "#OCaml"]
     
-let username = ""
-let password = ""
 let coffee_break = 30.0 (* second *)
 

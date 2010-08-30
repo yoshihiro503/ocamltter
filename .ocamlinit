@@ -1,11 +1,13 @@
-let print p s = Format.print_string ("\"" ^ s ^ "\"");;
-
-let ptl p (tw:TwitterApi.tweet) =
-  Format.print_string (TwitterApi.show_tweet tw);;
-print_endline "load .ocamlinit";;
 open Ocamltter;;
-#install_printer print;;
-#install_printer ptl;;
+
+let print_string_literal p s = Format.print_string ("\"" ^ s ^ "\"");;
+
+let print_tweet p (tw:TwitterApi.tweet) =
+  Format.print_string (TwitterApi.show_tweet tw);;
+
+#install_printer print_string_literal;;
+#install_printer print_tweet;;
+
 setup();;
 start_polling ();;
-
+print_endline "loading..."; flush stdout;
