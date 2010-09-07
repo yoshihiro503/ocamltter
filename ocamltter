@@ -3,8 +3,12 @@ prevdir=`pwd`
 ocamltterhome=`dirname $0`
 dir=.
 cd $ocamltterhome
-ocamlc -c -I +threads -I ${dir} -I ${dir}/base unix.cma nums.cma str.cma threads.cma cryptokit.cma ${dir}/base/util.ml ${dir}/base/base64.ml ${dir}/base/utf16.ml ${dir}/base/llist.ml ${dir}/base/parserMonad.ml ${dir}/base/json.ml ${dir}/base/http.ml ${dir}/base/oauth.ml ${dir}/twitterApi.ml ${dir}/config.ml ${dir}/ocamltter.ml
-
-ocaml -I +threads -I ${dir} -I ${dir}/base unix.cma nums.cma str.cma threads.cma cryptokit.cma ${dir}/base/util.cmo ${dir}/base/base64.cmo ${dir}/base/utf16.cmo ${dir}/base/llist.cmo ${dir}/base/parserMonad.cmo ${dir}/base/json.cmo ${dir}/base/http.cmo ${dir}/base/oauth.cmo ${dir}/twitterApi.cmo ${dir}/config.cmo ${dir}/ocamltter.cmo
-rm -f *.cm[io] base/*.cm[io]
+ocamlmktop -o top -I +threads -I ${dir} -I ${dir}/base unix.cma nums.cma \
+    str.cma  threads.cma cryptokit.cma ${dir}/base/util.ml \
+    ${dir}/base/base64.ml ${dir}/base/utf16.ml ${dir}/base/llist.ml \
+    ${dir}/base/parserMonad.ml ${dir}/base/json.ml ${dir}/base/http.ml \
+    ${dir}/base/oauth.ml ${dir}/twitter/oauthForTwitter.ml \
+    ${dir}/twitter/twitterApi.ml ${dir}/config.ml ${dir}/ocamltter.ml
+./top
+rm -f *.cm[io] base/*.cm[io] twitter/*.cm[io]
 cd $prevdir
