@@ -4,7 +4,6 @@ open Http
 (*****************************)
 (*****************************)
 (*****************************)
-let (|>) x f = f x (* so function pipelines read left to right *)
 
 let opt_param name param =
   match param with
