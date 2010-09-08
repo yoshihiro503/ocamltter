@@ -1,6 +1,8 @@
 open Unix
 open Util
 
+exception Http_error of string
+
 let url_encode s =
   let ss = string_foldr (fun c store -> match c with
     | 'a'..'z' | 'A'..'Z' | '0'..'9' | '-' | '.' | '_' | '~' as c -> string1 c :: store
@@ -76,17 +78,16 @@ let conn ?(port=80) hostname meth ?headers ?user ?pass path ps f =
     ignore @@ maybe close_out oc;
   in
   try
-    debug := "write output"; flush oc;
+    debug := "writing output..."; flush oc;
     output_string oc msg; flush oc;
-    debug := "read header";
+    debug := "reading header...";
     let header = read_header ic in
-    debug := "apply custom function f";
+    debug := "appling custom function f...";
     let x = f header ic in
-    debug := "shutdown_connection";
+    debug := "closing...";
     close ();
     x
   with e ->
-    prerr_endline (!%"Http.conn [%s](%s)" (Printexc.to_string e) !debug);
     close ();
-    raise e
+    raise @@ Http_error (!%"[%s] -> %s" !debug (Printexc.to_string e));
 

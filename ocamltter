@@ -1,14 +1,13 @@
 #!/bin/sh
 prevdir=`pwd`
 ocamltterhome=`dirname $0`
-dir=.
 cd $ocamltterhome
-ocamlmktop -o top -I +threads -I ${dir} -I ${dir}/base unix.cma nums.cma \
-    str.cma  threads.cma cryptokit.cma ${dir}/base/util.ml \
-    ${dir}/base/base64.ml ${dir}/base/utf16.ml ${dir}/base/llist.ml \
-    ${dir}/base/parserMonad.ml ${dir}/base/json.ml ${dir}/base/http.ml \
-    ${dir}/base/oauth.ml ${dir}/twitter/oauthForTwitter.ml \
-    ${dir}/twitter/twitterApi.ml ${dir}/config.ml ${dir}/ocamltter.ml
-./top
-rm -f *.cm[io] base/*.cm[io] twitter/*.cm[io]
+incl='-I +threads -I base -I twitter'
+ocamlmktop -o top ${incl} unix.cma nums.cma str.cma  threads.cma cryptokit.cma \
+    base/util.ml base/base64.ml base/utf16.ml base/llist.ml \
+    base/parserMonad.ml base/json.ml base/http.ml base/oauth.ml \
+    twitter/oauthForTwitter.ml twitter/twitterApi.ml \
+    config.ml ocamltter.ml
+./top ${incl}
+rm -f *.cm[io] base/*.cm[io] twitter/*.cm[io] top
 cd $prevdir
