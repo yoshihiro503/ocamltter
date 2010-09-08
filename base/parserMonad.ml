@@ -2,10 +2,10 @@ open Util
 open Llist
 
 type ts = char llist
-type state = int * int
+type state = int * int * (char list * char * char list)
 type error = state * string
 type 'a parser = state -> ts -> ('a * state * ts, error) either
-let lt_pos (l1,p1) (l2,p2) =
+let lt_pos (l1,p1,_) (l2,p2,_) =
   if l1 < l2 then true
   else if l1 = l2 then p1 < p2
   else false
@@ -13,8 +13,9 @@ let lt_pos (l1,p1) (l2,p2) =
 let eplus (st1,msg1) (st2,msg2) =
   if lt_pos st1 st2 then (st2,msg2) else (st1,msg1)
 
-let showerr ((line,pos),msg) =
-  !%"[line %d, %d: %s]"line pos msg
+let showerr ((line,pos,(pre,c,post)),msg) =
+  !%"{\n  line %d, %d: %s\n%s[%c]%s\n}"line pos msg (string_of_chars pre)
+  c (string_of_chars post)
     
 let return : 'a -> 'a parser =
     fun x ->
@@ -90,11 +91,17 @@ let opt : 'a parser -> ('a option) parser =
 let char1 state = function
   | Nil -> Inr (state,"(Nil)")
   | Cons (x,xs) ->
+      let next (pre,x0, _) =
+	let pre' = if List.length pre < 100 then pre @ [x0]
+	  else List.tl pre @ [x0]
+	in
+	(pre' , x, Llist.take 100 !$xs)
+      in
       match x, state with
-      | '\n', (line,pos) ->
-	  Inl (x,(line+1,-1), !$xs)
-      | _, (line,pos) ->
-	  Inl (x,(line, pos+1),!$xs)
+      | '\n', (line,pos,cs) ->
+	  Inl (x,(line+1,-1, next cs), !$xs)
+      | _, (line,pos,cs) ->
+	  Inl (x,(line, pos+1, next cs),!$xs)
 
 let char_when f = char1 >>= fun c ->
   if f c then return c
@@ -128,7 +135,7 @@ let run p state ts =
   | Inl (x,state',xs) -> x
   | Inr err -> failwith ("ParseError:"^(showerr err))
 
-let init_state = (1, 0)
+let init_state = (1, 0, ([],'_',[]))
 
 let run_ch p ch =
   run p init_state (Llist.of_stream (Stream.of_channel ch))

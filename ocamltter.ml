@@ -44,26 +44,34 @@ let setup () = ignore(oauth())
 
 let tw_sort = List.sort Tw.tw_compare
 
-let get_timeline ?(c=20) () =
-try
+let get_timeline ?(c=20) verbose =
+  try
     let tl1 =
-      List.filter Config.filter @@ Tw.home_timeline ~count:c (oauth())
+      let search word =
+	if verbose then
+          (print_string (!%"searching with '%s'... " word); flush stdout);
+	let ts = Tw.search word in
+	if verbose then
+          (print_endline (!%"%d" (List.length ts)); flush stdout);
+	ts
+      in
+      list_concatmap search Config.watching_words
     in
     let tl2 =
-      list_concatmap Tw.search Config.watching_words
+      if verbose then (print_endline "loading..."; flush stdout);
+      List.filter Config.filter @@ Tw.home_timeline ~count:c (oauth())
     in
     tw_sort (tl1 @ tl2)
-with
-| e ->
-    prerr_endline (!%"Ocamltter.print_tl [%s]" (Printexc.to_string e));
-    raise e
+  with
+  | e ->
+      prerr_endline (!%"Ocamltter.print_tl [%s]" (Printexc.to_string e));
+      raise e
 
 let print_timeline tw =
   List.iter print_endline @@ List.map show_tweet tw
 
 let reload () =
-  print_endline "loading..."; flush stdout;
-  get_timeline ()
+  get_timeline true
 
 let l ?(c=20) ?u () : Tw.tweet list =
   print_endline "loading..."; flush stdout;
@@ -90,7 +98,7 @@ let re status_id text =
 
 let qt st_id comment =
   let tw = get_tweet st_id in
-  re (status_id tw) (!%"%s QT @%s: %s" comment (sname tw) (text tw))
+  u (!%"%s QT @%s: %s" comment (sname tw) (text tw))
 
 let s word = List.sort tw_compare @@ Tw.search word
 
@@ -114,17 +122,17 @@ let help =
 
 let start_polling () =
   let cache = Cache.init () in
-  let rec loop () =
+  let rec loop verbose =
     begin try
-      let tl = List.filter (Cache.is_new cache) (get_timeline ~c:200 ()) in
+      let tl = List.filter (Cache.is_new cache) (get_timeline ~c:100 verbose) in
       List.iter (Cache.add cache) tl;
       print_timeline tl
     with e -> print_endline (Printexc.to_string e)
     end;
     Thread.delay Config.coffee_break;
-    loop ()
+    loop false (* verbose is only true at first time *)
   in
   let t = Thread.create loop in
-  t ()
+  t true
 
 (* see .ocamlinit *)

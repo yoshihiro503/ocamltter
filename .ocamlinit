@@ -13,4 +13,3 @@ let print_tweet p (tw:TwitterApi.tweet) =
 
 setup();;
 start_polling ();;
-print_endline "loading..."; flush stdout;
