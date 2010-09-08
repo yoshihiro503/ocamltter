@@ -2,9 +2,9 @@ include Util
 include TwitterApi
 
 
-let filter post =
+let filter tw =
   let ignores = [] in
-  not (List.mem post.sname ignores)
+  not (List.mem (sname tw) ignores)
 
 let watching_words =
   ["#Coq"; "OCamltter"; "ProofCafe"; "#OCaml"]

@@ -7,19 +7,25 @@ open OauthForTwitter
 
 exception TwErr of string
 
-type tweet = {
-    date: Date.t;
-    sname: string;
-    id: int64;
-    clientname: string;
-    text: string;
-  }
+type status_id = int64
+
+type tweet =
+  | U of (Date.t * string * status_id * string * string)
+
+let date = function
+  | U (d, _,_,_,_) -> d
+let sname = function
+  | U (_, sname,_,_,_) -> sname
+let text = function
+  | U (_, _, _, _, text) -> text
+let status_id = function
+  | U (_, _, id, _, _) -> id
 
 let show_tweet t =
-  let mo,d,h,m = Date.mon t.date, Date.day t.date, hour t.date, min t.date in
-  !%" [%02d/%02d %02d:%02d] %s: %s %LdL" mo d h m t.sname t.text t.id
+  let fmt d = !%"%02d/%02d %02d:%02d" (Date.mon d) (day d) (hour d) (min d) in
+  !%" [%s] %s: %s %LdL" (fmt (date t)) (sname t) (text t) (status_id t)
 
-let tw_compare t1 t2 = compare t1.date t2.date
+let tw_compare t1 t2 = compare (date t1) (date t2)
     
 let parse_date st =
   let parse_date01 st = (* Wed Apr 21 02:29:17 +0000 2010 *)
@@ -59,7 +65,7 @@ let json2status j =
     let client =
       Json.getf "source" j |> Json.as_string
     in
-    {date=date; sname=sname; text=text; id=id; clientname=client}
+    U (date, sname, id, client, text)
 
 let json2timeline j =
   Json.as_list j |> List.map json2status
@@ -124,7 +130,7 @@ let update ?(in_reply_to_status_id) oauth text =
   let text = match in_reply_to_status_id with
   | Some id ->
       let t = get_tweet (Int64.of_string id) in
-      !%"@%s %s" t.sname text
+      !%"@%s %s" (sname t) text
   | None -> text
   in
   let params = [("in_reply_to_status_id", in_reply_to_status_id);
@@ -148,7 +154,7 @@ let search word =
       let sname = Json.as_string @@ Json.getf "from_user" j in
       let text = Json.as_string @@ Json.getf "text" j in
       let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
-      { date=d; sname=sname; id=id; clientname=""; text=text })
+      U (d, sname, id, "", text))
 
 let rate_limit_status () =
   twitter_without_auth GET "/1/account/rate_limit_status.json" []

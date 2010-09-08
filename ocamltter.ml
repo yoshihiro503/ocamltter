@@ -26,8 +26,8 @@ module Cache = struct
   type t = (int64, tweet) Hashtbl.t
   let init () : t = Hashtbl.create 100
   let is_new (cache: t) (tw: tweet) =
-    not (Hashtbl.mem cache tw.id)
-  let add cache (tw: tweet) = Hashtbl.add cache tw.id tw
+    not (Hashtbl.mem cache (status_id tw))
+  let add cache (tw: tweet) = Hashtbl.add cache (status_id tw) tw
 end
 
 let load () = open_in_with conffile (fun ch ->
@@ -88,9 +88,9 @@ let re status_id text =
   ignore @@ Tw.update ~in_reply_to_status_id:(Int64.to_string status_id)
     (oauth()) text
 
-let qt status_id text =
-  let tw = get_tweet status_id in
-  re tw.id (!%"%s QT @%s: %s" text tw.sname tw.text)
+let qt st_id comment =
+  let tw = get_tweet st_id in
+  re (status_id tw) (!%"%s QT @%s: %s" comment (sname tw) (text tw))
 
 let s word = List.sort tw_compare @@ Tw.search word
 
