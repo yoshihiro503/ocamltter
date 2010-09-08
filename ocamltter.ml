@@ -1,7 +1,7 @@
-include Util
+open Util
 open Util.Date
-include TwitterApi
-include Http
+open TwitterApi
+open Http
 module Tw = TwitterApi
 
 let oauth_acc : (string * string * string) option ref = ref None

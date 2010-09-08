@@ -1,5 +1,5 @@
-include Util
-include TwitterApi
+open Util
+open TwitterApi
 
 
 let filter tw =

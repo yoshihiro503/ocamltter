@@ -3,6 +3,11 @@ prevdir=`pwd`
 ocamltterhome=`dirname $0`
 cd $ocamltterhome
 incl='-I +threads -I base -I twitter'
+ocamlc -c ${incl} \
+    base/util.ml base/base64.ml base/utf16.ml base/llist.ml \
+    base/parserMonad.ml base/json.ml base/http.ml base/oauth.ml \
+    twitter/oauthForTwitter.mli twitter/twitterApi.mli \
+    config.mli ocamltter.mli
 ocamlmktop -o top ${incl} unix.cma nums.cma str.cma  threads.cma cryptokit.cma \
     base/util.ml base/base64.ml base/utf16.ml base/llist.ml \
     base/parserMonad.ml base/json.ml base/http.ml base/oauth.ml \

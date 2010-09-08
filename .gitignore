@@ -2,3 +2,5 @@
 *.cmi
 *.cmo
 *.vo
+*~
+.ocamltter
