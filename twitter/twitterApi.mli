@@ -1,10 +1,17 @@
 (**
    Twitter APIs.
 *)
+open Util
+
 exception TwErr of string
 
 type status_id = int64
-type tweet = U of (Util.Date.t * string * status_id * string * string * Json.t)
+type tweet =
+  | U of (Date.t * string * status_id * string * string * Json.t)
+  | RT of
+      (Date.t * string * status_id * string * string * string * Date.t *status_id * Json.t)
+  | RE of
+      (Date.t * string * status_id * string * string * string * status_id * Json.t)
 
 type token = string * string * string
 
@@ -12,6 +19,7 @@ val date : tweet -> Util.Date.t
 val sname : tweet -> string
 val text : tweet -> string
 val status_id : tweet -> status_id
+val json : tweet -> Json.t
 
 val show_tweet : tweet -> string
 val tw_compare : tweet -> tweet -> int
