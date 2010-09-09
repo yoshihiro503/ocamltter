@@ -37,6 +37,8 @@ val twitter_without_auth :
 
 (** {6 APIs} *)
 
+(** {7 Timeline Methods} *)
+
 val home_timeline :
   ?since_id:string -> ?count:int -> token -> tweet list
 
@@ -51,15 +53,54 @@ val get_tweet : status_id -> tweet
 
 val mentions : token -> int -> tweet list
 
+(** {7 Status Methods} *)
+
 val update :
   ?in_reply_to_status_id:string ->
   token -> string -> Json.t
+
+val destroy : token -> status_id -> Json.t
 val retweet : token -> string -> Json.t
-val search : string -> tweet list
+
+(** {7 User Methods} *)
+
+val users_lookup : token -> string -> Json.t
+val users_lookup_uid : token -> string -> Json.t
+
+(** {7 Friendship Methods} *)
+
+val frendship_create : token -> string -> Json.t
+val frendship_destroy : token -> string -> Json.t
+
+(** {7 Social Graph Methods} *)
+
+val friends : ?sname:string -> token -> Json.t
+val followers : ?sname:string -> token -> Json.t
+
+(** {7 Account Methods} *)
+
 val rate_limit_status : unit -> Json.t
 
-(** {6 Initial Authentications} *)
+(** {7 Favorite Methods} *)
+
+val favorites : ?sname:string -> token -> Json.t
+val favorites_create : token -> status_id -> Json.t
+val favorites_destroy : token -> status_id -> Json.t
+
+(** {7 Spam Reporting Methods} *)
+
+val report_spam : token -> string -> Json.t
+
+(** {7 OAuth Methods} *)
 
 val fetch_request_token : unit -> token
 val fetch_access_token :
   string -> string -> string -> token
+
+(** {7 Help Methods} *)
+
+val help_test : unit -> Json.t
+
+(** {7 Search API Methods} *)
+
+val search : string -> tweet list
