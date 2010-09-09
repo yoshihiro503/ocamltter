@@ -60,4 +60,5 @@ type oauth = {
 }
 
 val access :
-  oauth -> Http.meth -> string -> string -> (string * string) list -> string
+  oauth -> Http.meth -> string -> string -> (string * string) list ->
+    (Http.header -> in_channel -> 'a) -> 'a

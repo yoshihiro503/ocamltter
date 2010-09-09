@@ -64,7 +64,7 @@ let get_timeline ?(c=20) verbose =
     tw_sort (tl1 @ tl2)
   with
   | e ->
-      prerr_endline (!%"Ocamltter.print_tl [%s]" (Printexc.to_string e));
+      prerr_endline "Ocamltter.get_timeline ERR:";
       raise e
 
 let print_timeline tw =

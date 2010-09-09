@@ -5,6 +5,9 @@ type ts = char llist
 type state = int * int * (char list * char * char list)
 type error = state * string
 type 'a parser = state -> ts -> ('a * state * ts, error) either
+
+exception ParseError of string
+
 let lt_pos (l1,p1,_) (l2,p2,_) =
   if l1 < l2 then true
   else if l1 = l2 then p1 < p2
@@ -77,7 +80,7 @@ let rec many : 'a parser -> ('a list) parser =
 
 let many1 p =
   p >>= fun x -> many p >>= fun xs -> return (x::xs)
-      
+
 let sep separator p =
   (p >>= fun x -> many (separator >> p) >>= fun xs -> return (x::xs))
     <|> (return [])
@@ -133,7 +136,8 @@ let int =
 let run p state ts =
   match p state ts with
   | Inl (x,state',xs) -> x
-  | Inr err -> failwith ("ParseError:"^(showerr err))
+  | Inr err -> 
+      raise (ParseError (showerr err))
 
 let init_state = (1, 0, ([],'_',[]))
 

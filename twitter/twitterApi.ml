@@ -7,19 +7,23 @@ open OauthForTwitter
 
 exception TwErr of string
 
+type token = string * string * string
+
 type status_id = int64
 
 type tweet =
-  | U of (Date.t * string * status_id * string * string)
+  | U of (Date.t * string * status_id * string * string * Json.t)
 
 let date = function
-  | U (d, _,_,_,_) -> d
+  | U (d, _,_,_,_,_) -> d
 let sname = function
-  | U (_, sname,_,_,_) -> sname
+  | U (_, sname,_,_,_, _) -> sname
 let text = function
-  | U (_, _, _, _, text) -> text
+  | U (_, _, _, _, text, _) -> text
 let status_id = function
-  | U (_, _, id, _, _) -> id
+  | U (_, _, id, _, _, _) -> id
+let json = function
+  | U (_, _, _, _, _, j) -> j
 
 let show_tweet t =
   let fmt d = !%"%02d/%02d %02d:%02d" (Date.mon d) (day d) (hour d) (min d) in
@@ -65,27 +69,26 @@ let json2status j =
     let client =
       Json.getf "source" j |> Json.as_string
     in
-    U (date, sname, id, client, text)
+    U (date, sname, id, client, text, j)
 
 let json2timeline j =
   Json.as_list j |> List.map json2status
 
 let catch_twerr (f: 'a -> Json.t) (x : 'a) =
-  try
     let j = f x in
     match Json.getf_opt "error" j with
     | Some err ->
 	let msg = Json.as_string err in
 	raise (TwErr msg)
     | None -> j
-  with
-  | TwErr m as e -> raise e
-  | e -> failwith ("unknown error: "^Printexc.to_string e)
+
+let parse_json ch =
+  Json.parse (slist "" id @@ read_all ch)
 
 let twitter (tok,sec,verif) ?(host="api.twitter.com") meth cmd params =
   let oauth = OauthForTwitter.oauth(tok,sec,verif) in
   let f () =
-    Json.parse (Oauth.access oauth meth host cmd params)
+    Oauth.access oauth meth host cmd params (fun _ ch -> parse_json ch)
   in
   catch_twerr f ()
 
@@ -154,7 +157,7 @@ let search word =
       let sname = Json.as_string @@ Json.getf "from_user" j in
       let text = Json.as_string @@ Json.getf "text" j in
       let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
-      U (d, sname, id, "", text))
+      U (d, sname, id, "", text, j))
 
 let rate_limit_status () =
   twitter_without_auth GET "/1/account/rate_limit_status.json" []

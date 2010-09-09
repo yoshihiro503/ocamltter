@@ -201,17 +201,6 @@ let rec json (): t parser =
   end 
   
 
-let parse_ch ch =
-  try
-    run_ch (json()) ch
-  with
-  | e -> print_endline (!%"JSON.parse err:[%s]" (Printexc.to_string e));
-      raise e
+let parse_ch ch = run_ch (json()) ch
 
-let parse s =
-  try
-    run_string (json()) s
-  with
-  | e -> print_endline (!%"JSON.parse err:[%s]:\n%s" (Printexc.to_string e) s);
-      raise e
-
+let parse s = run_string (json()) s

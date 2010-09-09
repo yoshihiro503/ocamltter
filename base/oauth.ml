@@ -360,7 +360,7 @@ type oauth = {
     verif: string;
   }
 
-let access oauth meth host path params =
+let access oauth meth host path params f =
   access_resource ~http_method:meth ~host:host ~path:path
     ~oauth_consumer_key:oauth.consumer_key
     ~oauth_consumer_secret:oauth.consumer_secret
@@ -369,4 +369,4 @@ let access oauth meth host path params =
     ~verif:oauth.verif
     ~params:params
     ()
-    (fun _ ch -> slist "\n" id (read_all ch))
+    f
