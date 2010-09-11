@@ -69,8 +69,8 @@ val users_lookup_uid : token -> string -> Json.t
 
 (** {7 Friendship Methods} *)
 
-val frendship_create : token -> string -> Json.t
-val frendship_destroy : token -> string -> Json.t
+val friendship_create : token -> string -> Json.t
+val friendship_destroy : token -> string -> Json.t
 
 (** {7 Social Graph Methods} *)
 

@@ -7,10 +7,10 @@ REQUIREMENT
 	
 	You need:
 
-           - Objective Caml
+           - Objective Caml 3.10, 3.11 or 3.12.0
              (available at http://caml.inria.fr/)
 
-           - Cryptokit
+           - Cryptokit 1.3 or 1.4
              (available at http://pauillac.inria.fr/~xleroy/software.html)
 
 
@@ -29,18 +29,23 @@ HOW TO USE
 
         2. You can use following commands:
 
-           - l();;             list timeline
-           - lc COUNT;;        list timeline (COUNT lines)
-           - lu "NAME";;       list NAME's timeline
-           - m();;             list mentions (tweet containing @YOU)
-           - u "TEXT";;        post a new message
-           - re ID "TEXT";;    reply to ID
-           - rt ID;;           retweet ID
-           - qt ID "TEXT";;    qt ID
-           - s "WORD";;        search tweets by a WORD
-           - setup ();;        (re)authorize ocamltter
-           - let CMD = ...;;   define a your own command CMD
-           - help;;            print the help
+           - l();;                 list timeline
+           - lc COUNT;;            list timeline (COUNT lines)
+           - lu "NAME";;           list NAME's timeline
+           - m();;                 list mentions (tweet containing @YOU)
+           - u "TEXT";;            post a new message
+           - re ID "TEXT";;        reply to ID
+           - del ID;;              delete tweet of ID
+           - rt ID;;               retweet ID
+           - qt ID "TEXT";;        qt ID
+           - follow "NAME";;       follow NAME
+           - unfollow "NAME";;     unfollow NAME
+           - fav ID;;              mark ID as favorites
+           - report_spam "NAME"    report NAME as a spam user
+           - s "WORD";;            search tweets by a WORD
+           - setup ();;            (re)authorize ocamltter
+           - let CMD = ...;;       define a your own command CMD
+           - help;;                print the help
 	   
         3. You may modify the config.ml
            - You can set your twitter id

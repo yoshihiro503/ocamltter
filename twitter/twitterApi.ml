@@ -33,6 +33,11 @@ let status_id = function
   | RT(_, _,id,_,_,_,_,_,_) -> id
   | RE(_, _,id,_,_,_,_,_) -> id
 
+let client = function
+  | U (_, _, _, client,_, _) -> client
+  | RT(_, _,_,client,_,_,_,_,_) -> client
+  | RE(_, _,_,client,_,_,_,_) -> client
+	
 let text = function
   | U (_, _, _, _, text, _) -> text
   | RT(_, _,_,_,text,_,_,_,_) -> text
@@ -197,9 +202,9 @@ let users_lookup_uid oauth uid =
 
 (** {7 Friendship Methods} *)
 
-let frendship_create oauth sname =
+let friendship_create oauth sname =
   twitter oauth POST "/1/friendships/create.json" [("screen_name",sname)]
-let frendship_destroy oauth sname =
+let friendship_destroy oauth sname =
   twitter oauth POST "/1/friendships/destroy.json" [("screen_name",sname)]
 
 (** {7 Social Graph Methods} *)

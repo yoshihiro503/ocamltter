@@ -89,16 +89,31 @@ let m ?(c=20) () : Tw.tweet list =
 let u text =
   ignore @@ Tw.update (oauth()) text
 
-let rt status_id =
-  ignore @@ Tw.retweet (oauth()) (Int64.to_string status_id)
-
 let re status_id text =
   ignore @@ Tw.update ~in_reply_to_status_id:(Int64.to_string status_id)
     (oauth()) text
 
+let rt status_id =
+  ignore @@ Tw.retweet (oauth()) (Int64.to_string status_id)
+
+let del id =
+  ignore @@ Tw.destroy (oauth()) id
+
 let qt st_id comment =
   let tw = get_tweet st_id in
   u (!%"%s QT @%s: %s" comment (sname tw) (text tw))
+
+let follow sname =
+  ignore @@ Tw.friendship_create (oauth()) sname
+
+let unfollow sname =
+  ignore @@ Tw.friendship_destroy (oauth()) sname
+
+let fav id =
+  ignore @@ Tw.favorites_create (oauth()) id
+
+let report_spam sname =
+  ignore @@ Tw.report_spam (oauth()) sname
 
 let s word = List.sort tw_compare @@ Tw.search word
 
@@ -106,18 +121,23 @@ let limit () = Tw.rate_limit_status ()
 
 let help =
 "commands:
-  l()                list timeline
-  lc N               list timeline(N lines)
-  lu \"NAME\"          list NAME's timeline
-  m()                list mentions (tweet containing @YOU)
-  u \"TEXT\"           post a new message
-  re ID \"TEXT\"       reply to ID
-  rt ID              retweet ID
-  qt ID \"TEXT\"       qt ID
-  s \"WORD\"           search tweets by a WORD
-  let CMD = ...      define a your own command CMD
-  setup()            (re)authorize ocamltter
-  help               print this help
+  l()                  list timeline
+  lc N                 list timeline(N lines)
+  lu \"NAME\"            list NAME's timeline
+  m()                  list mentions (tweet containing @YOU)
+  u \"TEXT\"             post a new message
+  re ID \"TEXT\"         reply to ID
+  del ID               delete tweet of ID
+  rt ID                retweet ID
+  qt ID \"TEXT\"         qt ID
+  follow \"NAME\"        follow NAME
+  unfollow \"NAME\"      unfollow NAME
+  fav ID               mark ID as favorites
+  report_spam \"NAME\"   report NAME as a spam user
+  s \"WORD\"             search tweets by a WORD
+  let CMD = ...        define a your own command CMD
+  setup()              (re)authorize ocamltter
+  help                 print this help
 "
 
 let start_polling () =
