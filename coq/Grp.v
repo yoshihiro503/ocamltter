@@ -119,6 +119,7 @@ Section GRP.
    intros; apply (length_split_dec_lt _ _ _ v H teq0).
   Defined.
 
+
   Definition g1 n xs H := fst (grp_aux n xs H).
 
   Definition g2 n xs H :=
@@ -194,10 +195,14 @@ Section GRP.
     rewrite e0 in H0; discriminate H0.
   Qed.
 
-(*  Axiom gcut_split_inv : forall n xs H (v:Vec A n) tail,
-    gcut n xs H = v :: gcut n tail H -> split_dec n xs = inl _ (v, tail).*)
-  Axiom split_vec : forall m (v:Vec A m) ys,
+  Lemma split_vec : forall m (v:Vec A m) ys,
     split_dec m (list_of_vec v ++ ys) = inl _ (v, ys).
+  Proof.
+   induction v; intros; simpl.
+    reflexivity.
+
+    rewrite IHv; reflexivity.
+  Qed.
 
   Lemma gcut_vec : forall m (v:Vec A m) xs H,
     gcut m (list_of_vec v ++ xs) H = v :: gcut m xs H.
@@ -232,11 +237,65 @@ Section GRP.
    induction xs; [|simpl; rewrite IHxs]; reflexivity.
   Qed.
 
+  Lemma split_inl : forall n xs v tail,
+    split_dec n xs = inl _ (v, tail) -> list_of_vec v ++ tail = xs.
+  Proof.
+   induction n; intros.
+    injection H.
+    intros eq1 eq2; rewrite eq1; rewrite <- eq2.
+    reflexivity.
     
-  Axiom cm_g1_g2 : forall n xs H,
-    (cm (g1 n xs H) ++ g2 n xs H) = xs.
+    destruct xs; [discriminate H | ].
+    case_eq (split_dec n xs).
+    
+     intros p eq.
+     destruct p.
+     simpl in H; rewrite eq in H; injection H; intros eq1 eq2.
+     rewrite <- eq2; rewrite <- eq1.
+     simpl.
+     rewrite (IHn xs v0 l eq); reflexivity.
+     
+     simpl in H.
+     intros s eq; rewrite eq in H; destruct s; discriminate H.
+  Qed.
 
-(*いまここ*)
+  Lemma split_inr : forall n xs r,
+    split_dec n xs = inr _ r -> xs = let (ys,_) := r in ys.
+  Proof.
+   induction n; intros; [discriminate H | ].
+   destruct xs.
+    destruct r.
+    simpl in H.
+    injection H.
+    intro eq; rewrite eq; reflexivity.
+
+    simpl in H; case_eq (split_dec n xs);
+      [intros p eq; rewrite eq in H; destruct p; discriminate H |].
+    intros s eq.
+    rewrite (IHn xs s eq).
+    destruct s; destruct r.
+    rewrite eq in H.
+    injection H.
+    intro eq0; apply eq0.
+  Qed.
+   
+  Lemma cm_g1_g2 : forall n xs H,
+    (cm (g1 n xs H) ++ g2 n xs H) = xs.
+  Proof.
+   unfold g1; unfold g2.
+   intros n xs H; functional induction (grp_aux n xs H).
+    simpl; reflexivity.
+
+    simpl.
+    rewrite e1 in IHp; simpl in IHp.
+    rewrite app_ass.
+    rewrite IHp.
+    rewrite (split_inl n (x::xs0) v tail e0); reflexivity.
+
+    simpl.
+    rewrite <- (split_inr n (x::xs0) r e0); reflexivity.
+  Qed.
+
   Lemma grp_inv: forall n m H0 H1 (vs: list (Vec A m)),
     n < m -> gcut m (cm (gfill n (cm vs) H0)) H1 = vs.
   Proof.
@@ -264,7 +323,7 @@ Section GRP.
                 (vec_of_list_n n xs1 HH :: vs, rest)
               | right HH =>
                 (Nil, exist _ xs1 HH)
-Â            end
+            end
         end
     end.
    intros; apply (decrease_split_at n x xs0 xs1 _ H).

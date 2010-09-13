@@ -20,17 +20,17 @@ type tweet =
 
 let date = function
   | U (d, _,_,_,_,_) -> d
-  | RT(d, _,_,_,_,_,_,_,_) -> d
+  | RT(_, _,_,_,_,_,d,_,_) -> d
   | RE(d, _,_,_,_,_,_,_) -> d
 
 let sname = function
   | U (_, sname,_,_,_, _) -> sname
-  | RT(_, sname,_,_,_,_,_,_,_) -> sname
+  | RT(_, _,_,_,_,sname,_,_,_) -> sname
   | RE(_, sname,_,_,_,_,_,_) -> sname
 
 let status_id = function
   | U (_, _, id, _, _, _) -> id
-  | RT(_, _,id,_,_,_,_,_,_) -> id
+  | RT(_, _,_,_,_,_,_,id,_) -> id
   | RE(_, _,id,_,_,_,_,_) -> id
 
 let client = function

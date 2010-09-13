@@ -45,6 +45,11 @@ let rec minus n m =
                 | O -> n
                 | S l -> minus k l)
 
+(** val bool_dec : bool -> bool -> bool **)
+
+let bool_dec b1 b2 =
+  if b1 then if b2 then true else false else if b2 then false else true
+
 (** val length : 'a1 list -> nat **)
 
 let rec length = function
@@ -108,6 +113,27 @@ let app2 f a b =
 let shift c = function
   | Ascii (a1, a2, a3, a4, a5, a6, a7, a8) -> Ascii (c, a1, a2, a3, a4, a5,
       a6, a7)
+
+(** val ascii_dec : ascii -> ascii -> bool **)
+
+let ascii_dec a b =
+  let Ascii (x, x0, x1, x2, x3, x4, x5, x6) = a in
+  let Ascii (b8, b9, b10, b11, b12, b13, b14, b15) = b in
+  if bool_dec x b8
+  then if bool_dec x0 b9
+       then if bool_dec x1 b10
+            then if bool_dec x2 b11
+                 then if bool_dec x3 b12
+                      then if bool_dec x4 b13
+                           then if bool_dec x5 b14
+                                then bool_dec x6 b15
+                                else false
+                           else false
+                      else false
+                 else false
+            else false
+       else false
+  else false
 
 (** val ascii_of_pos_aux : ascii -> ascii -> positive -> nat -> ascii **)
 
@@ -183,6 +209,13 @@ let rec replicate n x =
     | O -> []
     | S m -> x :: (replicate m x)
 
+(** val delete : ('a1 -> 'a1 -> bool) -> 'a1 -> 'a1 list -> 'a1 list **)
+
+let rec delete eq_dec a = function
+  | [] -> []
+  | x :: xs0 ->
+      if eq_dec x a then delete eq_dec a xs0 else x :: (delete eq_dec a xs0)
+
 type 'a vec =
   | VNil
   | VCons of nat * 'a * 'a vec
@@ -242,6 +275,11 @@ let g1 n xs =
 
 let g2 n xs =
   snd (grp_aux n xs)
+
+(** val gcut : nat -> 'a1 list -> 'a1 vec list **)
+
+let gcut n xs =
+  g1 n xs
 
 (** val gfill : 'a1 -> nat -> 'a1 list -> 'a1 vec list **)
 
@@ -339,27 +377,74 @@ let ascii_of_bool6 = function
                                      | VCons (n4, h14, h15) -> Ascii (h14,
                                          h11, h8, h5, h2, h, false, false))))))
 
+(** val bool6_of_ascii : ascii -> bool vec **)
+
+let bool6_of_ascii = function
+  | Ascii (a, b, c0, d, e, f, b0, b1) ->
+      vec_of_list (S (S (S (S (S (S O)))))) (f :: (e :: (d :: (c0 :: (b :: (a
+        :: []))))))
+
+(** val ascii_of_bool8 : bool vec -> ascii **)
+
+let ascii_of_bool8 = function
+  | VNil -> assert false (* absurd case *)
+  | VCons (n, h, h0) ->
+      (match h0 with
+         | VNil -> assert false (* absurd case *)
+         | VCons (n0, h2, h3) ->
+             (match h3 with
+                | VNil -> assert false (* absurd case *)
+                | VCons (n1, h5, h6) ->
+                    (match h6 with
+                       | VNil -> assert false (* absurd case *)
+                       | VCons (n2, h8, h9) ->
+                           (match h9 with
+                              | VNil -> assert false (* absurd case *)
+                              | VCons (n3, h11, h12) ->
+                                  (match h12 with
+                                     | VNil -> assert false (* absurd case *)
+                                     | VCons (n4, h14, h15) ->
+                                         (match h15 with
+                                            | VNil -> assert false
+                                                (* absurd case *)
+                                            | VCons (
+                                                n5, h17, h18) ->
+                                                (match h18 with
+                                                   | 
+                                                 VNil -> assert false
+                                                  (* absurd case *)
+                                                   | 
+                                                 VCons (
+                                                  n6, h20, h21) -> Ascii
+                                                  (h20, h17, h14, h11, h8,
+                                                  h5, h2, h))))))))
+
+(** val le_lt_dec_aux : nat -> nat -> bool **)
+
+let le_lt_dec_aux x y =
+  le_lt_dec x y
+
 (** val tblaux : nat -> nat **)
 
 let tblaux n =
-  if le_lt_dec n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
-       (S (S (S (S (S O)))))))))))))))))))))))))
+  if le_lt_dec_aux n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+       (S (S (S (S (S (S O)))))))))))))))))))))))))
   then plus
          (nat_of_ascii (Ascii (true, false, false, false, false, false, true,
            false))) n
-  else if le_lt_dec n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+  else if le_lt_dec_aux n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
             (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
-            (S (S (S (S (S (S (S (S (S (S (S
+            (S (S (S (S (S (S (S (S (S (S (S (S
             O)))))))))))))))))))))))))))))))))))))))))))))))))))
        then plus
               (nat_of_ascii (Ascii (true, false, false, false, false, true,
                 true, false)))
               (minus n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
                 (S (S (S (S (S (S (S (S O)))))))))))))))))))))))))))
-       else if le_lt_dec n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+       else if le_lt_dec_aux n (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
                  (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
                  (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
-                 (S (S (S (S
+                 (S (S (S (S (S (S
                  O)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
             then plus
                    (nat_of_ascii (Ascii (false, false, false, false, true,
@@ -383,6 +468,60 @@ let tblaux n =
 let tbl bs =
   ascii_of_nat (tblaux (nat_of_ascii (ascii_of_bool6 bs)))
 
+(** val tblaux_inv : nat -> nat **)
+
+let tblaux_inv n =
+  if le_lt_dec_aux (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+       (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+       (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+       (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+       (S (S (S (S (S (S (S (S (S
+       O)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+       n
+  then minus
+         (plus (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+           (S (S (S (S (S O)))))))))))))))))))))))))) n)
+         (nat_of_ascii (Ascii (true, false, false, false, false, true, true,
+           false)))
+  else if le_lt_dec_aux (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+            (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+            (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+            (S (S (S
+            O)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+            n
+       then minus n
+              (nat_of_ascii (Ascii (true, false, false, false, false, false,
+                true, false)))
+       else if le_lt_dec_aux (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                 (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                 (S (S (S (S (S (S (S (S (S (S (S (S
+                 O)))))))))))))))))))))))))))))))))))))))))))))))) n
+            then minus
+                   (plus (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                     (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                     (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                     O)))))))))))))))))))))))))))))))))))))))))))))))))))) n)
+                   (nat_of_ascii (Ascii (false, false, false, false, true,
+                     true, false, false)))
+            else if eq_nat_dec n
+                      (nat_of_ascii (Ascii (true, true, false, true, false,
+                        true, false, false)))
+                 then S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                        (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                        (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                        (S (S (S (S (S (S (S
+                        O)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+                 else S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                        (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                        (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+                        (S (S (S (S (S (S (S (S
+                        O))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+
+(** val tbl_inv : ascii -> bool vec **)
+
+let tbl_inv c =
+  bool6_of_ascii (ascii_of_nat (tblaux_inv (nat_of_ascii c)))
+
 (** val digit : ascii -> bool vec **)
 
 let digit = function
@@ -401,4 +540,15 @@ let encode s =
           (gfill false (S (S (S (S (S (S O))))))
             (cm (S (S (S (S (S (S (S (S O))))))))
               (map digit (asciilist_of_mlstring s)))))))
+
+(** val decode : mlstring -> mlstring **)
+
+let decode s =
+  mlstring_of_asciilist
+    (map ascii_of_bool8
+      (gcut (S (S (S (S (S (S (S (S O))))))))
+        (cm (S (S (S (S (S (S O))))))
+          (map tbl_inv
+            (delete ascii_dec (Ascii (true, false, true, true, true, true,
+              false, false)) (asciilist_of_mlstring s))))))
 

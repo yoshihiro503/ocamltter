@@ -1,7 +1,7 @@
 Require Import List.
 
 Inductive Vec (A: Type): nat -> Type :=
-| VNil : Vec A O
+| VNil : Vec A 0
 | VCons : forall n, A -> Vec A n -> Vec A (S n).
 
 Implicit Arguments VNil [A].
@@ -32,3 +32,20 @@ Lemma list_vec : forall {A:Type} (xs:list A) n (H: length xs = n),
 Proof.
  induction xs; intros; case H; simpl; [ | rewrite IHxs]; reflexivity.
 Qed.
+
+Lemma list_of_vec_length : forall {A:Type} n (v: Vec A n),
+  List.length (list_of_vec v) = n.
+Proof.
+ induction v; [ | simpl; rewrite IHv]; reflexivity.
+Qed.
+
+
+(*Lemma vec_list : forall {A:Type} n (v: Vec A n),
+  vec_of_list n (list_of_vec v) (list_of_vec_length n v) = v.
+Proof.
+ induction v.
+  simpl.
+unfold eq_rect.
+unfold lift_of_vec_length.
+Print eq_rect.
+  reflexivity.*)
