@@ -5,7 +5,10 @@ open Http
 module Tw = TwitterApi
 
 let oauth_acc : (string * string * string) option ref = ref None
-let conffile = ".ocamltter"
+let conffile =
+  match maybe Sys.getenv "HOME" with
+  | `Val home -> home ^ "/.ocamltter"
+  | `Err e -> ".ocamltter"
 
 let authorize () = 
   let url, req_tok, req_sec = Tw.fetch_request_token () in
@@ -23,11 +26,6 @@ let authorize () =
   (acc_tok, acc_sec, verif)
 
 module Cache = struct
-(*  type t = (int64, tweet) Hashtbl.t
-  let init () : t = Hashtbl.create 100
-  let is_new (cache: t) (tw: tweet) =
-    not (Hashtbl.mem cache (status_id tw))
-  let add cache (tw: tweet) = Hashtbl.add cache (status_id tw) tw*)
   let max_size = 1000
   type t = tweet Queue.t
   let init () : t = Queue.create ()
