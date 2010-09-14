@@ -12,52 +12,58 @@ type token = string * string * string
 type status_id = int64
 
 type tweet =
-  | U of (Date.t * string * status_id * string * string * Json.t)
-  | RT of
-      (Date.t * string * status_id * string * string * string * Date.t *status_id * Json.t)
-  | RE of
-      (Date.t * string * status_id * string * string * string * status_id * Json.t)
+  | U of u
+  | RT of rt
+  | RE of re
+and u = { u_date: Date.t; u_sname: string; u_id: status_id;
+	  u_client: string; u_text: string; u_json: Json.t }
+and rt = { rt_date: Date.t; rt_sname: string; rt_id: status_id;
+	   rt_client: string; rt_text: string; orig: tweet; rt_json: Json.t}
+and re = { re_date: Date.t; re_sname: string; re_id: status_id;
+	   re_client: string; re_text: string; reply_id: status_id;
+	   re_json: Json.t }
 
 let date = function
-  | U (d, _,_,_,_,_) -> d
-  | RT(_, _,_,_,_,_,d,_,_) -> d
-  | RE(d, _,_,_,_,_,_,_) -> d
+  | U u -> u.u_date
+  | RT rt -> rt.rt_date
+  | RE re -> re.re_date
 
 let sname = function
-  | U (_, sname,_,_,_, _) -> sname
-  | RT(_, _,_,_,_,sname,_,_,_) -> sname
-  | RE(_, sname,_,_,_,_,_,_) -> sname
+  | U u -> u.u_sname
+  | RT rt -> rt.rt_sname
+  | RE re -> re.re_sname
 
 let status_id = function
-  | U (_, _, id, _, _, _) -> id
-  | RT(_, _,_,_,_,_,_,id,_) -> id
-  | RE(_, _,id,_,_,_,_,_) -> id
+  | U u -> u.u_id
+  | RT rt -> rt.rt_id
+  | RE re -> re.re_id
 
 let client = function
-  | U (_, _, _, client,_, _) -> client
-  | RT(_, _,_,client,_,_,_,_,_) -> client
-  | RE(_, _,_,client,_,_,_,_) -> client
+  | U u -> u.u_client
+  | RT rt -> rt.rt_client
+  | RE re -> re.re_client
 	
 let text = function
-  | U (_, _, _, _, text, _) -> text
-  | RT(_, _,_,_,text,_,_,_,_) -> text
-  | RE(_, _,_,_,text,_,_,_) -> text
+  | U u -> u.u_text
+  | RT rt -> rt.rt_text
+  | RE re -> re.re_text
 	
 let json = function
-  | U (_, _, _, _, _, j) -> j
-  | RT(_, _,_,_,_,_,_,_,j) -> j
-  | RE(_, _,_,_,_,_,_,j) -> j
+  | U u -> u.u_json
+  | RT rt -> rt.rt_json
+  | RE re -> re.re_json
 
 
 let show_tweet =
   let fmt d = !%"%02d/%02d %02d:%02d" (Date.mon d) (day d) (hour d) (min d) in
   function
-    | U (d, n, sid, _, text, _) -> !%" [%s] %s: %s %LdL" (fmt d) n text sid
-    | RT(d, n, sid, _, text, rter, rtd, rtid, _) ->
-	!%" [%s] %s: %s %LdL [RT %s %LdL]"
-(fmt d) n text sid rter rtid
-    | RE(d, n, sid, _, text, re, reid, _) ->
-	!%" [%s] %s: %s %LdL to %LdL" (fmt d) n text sid reid
+    | U u -> !%" [%s] %s: %s %LdL" (fmt u.u_date) u.u_sname u.u_text u.u_id
+    | RT rt ->
+	!%" [%s] [RT]%s: %s %LdL [RT %s %LdL]" (fmt rt.rt_date) (sname rt.orig)
+	  (text rt.orig) (status_id rt.orig) rt.rt_sname rt.rt_id
+    | RE re ->
+	!%" [%s] %s: %s %LdL to %LdL" (fmt re.re_date) re.re_sname
+	  re.re_text re.re_id re.reply_id
 
 let tw_compare t1 t2 = compare (date t1) (date t2)
     
@@ -83,7 +89,7 @@ let parse_date st =
   try parse_date01 st with
   | _ -> parse_date02 st
 	  
-let json2status j =
+let rec json2tweet j =
     let date j =
       Json.getf "created_at" j |> Json.as_string |> parse_date
     in
@@ -97,19 +103,20 @@ let json2status j =
       Json.getf "user" j |> Json.getf "screen_name" |> Json.as_string
     in
     let client j = Json.getf "source" j |> Json.as_string in
-    let reply j = Json.getf "in_reply_to_screen_name" j |> Json.as_string in
+(*    let reply j = Json.getf "in_reply_to_screen_name" j |> Json.as_string in*)
     match getf_opt "retweeted_status" j, getf_opt "in_reply_to_status_id" j with
     | Some rt, _ ->
-	RT (date rt, sname rt, id rt, client rt, text rt, sname j, date j, id j
-	      , j)
+	RT { orig = json2tweet rt; rt_date=date j; rt_sname=sname j;
+	     rt_id=id j; rt_client=client j; rt_text=text j; rt_json=j }
     | _, Some (Number f) ->
-	RE (date j, sname j, id j, client j, text j, reply j,
-	    Int64.of_float f, j)
+	RE { reply_id=Int64.of_float f; re_date=date j; re_sname=sname j;
+	     re_id=id j; re_client=client j; re_text=text j; re_json=j }
     | _ ->
-	U (date j, sname j, id j, client j, text j, j)
+	U { u_date=date j; u_sname=sname j; u_id=id j; u_client=client j;
+	    u_text=text j; u_json=j }
 
 let json2timeline j =
-  Json.as_list j |> List.map json2status
+  Json.as_list j |> List.map json2tweet
 
 let catch_twerr (f: 'a -> Json.t) (x : 'a) =
     let j = f x in
@@ -160,7 +167,7 @@ let user_timeline ?since_id ?count oauth sname =
 
 let show status_id =
   twitter_without_auth GET (!%"/1/statuses/show/%Ld.json" status_id) []
-    |> json2status
+    |> json2tweet
 
 let get_tweet = show
 
@@ -267,8 +274,8 @@ let search word =
     |> Json.getf "results"
     |> Json.as_list
     |> List.map (fun j ->
-      let d = parse_date @@ Json.as_string @@ Json.getf "created_at" j in
+	(*let d = parse_date @@ Json.as_string @@ Json.getf "created_at" j in
       let sname = Json.as_string @@ Json.getf "from_user" j in
-      let text = Json.as_string @@ Json.getf "text" j in
+      let text = Json.as_string @@ Json.getf "text" j in*)
       let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
-      U (d, sname, id, "", text, j))
+      show id)
