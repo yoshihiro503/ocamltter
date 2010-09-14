@@ -127,7 +127,7 @@ let catch_twerr (f: 'a -> Json.t) (x : 'a) =
     | None -> j
 
 let parse_json ch =
-  Json.parse (slist "" id @@ read_all ch)
+  Json.parse_ch ch
 
 let twitter (tok,sec,verif) ?(host="api.twitter.com") meth cmd params =
   let oauth = OauthForTwitter.oauth(tok,sec,verif) in

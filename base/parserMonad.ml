@@ -91,7 +91,7 @@ let opt : 'a parser -> ('a option) parser =
       (p >>= fun x -> return (Some x)) <|> (return None)
 
 
-let char1 state = function
+let char1_with_debug state = function
   | Nil -> Inr (state,"(Nil)")
   | Cons (x,xs) ->
       let next (pre,x0, _) =
@@ -105,6 +105,12 @@ let char1 state = function
 	  Inl (x,(line+1,-1, next cs), !$xs)
       | _, (line,pos,cs) ->
 	  Inl (x,(line, pos+1, next cs),!$xs)
+
+let char1_without_debug state = function
+  | Nil -> Inr (state,"(Nil)")
+  | Cons (x,xs) -> Inl (x, state, !$xs)
+
+let char1 = char1_without_debug
 
 let char_when f = char1 >>= fun c ->
   if f c then return c
