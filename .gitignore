@@ -2,5 +2,7 @@
 *.cmi
 *.cmo
 *.vo
+*.v.d
+*.glob
 *~
 .ocamltter
