@@ -23,11 +23,24 @@ let authorize () =
   (acc_tok, acc_sec, verif)
 
 module Cache = struct
-  type t = (int64, tweet) Hashtbl.t
+(*  type t = (int64, tweet) Hashtbl.t
   let init () : t = Hashtbl.create 100
   let is_new (cache: t) (tw: tweet) =
     not (Hashtbl.mem cache (status_id tw))
-  let add cache (tw: tweet) = Hashtbl.add cache (status_id tw) tw
+  let add cache (tw: tweet) = Hashtbl.add cache (status_id tw) tw*)
+  let max_size = 1000
+  type t = tweet Queue.t
+  let init () : t = Queue.create ()
+  let qfilter f q =
+    let q2 = Queue.create () in
+    Queue.iter (fun x -> if f x then Queue.push x q2) q;
+    q2
+  let qfind f q = try Some (Queue.pop @@ qfilter f q) with _ -> None
+  let is_new (cache: t) (tw: tweet) =
+    Queue.is_empty (qfilter (fun t -> status_id t = status_id tw) cache)
+  let add cache (tw: tweet) =
+    if Queue.length cache > max_size then ignore @@ Queue.pop cache;
+    Queue.push tw cache
 end
 
 let load () = open_in_with conffile (fun ch ->

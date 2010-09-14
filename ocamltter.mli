@@ -4,12 +4,10 @@ val conffile : string
 val authorize : unit -> string * string * string
 module Cache :
   sig
-    type t = (TwitterApi.status_id, TwitterApi.tweet) Hashtbl.t
+    type t
     val init : unit -> t
     val is_new : t -> TwitterApi.tweet -> bool
-    val add :
-      (TwitterApi.status_id, TwitterApi.tweet) Hashtbl.t ->
-      TwitterApi.tweet -> unit
+    val add : t -> TwitterApi.tweet -> unit
   end
 val load : unit -> string * string * string
 val oauth : unit -> string * string * string
