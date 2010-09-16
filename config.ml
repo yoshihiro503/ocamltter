@@ -9,5 +9,5 @@ let filter tw =
 let watching_words =
   ["#Coq"; "OCamltter"; "ProofCafe"; "#OCaml"]
     
-let coffee_break = 30.0 (* second *)
+let coffee_break = ref 30.0 (* second *)
 

@@ -149,19 +149,31 @@ let help =
   let CMD = ...        define a your own command CMD
   setup()              (re)authorize ocamltter
   help                 print this help
+  start_polling ()     start polling
+  stop_polling ()      stop polling
+  #quite               quite ocamltter
 "
 
+let is_polling_on = ref true
+
+let stop_polling ()  = is_polling_on := false
+
 let start_polling () =
+  is_polling_on := true;
   let cache = Cache.init () in
   let rec loop verbose =
-    begin try
-      let tl = List.filter (Cache.is_new cache) (get_timeline ~c:100 verbose) in
-      List.iter (Cache.add cache) tl;
-      print_timeline tl
-    with e -> print_endline (Printexc.to_string e)
-    end;
-    Thread.delay Config.coffee_break;
-    loop false (* verbose is only true at first time *)
+    if !is_polling_on = true then begin
+      begin try
+	let tl =
+	  List.filter (Cache.is_new cache) (get_timeline ~c:100 verbose)
+	in
+	List.iter (Cache.add cache) tl;
+	print_timeline tl
+      with e -> print_endline (Printexc.to_string e);
+      end;
+      Thread.delay !Config.coffee_break;
+      loop false (* verbose is only true at first time *)
+    end
   in
   let t = Thread.create loop in
   t true

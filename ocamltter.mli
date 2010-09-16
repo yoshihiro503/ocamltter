@@ -38,4 +38,6 @@ val report_spam : string -> unit
 val s : string -> TwitterApi.tweet list
 val limit : unit -> Json.t
 val help : string
+
+val stop_polling : unit -> unit
 val start_polling : unit -> Thread.t
