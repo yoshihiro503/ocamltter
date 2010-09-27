@@ -39,13 +39,12 @@ Proof.
  induction v; [ | simpl; rewrite IHv]; reflexivity.
 Qed.
 
+Definition hd : forall {A:Type} {n} (v: Vec A (S n)), A.
+ intros; inversion v.
+ exact X.
+Defined.
 
-(*Lemma vec_list : forall {A:Type} n (v: Vec A n),
-  vec_of_list n (list_of_vec v) (list_of_vec_length n v) = v.
-Proof.
- induction v.
-  simpl.
-unfold eq_rect.
-unfold lift_of_vec_length.
-Print eq_rect.
-  reflexivity.*)
+Definition tl : forall {A:Type} {n} (v: Vec A (S n)), Vec A n.
+ intros; inversion v.
+ exact X0.
+Defined.
