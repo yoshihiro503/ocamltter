@@ -7,24 +7,20 @@ exception TwErr of string
 
 type status_id = int64
 type tweet =
-  | U of u
-  | RT of rt
-  | RE of re
-and u = { u_date: Date.t; u_sname: string; u_id: status_id;
-	  u_client: Xml.xml; u_text: string; u_json: Json.t }
-and rt = { rt_date: Date.t; rt_sname: string; rt_id: status_id;
-	   rt_client: Xml.xml; rt_text: string; orig: tweet; rt_json: Json.t}
-and re = { re_date: Date.t; re_sname: string; re_id: status_id;
-	   re_client: Xml.xml; re_text: string; reply_id: status_id;
-	   re_json: Json.t }
+  | U of tweet_base
+  | RT of tweet_base * tweet_base
+  | RE of tweet_base * status_id
+and tweet_base =
+  {date:Date.t; sname:string; id:status_id; client:Xml.xml; text:string;
+   json:Json.t}
 
 type token = string * string * string
 
 val date : tweet -> Util.Date.t
 val sname : tweet -> string
-val text : tweet -> string
-val client : tweet -> Xml.xml
 val status_id : tweet -> status_id
+val client : tweet -> Xml.xml
+val text : tweet -> string
 val json : tweet -> Json.t
 
 val show_tweet : tweet -> string

@@ -13,66 +13,61 @@ type token = string * string * string
 type status_id = int64
 
 type tweet =
-  | U of u
-  | RT of rt
-  | RE of re
-and u = { u_date: Date.t; u_sname: string; u_id: status_id;
-	  u_client: Xml.xml; u_text: string; u_json: Json.t }
-and rt = { rt_date: Date.t; rt_sname: string; rt_id: status_id;
-	   rt_client: Xml.xml; rt_text: string; orig: tweet; rt_json: Json.t}
-and re = { re_date: Date.t; re_sname: string; re_id: status_id;
-	   re_client: Xml.xml; re_text: string; reply_id: status_id;
-	   re_json: Json.t }
+  | U of tweet_base
+  | RT of tweet_base * tweet_base
+  | RE of tweet_base * status_id
+and tweet_base =
+  {date:Date.t; sname:string; id:status_id; client:Xml.xml; text:string;
+   json:Json.t}
+     
 
 let sclient = function
-  | Xml.PCData "web" -> ""
+  | Xml.PCData "web" -> "web"
   | Xml.Tag ("a", _, [PCData clname]) -> clname
   | otherwise -> Xml.show otherwise
 
 let date = function
-  | U u -> u.u_date
-  | RT rt -> rt.rt_date
-  | RE re -> re.re_date
+  | U u -> u.date
+  | RT (rt, _) -> rt.date
+  | RE (re, _) -> re.date
 
 let sname = function
-  | U u -> u.u_sname
-  | RT rt -> rt.rt_sname
-  | RE re -> re.re_sname
+  | U u -> u.sname
+  | RT (rt,_) -> rt.sname
+  | RE (re,_) -> re.sname
 
 let status_id = function
-  | U u -> u.u_id
-  | RT rt -> rt.rt_id
-  | RE re -> re.re_id
+  | U u -> u.id
+  | RT (rt,_) -> rt.id
+  | RE (re,_) -> re.id
 
 let client = function
-  | U u -> u.u_client
-  | RT rt -> rt.rt_client
-  | RE re -> re.re_client
-	
+  | U u -> u.client
+  | RT (rt,_) -> rt.client
+  | RE (re,_) -> re.client
+
 let text = function
-  | U u -> u.u_text
-  | RT rt -> rt.rt_text
-  | RE re -> re.re_text
-	
+  | U u -> u.text
+  | RT (rt,_) -> rt.text
+  | RE (re,_) -> re.text
+
 let json = function
-  | U u -> u.u_json
-  | RT rt -> rt.rt_json
-  | RE re -> re.re_json
+  | U u -> u.json
+  | RT (rt,_) -> rt.json
+  | RE (re,_) -> re.json
 
 
 let show_tweet =
   let fmt d = !%"%02d/%02d %02d:%02d" (Date.mon d) (day d) (hour d) (min d) in
   function
-    | U u -> !%" [%s] %s: %s %LdL %s" (fmt u.u_date) u.u_sname u.u_text u.u_id
-	  (sclient u.u_client)
-    | RT rt ->
-	!%" [%s] [RT]%s: %s %LdL [RT %s %LdL] %s" (fmt rt.rt_date)
-	  (sname rt.orig)
-	  (text rt.orig) (status_id rt.orig) rt.rt_sname rt.rt_id
-	  (sclient rt.rt_client)
-    | RE re ->
-	!%" [%s] %s: %s %LdL to %LdL %s" (fmt re.re_date) re.re_sname
-	  re.re_text re.re_id re.reply_id (sclient re.re_client)
+    | U u -> !%" [%s] %s: %s %LdL %s" (fmt u.date) u.sname u.text u.id
+	  (sclient u.client)
+    | RT (rt, orig) ->
+	!%" [%s] [RT]%s: %s %LdL [RT %s %LdL] %s" (fmt rt.date)
+	  orig.sname orig.text orig.id rt.sname rt.id (sclient rt.client)
+    | RE (re, reply_id) ->
+	!%" [%s] %s: %s %LdL to %LdL %s" (fmt re.date) re.sname
+	  re.text re.id reply_id (sclient re.client)
 
 let tw_compare t1 t2 = compare (date t1) (date t2)
     
@@ -115,16 +110,14 @@ let rec json2tweet j =
       Json.getf "source" j |> Json.as_string |> Xml.parse_string
     in
 (*    let reply j = Json.getf "in_reply_to_screen_name" j |> Json.as_string in*)
+    let base j = {
+      date=date j; sname=sname j; id=id j; client=client j;
+      text=text j; json=j
+    } in
     match getf_opt "retweeted_status" j, getf_opt "in_reply_to_status_id" j with
-    | Some rt, _ ->
-	RT { orig = json2tweet rt; rt_date=date j; rt_sname=sname j;
-	     rt_id=id j; rt_client=client j; rt_text=text j; rt_json=j }
-    | _, Some (Number f) ->
-	RE { reply_id=Int64.of_float f; re_date=date j; re_sname=sname j;
-	     re_id=id j; re_client=client j; re_text=text j; re_json=j }
-    | _ ->
-	U { u_date=date j; u_sname=sname j; u_id=id j; u_client=client j;
-	    u_text=text j; u_json=j }
+    | Some rt, _ -> RT (base j, base rt)
+    | _, Some (Number f) -> RE (base j, Int64.of_float f)
+    | _ -> U (base j)
 
 let json2timeline j =
   Json.as_list j |> List.map json2tweet
@@ -289,8 +282,12 @@ let search word =
       let sname = Json.as_string @@ Json.getf "from_user" j in
       let text = "{"^word^"}" ^ Json.as_string @@ Json.getf "text" j in
       let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
-      U {u_date=d; u_sname=sname; u_text=text; u_client=Xml.PCData"";
-	 u_id=id; u_json=j}
+      let client =
+	Xml.parse_string @@ Http.html_decode @@ Json.as_string
+	@@ Json.getf "source" j
+      in
+      U {date=d; sname=sname; text=text; client=client;
+	 id=id; json=j}
 		)
 
 

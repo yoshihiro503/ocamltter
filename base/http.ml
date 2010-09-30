@@ -9,6 +9,17 @@ let url_encode s =
     | c -> ("%" ^ to_hex (int_of_char c)) :: store) s []
   in
   String.concat "" (ss)
+
+let html_decode s =
+  let rec aux store = function
+    | '&'::'a'::'m'::'p'::';'::cs -> aux ('&'::store) cs
+    | '&'::'q'::'u'::'o'::'t'::';'::cs -> aux ('\"'::store) cs
+    | '&'::'l'::'t'::';'::cs -> aux ('<'::store) cs
+    | '&'::'g'::'t'::';'::cs -> aux ('>'::store) cs
+    | c :: cs -> aux (c::store) cs
+    | [] -> List.rev store
+  in
+  string_of_chars @@ aux [] @@ chars_of_string s
     
 type header = {
     code : string;
