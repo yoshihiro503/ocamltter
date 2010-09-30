@@ -11,6 +11,6 @@ val conn :
   string ->
   meth ->
   ?headers:(string * string) list ->
-  ?user:string ->
-  ?pass:string ->
-  string -> (string * string) list -> (header -> in_channel -> 'a) -> 'a
+  string -> (string * string) list ->
+  ?rawdata:string ->
+    (header -> in_channel -> 'a) -> 'a

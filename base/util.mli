@@ -51,7 +51,7 @@ module Date :
     val hour : float -> int
     val min : float -> int
     val sec : float -> int
-    val lt : 'a -> 'a -> bool
-    val to_string : 'a -> string
+    val lt : t -> t -> bool
+    val to_string : t -> string
     val pmonth : string -> int
   end
