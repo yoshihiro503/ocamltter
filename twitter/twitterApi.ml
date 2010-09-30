@@ -4,6 +4,7 @@ open Http
 open Json
 open Oauth
 open OauthForTwitter
+open Xml
 
 exception TwErr of string
 
@@ -16,12 +17,17 @@ type tweet =
   | RT of rt
   | RE of re
 and u = { u_date: Date.t; u_sname: string; u_id: status_id;
-	  u_client: string; u_text: string; u_json: Json.t }
+	  u_client: Xml.xml; u_text: string; u_json: Json.t }
 and rt = { rt_date: Date.t; rt_sname: string; rt_id: status_id;
-	   rt_client: string; rt_text: string; orig: tweet; rt_json: Json.t}
+	   rt_client: Xml.xml; rt_text: string; orig: tweet; rt_json: Json.t}
 and re = { re_date: Date.t; re_sname: string; re_id: status_id;
-	   re_client: string; re_text: string; reply_id: status_id;
+	   re_client: Xml.xml; re_text: string; reply_id: status_id;
 	   re_json: Json.t }
+
+let sclient = function
+  | Xml.PCData "web" -> ""
+  | Xml.Tag ("a", _, [PCData clname]) -> clname
+  | otherwise -> Xml.show otherwise
 
 let date = function
   | U u -> u.u_date
@@ -57,13 +63,16 @@ let json = function
 let show_tweet =
   let fmt d = !%"%02d/%02d %02d:%02d" (Date.mon d) (day d) (hour d) (min d) in
   function
-    | U u -> !%" [%s] %s: %s %LdL" (fmt u.u_date) u.u_sname u.u_text u.u_id
+    | U u -> !%" [%s] %s: %s %LdL %s" (fmt u.u_date) u.u_sname u.u_text u.u_id
+	  (sclient u.u_client)
     | RT rt ->
-	!%" [%s] [RT]%s: %s %LdL [RT %s %LdL]" (fmt rt.rt_date) (sname rt.orig)
+	!%" [%s] [RT]%s: %s %LdL [RT %s %LdL] %s" (fmt rt.rt_date)
+	  (sname rt.orig)
 	  (text rt.orig) (status_id rt.orig) rt.rt_sname rt.rt_id
+	  (sclient rt.rt_client)
     | RE re ->
-	!%" [%s] %s: %s %LdL to %LdL" (fmt re.re_date) re.re_sname
-	  re.re_text re.re_id re.reply_id
+	!%" [%s] %s: %s %LdL to %LdL %s" (fmt re.re_date) re.re_sname
+	  re.re_text re.re_id re.reply_id (sclient re.re_client)
 
 let tw_compare t1 t2 = compare (date t1) (date t2)
     
@@ -102,7 +111,9 @@ let rec json2tweet j =
     let sname j =
       Json.getf "user" j |> Json.getf "screen_name" |> Json.as_string
     in
-    let client j = Json.getf "source" j |> Json.as_string in
+    let client j =
+      Json.getf "source" j |> Json.as_string |> Xml.parse_string
+    in
 (*    let reply j = Json.getf "in_reply_to_screen_name" j |> Json.as_string in*)
     match getf_opt "retweeted_status" j, getf_opt "in_reply_to_status_id" j with
     | Some rt, _ ->
@@ -278,7 +289,8 @@ let search word =
       let sname = Json.as_string @@ Json.getf "from_user" j in
       let text = "{"^word^"}" ^ Json.as_string @@ Json.getf "text" j in
       let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
-      U {u_date=d; u_sname=sname; u_text=text; u_client=""; u_id=id; u_json=j}
+      U {u_date=d; u_sname=sname; u_text=text; u_client=Xml.PCData"";
+	 u_id=id; u_json=j}
 		)
 
 

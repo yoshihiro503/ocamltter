@@ -11,11 +11,11 @@ type tweet =
   | RT of rt
   | RE of re
 and u = { u_date: Date.t; u_sname: string; u_id: status_id;
-	  u_client: string; u_text: string; u_json: Json.t }
+	  u_client: Xml.xml; u_text: string; u_json: Json.t }
 and rt = { rt_date: Date.t; rt_sname: string; rt_id: status_id;
-	   rt_client: string; rt_text: string; orig: tweet; rt_json: Json.t}
+	   rt_client: Xml.xml; rt_text: string; orig: tweet; rt_json: Json.t}
 and re = { re_date: Date.t; re_sname: string; re_id: status_id;
-	   re_client: string; re_text: string; reply_id: status_id;
+	   re_client: Xml.xml; re_text: string; reply_id: status_id;
 	   re_json: Json.t }
 
 type token = string * string * string
@@ -23,7 +23,7 @@ type token = string * string * string
 val date : tweet -> Util.Date.t
 val sname : tweet -> string
 val text : tweet -> string
-val client : tweet -> string
+val client : tweet -> Xml.xml
 val status_id : tweet -> status_id
 val json : tweet -> Json.t
 
