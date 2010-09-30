@@ -2,7 +2,7 @@
 prevdir=`pwd`
 ocamltterhome=`dirname $0`
 cd $ocamltterhome
-incl='-I +site-lib/cryptokit -I +threads -I base -I twitter'
+incl='-I +cryptokit -I +site-lib/cryptokit -I +threads -I base -I twitter'
 ocamlc -c ${incl} \
     base/util.mli base/base64.mli base/utf16.mli base/llist.mli \
     base/parserMonad.mli base/json.mli base/xml.mli \
