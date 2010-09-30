@@ -276,7 +276,7 @@ let search word =
     |> List.map (fun j ->
       let d = parse_date @@ Json.as_string @@ Json.getf "created_at" j in
       let sname = Json.as_string @@ Json.getf "from_user" j in
-      let text = Json.as_string @@ Json.getf "text" j in
+      let text = "{"^word^"}" ^ Json.as_string @@ Json.getf "text" j in
       let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
       U {u_date=d; u_sname=sname; u_text=text; u_client=""; u_id=id; u_json=j}
 		)
