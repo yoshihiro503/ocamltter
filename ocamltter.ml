@@ -114,6 +114,10 @@ let qt st_id comment =
   let tw = get_tweet st_id in
   u (!%"%s QT @%s: %s" comment (sname tw) (text tw))
 
+let reqt st_id comment =
+  let tw = get_tweet st_id in
+  re st_id (!%"%s QT @%s: %s" comment (sname tw) (text tw))
+
 let follow sname =
   ignore @@ Tw.friendship_create (oauth()) sname
 
