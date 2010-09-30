@@ -150,7 +150,8 @@ module Date = struct
   let min t = (localtime t).tm_min
   let sec t = (localtime t).tm_sec
   let lt d1 d2 = d1 < d2
-  let to_string t = ""
+  let to_string t = !%"%4d/%02d/%02d %02d:%02d:%02d" (year t) (mon t) (day t)
+      (hour t) (min t) (sec t)
   let pmonth = function
     | "Jan" ->  1
     | "Feb" ->  2

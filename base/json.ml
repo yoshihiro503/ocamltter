@@ -124,7 +124,12 @@ let lit_string =
       | '\"' -> error ""
       | '\\' -> char1 >>=
 	  begin function
-	  | '\"' | '\\' | '/' | 'b' | 'f' | 'n' | 'r' | 't' as c -> return (string1 c)
+	  | '\"' | '\\' | '/' as c -> return (string1 c)
+	  | 'b' -> return "\b"
+(*	  | 'f' -> return "\f"*)
+	  | 'n' -> return "\n"
+	  | 'r' -> return "\r"
+	  | 't' -> return "\t"
 	  | 'u' -> four_hex_digits
 	  | _ -> error ""
 	  end

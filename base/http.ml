@@ -36,15 +36,10 @@ let read_all_and_count ic =
   in
   loop [] 0
 
-let conn ?(port=80) hostname meth ?headers ?user ?pass path ps f =
+let conn ?(port=80) hostname meth ?headers  path ps ?(rawdata="") f =
   let host_entry = Unix.gethostbyname hostname in
   let inet_addr = host_entry.h_addr_list.(0) in
   let sa = Unix.ADDR_INET (inet_addr, port) in
-  let auth = match user,pass with
-  | Some user, Some pass ->
-      !%"Authorization: Basic %s\r\n" (Base64.encode (user ^ ":" ^ pass))
-  | _ -> ""
-  in
   let hds = match headers with
   | None -> ""
   | Some hds -> slist"\r\n" (fun (k,v) -> k^": "^v) hds ^ "\r\n"
@@ -54,22 +49,20 @@ let conn ?(port=80) hostname meth ?headers ?user ?pass path ps f =
     | GET ->
 	let path = if ps<>[] then path ^ "?" ^ params2string ps else path in
 	!%"GET %s HTTP/1.0\r\n" path
-	^ auth
 	^ hds
 	^ "Host: " ^ hostname ^ "\r\n"
 	^ "\r\n"
     | POST ->
-	let s = params2string ps in
+	let s = params2string ps ^ rawdata in
 	!%"POST %s HTTP/1.0\r\n" path
-	^ !%"Content-Length: %d\r\n" (String.length s)
-	^ auth
-	^ hds
 	^ "Host: " ^ hostname ^ "\r\n"
+	^ !%"Content-Length: %d\r\n" (String.length s)
+	^ hds
 	^ "\r\n"
 	^ s
 	^ "\r\n"
   in
-  (* print_endline msg; *)
+  (*print_endline msg;*)
   let debug = ref "" in
   let ic, oc = Unix.open_connection sa in
   let close () =
@@ -89,5 +82,5 @@ let conn ?(port=80) hostname meth ?headers ?user ?pass path ps f =
     x
   with e ->
     close ();
-    raise @@ Http_error (!%"[%s] -> %s" !debug (Printexc.to_string e));
-
+    print_endline ("msg=" ^ msg);
+    raise @@ Http_error (!%"[%s] -> %s" !debug (Printexc.to_string e))
