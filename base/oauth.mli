@@ -13,7 +13,7 @@ val fetch_request_token :
   ?oauth_timestamp:float ->
   ?oauth_nonce:string ->
   ?params:(string * string) list ->
-  unit -> (Http.header -> in_channel -> 'c) -> 'c
+  unit -> ?rawdata:string -> (Http.header -> in_channel -> 'c) -> 'c
 
 val fetch_access_token :
   ?http_method:Http.meth ->
@@ -30,7 +30,8 @@ val fetch_access_token :
   oauth_token_secret:string ->
   verif:string ->
   ?oauth_timestamp:float ->
-  ?oauth_nonce:string -> unit -> (Http.header -> in_channel -> 'c) -> 'c
+  ?oauth_nonce:string -> unit -> ?rawdata:string ->
+  (Http.header -> in_channel -> 'c) -> 'c
 
 val access_resource :
   ?http_method:Http.meth ->
@@ -49,7 +50,7 @@ val access_resource :
   ?oauth_timestamp:float ->
   ?oauth_nonce:string ->
   ?params:(string * string) list ->
-  ?body:'d -> unit -> (Http.header -> in_channel -> 'e) -> 'e
+  ?body:'d -> unit -> ?rawdata:string -> (Http.header -> in_channel -> 'e) -> 'e
 
 type oauth = {
   consumer_key : string;
