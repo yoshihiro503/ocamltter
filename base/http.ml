@@ -93,5 +93,4 @@ let conn ?(port=80) hostname meth ?headers  path ps ?(rawdata="") f =
     x
   with e ->
     close ();
-    print_endline ("msg=" ^ msg);
-    raise @@ Http_error (!%"[%s] -> %s" !debug (Printexc.to_string e))
+    raise @@ Http_error (!%"[%s] -> %s\n%s" !debug (Printexc.to_string e) msg)
