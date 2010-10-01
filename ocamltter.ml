@@ -61,7 +61,7 @@ let get_timeline ?(c=20) verbose =
       let search word =
 	if verbose then
           (print_string (!%"searching with '%s'... " word); flush stdout);
-	let ts = Tw.search word in
+	let ts = value_or [] @@ maybe (Tw.search ~rpp:c) word in
 	if verbose then
           (print_endline (!%"%d" (List.length ts)); flush stdout);
 	ts
@@ -130,7 +130,7 @@ let fav id =
 let report_spam sname =
   ignore @@ Tw.report_spam (oauth()) sname
 
-let s word = List.sort tw_compare @@ Tw.search word
+let s word = List.sort tw_compare @@ Tw.search ~rpp:100 word
 
 let limit () = Tw.rate_limit_status ()
 
@@ -165,21 +165,21 @@ let stop_polling ()  = is_polling_on := false
 let start_polling () =
   is_polling_on := true;
   let cache = Cache.init () in
-  let rec loop verbose =
+  let rec loop verbose c =
     if !is_polling_on = true then begin
       begin try
 	let tl =
-	  List.filter (Cache.is_new cache) (get_timeline ~c:100 verbose)
+	  List.filter (Cache.is_new cache) (get_timeline ~c:c verbose)
 	in
 	List.iter (Cache.add cache) tl;
 	print_timeline tl
       with e -> print_endline (Printexc.to_string e);
       end;
       Thread.delay !Config.coffee_break;
-      loop false (* verbose is only true at first time *)
+      loop false 20 (* verbose is only true at first time *)
     end
   in
-  let t = Thread.create loop in
-  t true
+  let t = Thread.create (fun () -> loop true 100) in
+  t ()
 
 (* see .ocamlinit *)

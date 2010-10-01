@@ -26,6 +26,7 @@ val list_of_hash : ('a, 'b) Hashtbl.t -> ('a * 'b) list
 val list_filter_map : ('a -> 'b option) -> 'a list -> 'b list
 val maybe : ('a -> 'b) -> 'a -> [> `Err of exn | `Val of 'b ]
 val value : [< `Err of exn | `Val of 'a ] -> 'a
+val value_or : 'a -> [< `Err of exn | `Val of 'a ] -> 'a
 val some : 'a -> 'a option
 val none : 'a option
 val option_map : ('a -> 'b) -> 'a option -> 'b option

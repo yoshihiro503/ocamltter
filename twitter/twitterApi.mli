@@ -105,4 +105,4 @@ val help_test : unit -> Json.t
 
 (** {7 Search API Methods} *)
 
-val search : string -> tweet list
+val search : ?rpp:int -> string -> tweet list

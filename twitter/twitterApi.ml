@@ -272,8 +272,8 @@ let help_test () =
 
 (** {7 Search API Methods} *)
 
-let search word =
-  let ps = [("q",word);("rpp","100")] in
+let search ?(rpp=20) word =
+  let ps = [("q",word);("rpp", !%"%d"rpp)] in
   twitter_without_auth GET ~host:"search.twitter.com" "/search.json" ps
     |> Json.getf "results"
     |> Json.as_list

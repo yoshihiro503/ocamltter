@@ -74,6 +74,8 @@ let maybe f x =
   try `Val (f x) with e -> `Err e
 let value = function
     `Val v -> v | `Err e -> raise e
+let value_or default = function
+  | `Val v -> v | `Err _ -> default
 
 let some x = Some x
 let none = None
