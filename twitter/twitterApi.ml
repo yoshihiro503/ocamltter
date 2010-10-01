@@ -98,7 +98,7 @@ let rec json2tweet j =
       Json.getf "created_at" j |> Json.as_string |> parse_date
     in
     let text j =
-      Json.getf "text" j |> Json.as_string
+      Json.getf "text" j |> Json.as_string |> Http.html_decode
     in
     let id j =
       Json.getf "id" j |> Json.as_float |> Int64.of_float
@@ -280,7 +280,9 @@ let search ?(rpp=20) word =
     |> List.map (fun j ->
       let d = parse_date @@ Json.as_string @@ Json.getf "created_at" j in
       let sname = Json.as_string @@ Json.getf "from_user" j in
-      let text = "{"^word^"}" ^ Json.as_string @@ Json.getf "text" j in
+      let text = "{"^word^"}" ^
+	Http.html_decode @@ Json.as_string @@ Json.getf "text" j
+      in
       let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
       let client =
 	Xml.parse_string @@ Http.html_decode @@ Json.as_string
