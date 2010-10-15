@@ -107,7 +107,8 @@ let rec json2tweet j =
       Json.getf "user" j |> Json.getf "screen_name" |> Json.as_string
     in
     let client j =
-      Json.getf "source" j |> Json.as_string |> Xml.parse_string
+      Json.getf "source" j |> Json.as_string |> Option.maybe Xml.parse_string
+        |> Option.get_or_else (Xml.PCData "ParseERROR")
     in
 (*    let reply j = Json.getf "in_reply_to_screen_name" j |> Json.as_string in*)
     let base j = {
@@ -151,7 +152,7 @@ let twitter_without_auth ?(host="api.twitter.com") meth cmd params =
 (** {7 Timeline Methods} *)
 
 let home_timeline ?since_id ?count oauth =
-  let params = [("since_id",since_id); ("count", option_map sint count)]
+  let params = [("since_id",since_id); ("count", Option.map sint count)]
       |> list_filter_map (function
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
@@ -160,7 +161,7 @@ let home_timeline ?since_id ?count oauth =
     |> json2timeline
 
 let user_timeline ?since_id ?count oauth sname =
-  let params = [("since_id",since_id); ("count", option_map sint count);
+  let params = [("since_id",since_id); ("count", Option.map sint count);
 		("screen_name", Some sname)]
       |> list_filter_map (function
 	| (key, Some v) -> Some (key, v)

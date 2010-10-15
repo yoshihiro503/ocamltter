@@ -24,14 +24,20 @@ val iteri : (int -> 'a -> 'b) -> 'a list -> unit
 type ('a, 'b) either = Inl of 'a | Inr of 'b
 val list_of_hash : ('a, 'b) Hashtbl.t -> ('a * 'b) list
 val list_filter_map : ('a -> 'b option) -> 'a list -> 'b list
-val maybe : ('a -> 'b) -> 'a -> [> `Err of exn | `Val of 'b ]
-val value : [< `Err of exn | `Val of 'a ] -> 'a
-val value_or : 'a -> [< `Err of exn | `Val of 'a ] -> 'a
-val some : 'a -> 'a option
-val none : 'a option
-val option_map : ('a -> 'b) -> 'a option -> 'b option
-val sopt : ('a -> string) -> 'a option -> string
-val opt_min : 'a option -> 'a option -> 'a option
+val maybe : ('a -> 'b) -> 'a -> ('b, exn) either
+val value : ('a, exn) either -> 'a
+val value_or : 'a -> ('a, exn) either -> 'a
+module Option :
+    sig
+      type 'a t = 'a option
+      val some : 'a -> 'a t
+      val none : 'a t
+      val map : ('a -> 'b) -> 'a t -> 'b t
+      val sopt : ('a -> string) -> 'a t -> string
+      val opt_min : 'a t -> 'a t -> 'a t
+      val maybe : ('a -> 'b) -> 'a -> 'b t
+      val get_or_else : 'a -> 'a t -> 'a
+    end
 val open_with : ('a -> 'b) * ('b -> 'c) -> 'a -> ('b -> 'd) -> 'd
 val open_in_with : string -> (in_channel -> 'a) -> 'a
 val open_out_with : string -> (out_channel -> 'a) -> 'a

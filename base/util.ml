@@ -71,28 +71,40 @@ let list_filter_map f xs =
     | None -> ys) [] xs
 
 let maybe f x =
-  try `Val (f x) with e -> `Err e
+  try Inl (f x) with e -> Inr e
 let value = function
-    `Val v -> v | `Err e -> raise e
+    Inl v -> v | Inr e -> raise e
 let value_or default = function
-  | `Val v -> v | `Err _ -> default
+  | Inl v -> v | Inr _ -> default
 
-let some x = Some x
-let none = None
+module Option = struct
+  type 'a t = 'a option
+  let some x = Some x
+  let none = None
+      
+  let of_either = function
+    | Inl x -> Some x
+    | Inr _ -> None
 
-let option_map f = function
-  | Some x -> Some (f x)
-  | None -> None
+  let map f = function
+    | Some x -> Some (f x)
+    | None -> None
 
-let sopt show = function
-  | Some x -> show x
-  | None -> "None"
+  let sopt show = function
+    | Some x -> show x
+    | None -> "None"
 
-let opt_min x y =
-  match x, y with
-  | Some x, Some y -> Some (min x y)
-  | x, None -> x
-  | None, y -> y
+  let opt_min x y =
+    match x, y with
+    | Some x, Some y -> Some (min x y)
+    | x, None -> x
+    | None, y -> y
+
+  let maybe f x = of_either @@ maybe f x
+  let get_or_else default = function
+    | Some x -> x
+    | None -> default
+end
 
 let open_with (opn, close) filepath f =
   let ch = opn filepath in

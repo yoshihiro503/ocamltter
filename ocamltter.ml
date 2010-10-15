@@ -7,8 +7,8 @@ module Tw = TwitterApi
 let oauth_acc : (string * string * string) option ref = ref None
 let conffile =
   match maybe Sys.getenv "HOME" with
-  | `Val home -> home ^ "/.ocamltter"
-  | `Err e -> ".ocamltter"
+  | Inl home -> home ^ "/.ocamltter"
+  | Inr e -> ".ocamltter"
 
 let authorize () = 
   let url, req_tok, req_sec = Tw.fetch_request_token () in
