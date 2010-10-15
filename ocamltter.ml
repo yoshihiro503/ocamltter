@@ -26,7 +26,7 @@ let authorize () =
   (acc_tok, acc_sec, verif)
 
 module Cache = struct
-  let max_size = 1000
+  let max_size = 10000
   type t = tweet Queue.t
   let init () : t = Queue.create ()
   let qfilter f q =
@@ -113,6 +113,11 @@ let del id =
 let qt st_id comment =
   let tw = get_tweet st_id in
   u (!%"%s QT @%s: %s" comment (sname tw) (text tw))
+
+let qtlink id s =
+  let t = show id in
+  let url = !%"http://twitter.com/%s/status/%Ld" (sname t) id in
+  u @@ s ^ " QT " ^ url;;
 
 let reqt st_id comment =
   let tw = get_tweet st_id in
