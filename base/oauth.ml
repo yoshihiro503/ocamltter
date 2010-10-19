@@ -1,9 +1,6 @@
 open Util
 open Http
-
-(*****************************)
-(*****************************)
-(*****************************)
+open Base64
 
 let opt_param name param =
   match param with
@@ -18,17 +15,10 @@ let string_of_http_method = function
   | GET -> "GET"
   | POST -> "POST"
 
-
 let string_of_signature_method = function
   | `Plaintext -> "PLAINTEXT"
   | `Hmac_sha1 -> "HMAC-SHA1"
   | `Rsa_sha1 _ -> "RSA-SHA1"
-
-let signature_method_of_string rsa_key = function
-  | "PLAINTEXT" -> `Plaintext
-  | "HMAC-SHA1" -> `Hmac_sha1
-  | "RSA-SHA1"  -> `Rsa_sha1 (rsa_key ())
-  | _ -> raise Not_found
 
 let normalize_url url =
 (*  let url = Neturl.parse_url ~enable_fragment:true url in
@@ -46,12 +36,8 @@ let make_nonce () =
   Cryptokit.Random.string rng 16 |>
       Cryptokit.transform_string (Cryptokit.Hexa.encode ())
 
-let base64_encode v =
-  let b64 = Cryptokit.transform_string (Cryptokit.Base64.encode_compact ()) v in
-  b64 ^ "="
-
-let base64_decode v =
-  Cryptokit.transform_string (Cryptokit.Base64.decode ()) v
+let base64_encode v = Base64.encode v
+let base64_decode v = Base64.decode v
 
 let hmac_sha1_hash text key =
   text |>
@@ -146,7 +132,6 @@ let sign
       ~oauth_timestamp ~oauth_nonce ~oauth_version
       ?params
       () in
-(*  print_endline ("sigbasestring="^signature_base_string);*)
   match oauth_signature_method with
     | `Plaintext -> rfc3986_encode key
     | `Hmac_sha1 -> hmac_sha1_hash signature_base_string key
@@ -184,10 +169,6 @@ let check_signature
     | `Hmac_sha1 -> hmac_sha1_hash signature_base_string key = oauth_signature
     | `Rsa_sha1 rsa_key -> check_rsa_sha1_hash signature_base_string rsa_key oauth_signature
 
-(****************)
-(****************)
-(****************)
-
   let authorization_header
       ~oauth_version ~oauth_signature_method ~oauth_signature
       ~oauth_consumer_key ?oauth_token
@@ -206,9 +187,10 @@ let check_signature
         opt_param "oauth_token" oauth_token in
 
     "Authorization",
-    (params |>
-        List.map (fun (k, v) -> k ^ "=\"" ^ String.escaped (rfc3986_encode v) ^ "\"") |>
-            String.concat ",")
+    (params
+        |> List.map (fun (k, v) ->
+	    k ^ "=\"" ^ String.escaped (rfc3986_encode v) ^ "\"")
+	|> String.concat ",")
 
 
 let fetch_request_token
@@ -236,23 +218,6 @@ let fetch_request_token
     ] in
     Http.conn host (http_method) ~headers:headers path []
 
-(*
-let () =
-  fetch_request_token ~http_method:GET ~url:url
-    ~oauth_consumer_key:oauth_consumer_key
-    ~oauth_consumer_secret:oauth_consumer_secret
-    ()
-    (fun _ ch ->
-  let s = slist "\n" id (read_all ch) in
-  match Str.split(Str.regexp"&") s +> List.map (Str.split (Str.regexp "=")) with
-  | [_;token]::[_;secret]::_ ->
-    oauth_token := token;
-    oauth_token_secret := secret;
-  print_endline ("token="^token);
-  print_endline("secret="^secret);
-    print_endline ("http://twitter.com/oauth/authorize?oauth_token="^token)
-  | _ -> ())
-*)
 
 let authorization_header2
       ~oauth_version ~oauth_signature_method ~oauth_signature
@@ -276,10 +241,10 @@ let authorization_header2
     in
 
     "Authorization",
-    (params |>
-        List.map (fun (k, v) -> k ^ "=\"" ^ String.escaped (rfc3986_encode v) ^ "\"") |>
-            String.concat ",")
-
+    (params
+        |> List.map (fun (k, v) ->
+	    k ^ "=\"" ^ String.escaped (rfc3986_encode v) ^ "\"")
+        |> String.concat ",")
 
 
 let fetch_access_token
@@ -309,20 +274,6 @@ let fetch_access_token
         ()
     ] in
     Http.conn host (http_method) ~headers:headers path []
-
-(*
-let () =
-  let verif = read_line() in
-(*  let verif = "0140228" in*)
-  fetch_access_token ~http_method:GET ~url:url
-    ~oauth_consumer_key:oauth_consumer_key
-    ~oauth_consumer_secret:oauth_consumer_secret
-    ~oauth_token:!oauth_token
-    ~oauth_token_secret:!oauth_token_secret
-    ~verif:verif
-    ()
-    (fun _ ch -> print_endline(slist "\n" id (read_all ch)))
-*)
 
 
 let access_resource
