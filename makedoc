@@ -2,17 +2,15 @@
 prevdir=`pwd`
 ocamltterhome=`dirname $0`
 cd $ocamltterhome
-incl='-I +threads -I base -I twitter'
+incl='-I +cryptokit -I +site-lib/cryptokit -I +threads -I base -I twitter'
 ocamlc -c ${incl} \
     base/util.mli base/base64.mli base/utf16.mli base/llist.mli \
-    base/parserMonad.mli base/json.mli base/http.mli base/oauth.mli \
+    base/parserMonad.mli base/json.mli base/xml.mli \
+    base/http.mli base/oauth.mli \
     twitter/oauthForTwitter.mli twitter/twitterApi.mli \
     config.mli ocamltter.mli
 mkdir -p doc
 ocamldoc -html -d doc ${incl} \
-    base/util.mli base/base64.mli base/utf16.mli base/llist.mli \
-    base/parserMonad.mli base/json.mli base/http.mli base/oauth.mli \
     twitter/oauthForTwitter.mli twitter/twitterApi.mli \
     config.mli ocamltter.mli
-rm -f *.cm[io] base/*.cm[io] twitter/*.cm[io] top
 cd $prevdir
