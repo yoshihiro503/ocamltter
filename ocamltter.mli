@@ -26,6 +26,8 @@ val u : string -> unit
 val rt : TwitterApi.status_id -> unit
 val re : TwitterApi.status_id -> string -> unit
 val qt : TwitterApi.status_id -> string -> unit
+val qtlink : TwitterApi.status_id -> string -> unit
+val reqt : TwitterApi.status_id -> string -> unit
 val del : TwitterApi.status_id -> unit
 
 val follow : string -> unit
