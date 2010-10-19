@@ -14,8 +14,6 @@ and tweet_base =
   {date:Date.t; sname:string; id:status_id; client:Xml.xml; text:string;
    json:Json.t}
 
-type token = string * string * string
-
 val date : tweet -> Util.Date.t
 val sname : tweet -> string
 val status_id : tweet -> status_id
@@ -29,7 +27,7 @@ val tw_compare : tweet -> tweet -> int
 (** {6 basic operations for twitter} *)
 
 val twitter :
-  token ->
+    OauthForTwitter.token ->
   ?host:string -> Http.meth -> string -> (string * string) list -> Json.t
 (** [twitter (tok,secret,verif) method path parameters] *)
 
@@ -42,42 +40,42 @@ val twitter_without_auth :
 (** {7 Timeline Methods} *)
 
 val home_timeline :
-  ?since_id:string -> ?count:int -> token -> tweet list
+  ?since_id:string -> ?count:int -> OauthForTwitter.token -> tweet list
 
 val user_timeline :
   ?since_id:string ->
-  ?count:int -> token -> string -> tweet list
+  ?count:int -> OauthForTwitter.token -> string -> tweet list
 
 val show : status_id -> tweet
 
 val get_tweet : status_id -> tweet
 (** same as [show] *)
 
-val mentions : token -> int -> tweet list
+val mentions : OauthForTwitter.token -> int -> tweet list
 
 (** {7 Status Methods} *)
 
 val update :
   ?in_reply_to_status_id:string ->
-  token -> string -> Json.t
+  OauthForTwitter.token -> string -> Json.t
 
-val destroy : token -> status_id -> Json.t
-val retweet : token -> string -> Json.t
+val destroy : OauthForTwitter.token -> status_id -> Json.t
+val retweet : OauthForTwitter.token -> string -> Json.t
 
 (** {7 User Methods} *)
 
-val users_lookup : token -> string -> Json.t
-val users_lookup_uid : token -> string -> Json.t
+val users_lookup : OauthForTwitter.token -> string -> Json.t
+val users_lookup_uid : OauthForTwitter.token -> string -> Json.t
 
 (** {7 Friendship Methods} *)
 
-val friendship_create : token -> string -> Json.t
-val friendship_destroy : token -> string -> Json.t
+val friendship_create : OauthForTwitter.token -> string -> Json.t
+val friendship_destroy : OauthForTwitter.token -> string -> Json.t
 
 (** {7 Social Graph Methods} *)
 
-val friends : ?sname:string -> token -> Json.t
-val followers : ?sname:string -> token -> Json.t
+val friends : ?sname:string -> OauthForTwitter.token -> Json.t
+val followers : ?sname:string -> OauthForTwitter.token -> Json.t
 
 (** {7 Account Methods} *)
 
@@ -85,19 +83,19 @@ val rate_limit_status : unit -> Json.t
 
 (** {7 Favorite Methods} *)
 
-val favorites : ?sname:string -> token -> Json.t
-val favorites_create : token -> status_id -> Json.t
-val favorites_destroy : token -> status_id -> Json.t
+val favorites : ?sname:string -> OauthForTwitter.token -> Json.t
+val favorites_create : OauthForTwitter.token -> status_id -> Json.t
+val favorites_destroy : OauthForTwitter.token -> status_id -> Json.t
 
 (** {7 Spam Reporting Methods} *)
 
-val report_spam : token -> string -> Json.t
+val report_spam : OauthForTwitter.token -> string -> Json.t
 
 (** {7 OAuth Methods} *)
 
-val fetch_request_token : unit -> token
+val fetch_request_token : unit -> OauthForTwitter.token
 val fetch_access_token :
-  string -> string -> string -> token
+  string -> string -> string -> OauthForTwitter.token
 
 (** {7 Help Methods} *)
 

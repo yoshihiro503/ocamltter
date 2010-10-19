@@ -2,6 +2,8 @@ open Util
 open Http
 open Oauth
 
+type token = string * string * string
+
 let ocamltter_consumer_key = "vS0nKAS6ieWL76zZaQgF4A"
 let ocamltter_consumer_secret = "XHa1ZiPcNRsYKw4mdIv8wHUiNulpBFxKT1ntXXuJgo"
 
@@ -55,3 +57,5 @@ let fetch_access_token req_token req_secret verif =
         assoc "screen_name" res
       in user, acc_token, acc_secret
     )
+
+let access = Oauth.access

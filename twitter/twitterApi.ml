@@ -2,9 +2,8 @@ open Util
 open Util.Date
 open Http
 open Json
-open Oauth
-open OauthForTwitter
 open Xml
+module TwOauth = OauthForTwitter
 
 exception TwErr of string
 
@@ -135,9 +134,9 @@ let parse_json ch =
   Json.parse_ch ch
 
 let twitter (tok,sec,verif) ?(host="api.twitter.com") meth cmd params =
-  let oauth = OauthForTwitter.oauth(tok,sec,verif) in
+  let oauth = TwOauth.oauth(tok,sec,verif) in
   let f () =
-    Oauth.access oauth meth host cmd params (fun _ ch -> parse_json ch)
+    TwOauth.access oauth meth host cmd params (fun _ ch -> parse_json ch)
   in
   catch_twerr f ()
 
@@ -263,8 +262,8 @@ let report_spam oauth sname =
 
 (** {7 OAuth Methods} *)
 
-let fetch_request_token = OauthForTwitter.fetch_request_token
-let fetch_access_token  = OauthForTwitter.fetch_access_token
+let fetch_request_token = TwOauth.fetch_request_token
+let fetch_access_token  = TwOauth.fetch_access_token
 
 (** {7 Help Methods} *)
 
