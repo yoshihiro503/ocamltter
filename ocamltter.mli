@@ -21,6 +21,7 @@ val l : ?c:int -> ?u:string -> unit -> TwitterApi.tweet list
 val lc : int -> TwitterApi.tweet list
 val lu : string -> TwitterApi.tweet list
 val m : ?c:int -> unit -> TwitterApi.tweet list
+val kwsk : TwitterApi.status_id -> TwitterApi.tweet list
 
 val u : string -> unit
 val rt : TwitterApi.status_id -> unit

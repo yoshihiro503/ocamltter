@@ -96,6 +96,14 @@ let lu user  = l ~u:user  ()
 let m ?(c=20) () : Tw.tweet list =
   print_endline "loading..."; flush stdout;
   tw_sort @@ Tw.mentions (oauth()) c
+
+let kwsk id =
+  let rec iter store id =
+    match show id with
+    | RE(_, re_id) as t -> iter (t :: store) re_id
+    | t -> t :: store
+  in
+  iter [] id
     
 let u text =
   ignore @@ Tw.update (oauth()) text
