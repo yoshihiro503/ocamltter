@@ -11,9 +11,9 @@ let show xml =
   let rec iter d = function
     | Tag (name,attrs,body) ->
 	indent d ^ "<"^name^" "^slist " " (fun(k,v)->k^"="^v) attrs^">\n"
-	^slist "" (iter (d+1)) body
-	^indent d^"</"^name^">\n"
-    | PCData s -> indent d ^ "PCData("^s^")\n"
+	^slist "\n" (iter (d+1)) body
+	^indent d^"</"^name^">"
+    | PCData s -> indent d ^ "PCData("^s^")"
   in
   iter 0 xml
 	    

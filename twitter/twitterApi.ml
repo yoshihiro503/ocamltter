@@ -106,8 +106,9 @@ let rec json2tweet j =
       Json.getf "user" j |> Json.getf "screen_name" |> Json.as_string
     in
     let client j =
-      Json.getf "source" j |> Json.as_string |> Option.maybe Xml.parse_string
-        |> Option.get_or_else (Xml.PCData "ParseERROR")
+(*      Json.getf "source" j |> Json.as_string |> Option.maybe Xml.parse_string
+        |> Option.get_or_else (Xml.PCData "ParseERROR")*)
+      Xml.PCData""
     in
 (*    let reply j = Json.getf "in_reply_to_screen_name" j |> Json.as_string in*)
     let base j = {
