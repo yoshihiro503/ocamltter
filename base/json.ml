@@ -116,7 +116,13 @@ let lit_string =
       let n = int_of_string ("0x" ^ Utf16.utf16c_to_utf8c s) in
       let m, n1 = n / (16*16), n mod (16*16) in
       let n3,n2 = m / (16*16), m mod (16*16) in
-      let cs = List.map char_of_int @@ if n3=0 then [n2;n1] else [n3;n2;n1] in
+      let cs = List.map char_of_int
+	begin match [n3;n2;n1] with
+	| [0; 0; _] ->         [n1]
+	| [0; _; _] ->     [n2; n1]
+	| _         -> [n3; n2; n1]
+	end
+      in
       return (string_of_chars cs)
   in
   let lit_char =
