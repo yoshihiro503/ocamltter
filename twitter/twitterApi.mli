@@ -35,6 +35,10 @@ val twitter_without_auth :
   ?host:string -> Http.meth -> string -> (string * string) list -> Json.t
 (** [twitter_without_auth] *)
 
+val twitter_low :
+  ?host:string -> Http.meth -> string -> (string * string) list -> string
+(** [twitter_without_auth for debug *)
+
 (** {6 APIs} *)
 
 (** {7 Timeline Methods} *)
@@ -47,6 +51,8 @@ val user_timeline :
   ?count:int -> OauthForTwitter.token -> string -> tweet list
 
 val show : status_id -> tweet
+
+val show_low : status_id -> string
 
 val get_tweet : status_id -> tweet
 (** same as [show] *)

@@ -147,6 +147,9 @@ let twitter_without_auth ?(host="api.twitter.com") meth cmd params =
   in
   catch_twerr f ()
 
+let twitter_low ?(host="api.twitter.com") meth cmd params =
+  Http.conn host meth cmd params (fun _ ch -> String.concat "\n" @@ read_all ch)
+
 (** {6 APIs} *)
 
 (** {7 Timeline Methods} *)
@@ -173,6 +176,9 @@ let user_timeline ?since_id ?count oauth sname =
 let show status_id =
   twitter_without_auth GET (!%"/1/statuses/show/%Ld.json" status_id) []
     |> json2tweet
+
+let show_low status_id =
+  twitter_low GET (!%"/1/statuses/show/%Ld.json" status_id) []
 
 let get_tweet = show
 
