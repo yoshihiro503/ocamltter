@@ -100,7 +100,7 @@ let rec json2tweet j =
       Json.getf "text" j |> Json.as_string |> Http.html_decode
     in
     let id j =
-      Json.getf "id" j |> Json.as_float |> Int64.of_float
+      Json.getf "id_str" j |> Json.as_string |> Int64.of_string
     in
     let sname j =
       Json.getf "user" j |> Json.getf "screen_name" |> Json.as_string
@@ -114,9 +114,9 @@ let rec json2tweet j =
       date=date j; sname=sname j; id=id j; client=client j;
       text=text j; json=j
     } in
-    match getf_opt "retweeted_status" j, getf_opt "in_reply_to_status_id" j with
+    match getf_opt "retweeted_status" j, getf_opt "in_reply_to_status_id_str" j with
     | Some rt, _ -> RT (base j, base rt)
-    | _, Some (Number f) -> RE (base j, Int64.of_float f)
+    | _, Some (String f) -> RE (base j, Int64.of_string f)
     | _ -> U (base j)
 
 let json2timeline j =
