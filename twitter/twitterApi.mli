@@ -37,7 +37,7 @@ val twitter_without_auth :
 
 val twitter_low :
   ?host:string -> Http.meth -> string -> (string * string) list -> string
-(** [twitter_without_auth for debug *)
+(** [twitter_without_auth for debug] *)
 
 (** {6 APIs} *)
 
