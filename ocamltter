@@ -1,7 +1,6 @@
 #!/bin/sh
-prevdir=`pwd`
 ocamltterhome=`dirname $0`
-cd $ocamltterhome
+pushd $ocamltterhome
 incl='-I +cryptokit -I +site-lib/cryptokit -I +threads -I base -I twitter'
 ocamlc -c ${incl} \
     base/util.mli base/base64.mli base/utf16.mli base/llist.mli \
@@ -17,4 +16,4 @@ ocamlmktop -o ocamltter_top ${incl} \
     config.ml ocamltter.ml
 ./ocamltter_top ${incl}
 rm -f *.cm[io] base/*.cm[io] twitter/*.cm[io] ocamltter_top
-cd $prevdir
+popd
