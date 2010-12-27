@@ -289,7 +289,7 @@ let search ?(rpp=20) word =
       let text = "{"^word^"}" ^
 	Http.html_decode @@ Json.as_string @@ Json.getf "text" j
       in
-      let id = Int64.of_float @@ Json.as_float @@ Json.getf"id" j in
+      let id = Int64.of_string @@ Json.as_string @@ Json.getf"id_str" j in
       let client =
 	Xml.parse_string @@ Http.html_decode @@ Json.as_string
 	@@ Json.getf "source" j
