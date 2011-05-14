@@ -5,10 +5,7 @@ open Http
 module Tw = TwitterApi
 
 let oauth_acc : (string * string * string) option ref = ref None
-let conffile =
-  match maybe Sys.getenv "HOME" with
-  | Inl home -> home ^ "/.ocamltter"
-  | Inr e -> ".ocamltter"
+let config_file = ref "Assign a conf filename."
 
 let authorize () = 
   let url, req_tok, req_sec = Tw.fetch_request_token () in
@@ -21,7 +18,7 @@ let authorize () =
   in
   oauth_acc := Some (acc_tok, acc_sec, verif);
   print_endline ("Grant Success! Hello, @"^username^" !");
-  open_out_with conffile (fun ch ->
+  open_out_with !config_file (fun ch ->
     output_string ch (acc_tok^"\n"^acc_sec^"\n"^verif^"\n"));
   (acc_tok, acc_sec, verif)
 
@@ -41,7 +38,7 @@ module Cache = struct
     Queue.push tw cache
 end
 
-let load () = open_in_with conffile (fun ch ->
+let load () = open_in_with !config_file (fun ch ->
   let tok = input_line ch in let sec=input_line ch in let verif=input_line ch in
   let acc=(tok,sec,verif) in
   oauth_acc := Some acc; acc)

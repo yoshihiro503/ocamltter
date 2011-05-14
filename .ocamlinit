@@ -11,5 +11,10 @@ let print_tweet p (tw:TwitterApi.tweet) =
 #install_printer print_string_literal;;
 #install_printer print_tweet;;
 
+config_file :=
+  match maybe Sys.getenv "HOME" with
+  | Inl home -> home ^ "/.ocamltter"
+  | Inr e -> ".ocamltter";;
+
 setup();;
 start_polling ();;

@@ -1,6 +1,6 @@
 
 val oauth_acc : (string * string * string) option ref
-val conffile : string
+val config_file : string ref
 val authorize : unit -> string * string * string
 module Cache :
   sig
