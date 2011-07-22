@@ -202,6 +202,7 @@ let update ?(in_reply_to_status_id) oauth text =
 	| (_, None) -> None)
   in
   twitter oauth POST "/1/statuses/update.json" params
+    |> json2tweet
 
 let destroy oauth status_id =
   twitter oauth POST (!%"/1/statuses/destroy/%Ld.json" status_id) []

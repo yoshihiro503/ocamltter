@@ -103,14 +103,15 @@ let kwsk id =
   iter [] id
     
 let u text =
-  ignore @@ Tw.update (oauth()) text
+  Tw.update (oauth()) text |> Tw.status_id
 
 let re status_id text =
-  ignore @@ Tw.update ~in_reply_to_status_id:(Int64.to_string status_id)
-    (oauth()) text
+  Tw.update ~in_reply_to_status_id:(Int64.to_string status_id) (oauth()) text
+  |> Tw.status_id
+    
 
 let rt status_id =
-  ignore @@ Tw.retweet (oauth()) (Int64.to_string status_id)
+  Tw.retweet (oauth()) (Int64.to_string status_id) |> ignore
 
 let del id =
   ignore @@ Tw.destroy (oauth()) id

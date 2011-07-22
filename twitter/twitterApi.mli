@@ -63,7 +63,7 @@ val mentions : OauthForTwitter.token -> int -> tweet list
 
 val update :
   ?in_reply_to_status_id:string ->
-  OauthForTwitter.token -> string -> Json.t
+  OauthForTwitter.token -> string -> tweet
 
 val destroy : OauthForTwitter.token -> status_id -> Json.t
 val retweet : OauthForTwitter.token -> string -> Json.t

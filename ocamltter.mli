@@ -23,12 +23,12 @@ val lu : string -> TwitterApi.tweet list
 val m : ?c:int -> unit -> TwitterApi.tweet list
 val kwsk : TwitterApi.status_id -> TwitterApi.tweet list
 
-val u : string -> unit
+val u : string -> TwitterApi.status_id
 val rt : TwitterApi.status_id -> unit
-val re : TwitterApi.status_id -> string -> unit
-val qt : TwitterApi.status_id -> string -> unit
-val qtlink : TwitterApi.status_id -> string -> unit
-val reqt : TwitterApi.status_id -> string -> unit
+val re : TwitterApi.status_id -> string -> TwitterApi.status_id
+val qt : TwitterApi.status_id -> string -> TwitterApi.status_id
+val qtlink : TwitterApi.status_id -> string -> TwitterApi.status_id
+val reqt : TwitterApi.status_id -> string -> TwitterApi.status_id
 val del : TwitterApi.status_id -> unit
 
 val follow : string -> unit
