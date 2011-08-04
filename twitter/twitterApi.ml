@@ -218,6 +218,9 @@ let users_lookup oauth sname =
 let users_lookup_uid oauth uid =
   twitter oauth GET "/1/users/lookup.json" [("user_id", uid)]
 
+let users_search oauth word page =
+  twitter oauth GET "/1/users/search.json" [("q", word); ("page", !%"%d" page)]
+
 (** {7 Friendship Methods} *)
 
 let friendship_create oauth sname =

@@ -72,6 +72,7 @@ val retweet : OauthForTwitter.token -> string -> Json.t
 
 val users_lookup : OauthForTwitter.token -> string -> Json.t
 val users_lookup_uid : OauthForTwitter.token -> string -> Json.t
+val users_search: OauthForTwitter.token -> string -> int -> Json.t
 
 (** {7 Friendship Methods} *)
 
