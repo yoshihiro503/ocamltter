@@ -11,3 +11,4 @@ let watching_words =
     
 let coffee_break = ref 30.0 (* second *)
 
+let talk = ref false

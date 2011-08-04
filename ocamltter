@@ -11,13 +11,14 @@ fi
 ocamlc -c ${incl} \
     base/util.mli base/base64.mli base/utf16.mli base/llist.mli \
     base/parserMonad.mli base/json.mli base/xml.mli \
-    base/http.mli base/oauth.mli \
+    base/http.mli base/oauth.mli base/googleTTS.mli \
     twitter/oauthForTwitter.mli twitter/twitterApi.mli \
     config.mli ocamltter.mli
 ocamlmktop -o ocamltter_top ${incl} \
     unix.cma nums.cma str.cma  threads.cma cryptokit.cma \
     base/util.ml base/base64.ml base/utf16.ml base/llist.ml \
     base/parserMonad.ml base/json.ml base/xml.ml base/http.ml base/oauth.ml \
+    base/googleTTS.ml \
     twitter/oauthForTwitter.ml twitter/twitterApi.ml \
     config.ml ocamltter.ml
 ./ocamltter_top ${incl} -init $initfile

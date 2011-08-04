@@ -3,6 +3,7 @@ open Util.Date
 open TwitterApi
 open Http
 module Tw = TwitterApi
+module TTS = GoogleTTS
 
 let oauth_acc : (string * string * string) option ref = ref None
 let config_file = ref "Assign a conf filename."
@@ -182,15 +183,18 @@ let start_polling () =
 	let tl =
 	  List.filter (Cache.is_new cache) (get_timeline ~c:c verbose)
 	in
-	List.iter (Cache.add cache) tl;
-	print_timeline tl
+	List.iter begin fun t ->
+          Cache.add cache t;
+	  print_endline (Tw.show_tweet t);
+          if !Config.talk then TTS.say_ja (!%"%s, %s" (sname t) (text t));
+        end tl
       with e -> print_endline (Printexc.to_string e);
       end;
       Thread.delay !Config.coffee_break;
       loop false 20 (* verbose is only true at first time *)
     end
   in
-  let t = Thread.create (fun () -> loop true 100) in
+  let t = Thread.create (fun () -> loop true 20) in
   t ()
 
 (* see .ocamlinit *)
