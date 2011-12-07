@@ -139,6 +139,8 @@ let unfollow sname =
 let fav id =
   ignore @@ Tw.favorites_create (oauth()) id
 
+let frt id = fav id; rt id
+
 let report_spam sname =
   ignore @@ Tw.report_spam (oauth()) sname
 
