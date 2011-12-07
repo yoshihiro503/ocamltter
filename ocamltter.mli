@@ -35,6 +35,7 @@ val follow : string -> unit
 val unfollow : string -> unit
 
 val fav : TwitterApi.status_id -> unit
+val frt : TwitterApi.status_id -> unit
 
 val report_spam : string -> unit
 
