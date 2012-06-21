@@ -1,39 +1,33 @@
+The OCAMLTTER twitter client
+============================
 
-              THE OCAMLTTER TWITTER CLIENT
-              ============================
-
-LICENSE
-=======
+License
+-------
 
         MIT License: see the MIT-LICENSE file
 
 
-REQUIREMENT
-===========
+Requirements
+------------
 	
-	You need:
-
-           - Objective Caml 3.10, 3.11 or 3.12.0
-             (available at http://caml.inria.fr/)
-
-           - Cryptokit 1.3 or 1.4
-             (available at http://pauillac.inria.fr/~xleroy/software.html)
+* [OCaml](http://caml.inria.fr/) >= 3.10
+* [Cryptokit](http://pauillac.inria.fr/~xleroy/software.html) >= 1.3
 
 
-INSTALLATION
-============
+Installation
+------------
 
-        Nothing to do.
+Nothing to do.
 
 
-HOW TO USE
-==========
+How to use
+----------
 
-        1. Run
+#### Run
 
            $ ./ocamltter
 
-        2. You can use following commands:
+#### You can use following commands:
 
            - l();;                 list timeline
            - lc COUNT;;            list timeline (COUNT lines)
@@ -53,21 +47,19 @@ HOW TO USE
            - let CMD = ...;;       define a your own command CMD
            - help;;                print the help
 	   
-        3. You may modify the config.ml
-           - You can set your twitter id
-	   - You can set your interesting keywords
-	   - You can set ignored users
+#### You may modify the config.ml
+* You can set your twitter id
+* You can set your interesting keywords
+* You can set ignored users
 
-        4. Quit
+#### Quit
 
             #quit;;  or  ^D
 
 
-BUGS REPORT
-===========
+Bugs report
+-----------
 
-        Send your bug reports at
-
-          y.imai at ocaml.jp
-
+* y.imai at ocaml.jp
+* [@yoshihiro503](http://twitter.com/yoshihiro503)
 	
