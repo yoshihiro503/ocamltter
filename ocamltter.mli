@@ -27,6 +27,7 @@ val u : string -> TwitterApi.status_id
 val rt : TwitterApi.status_id -> unit
 val re : TwitterApi.status_id -> string -> TwitterApi.status_id
 val qt : TwitterApi.status_id -> string -> TwitterApi.status_id
+val link : TwitterApi.status_id -> string
 val qtlink : TwitterApi.status_id -> string -> TwitterApi.status_id
 val reqt : TwitterApi.status_id -> string -> TwitterApi.status_id
 val del : TwitterApi.status_id -> unit
@@ -40,7 +41,7 @@ val frt : TwitterApi.status_id -> unit
 val report_spam : string -> unit
 
 val s : string -> TwitterApi.tweet list
-val limit : unit -> Json.t
+val limit_status : unit -> Json.t
 val help : string
 
 val stop_polling : unit -> unit

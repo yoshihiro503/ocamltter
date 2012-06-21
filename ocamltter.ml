@@ -121,10 +121,12 @@ let qt st_id comment =
   let tw = get_tweet st_id in
   u (!%"%s QT @%s: %s" comment (sname tw) (text tw))
 
-let qtlink id s =
+let link id =
   let t = show id in
-  let url = !%"http://twitter.com/%s/status/%Ld" (sname t) id in
-  u @@ s ^ " QT " ^ url;;
+  !%"http://twitter.com/%s/status/%Ld" (sname t) id
+  
+let qtlink id s =
+  u @@ s ^ " QT " ^ link id;;
 
 let reqt st_id comment =
   let tw = get_tweet st_id in
@@ -146,7 +148,7 @@ let report_spam sname =
 
 let s word = List.sort tw_compare @@ Tw.search ~rpp:100 word
 
-let limit () = Tw.rate_limit_status ()
+let limit_status () = Tw.rate_limit_status ()
 
 let help =
 "commands:
@@ -157,18 +159,24 @@ let help =
   u \"TEXT\"             post a new message
   re ID \"TEXT\"         reply to ID
   del ID               delete tweet of ID
-  rt ID                retweet ID
+  rt ID                retweet to ID
   qt ID \"TEXT\"         qt ID
+  qtlink ID \"TEXT\"     qt with link for ID
   follow \"NAME\"        follow NAME
   unfollow \"NAME\"      unfollow NAME
   fav ID               mark ID as favorites
+  frt ID               fav ID and rt ID
   report_spam \"NAME\"   report NAME as a spam user
   s \"WORD\"             search tweets by a WORD
-  let CMD = ...        define a your own command CMD
+  show ID              show the tweet of ID
+  link ID              link for the tweet of ID
+  kwsk ID              show the convesation about ID
   setup()              (re)authorize ocamltter
-  help                 print this help
   start_polling ()     start polling
   stop_polling ()      stop polling
+  limit_status ()      rate limit status of API
+  let CMD = ...        define a your own command CMD
+  help                 print this help
   #quite               quite ocamltter
 "
 
