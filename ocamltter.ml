@@ -53,13 +53,13 @@ let setup () = ignore(oauth())
 
 let tw_sort = List.sort Tw.tw_compare
 
-let get_timeline ?(c=20) verbose =
+let get_timeline ?(c=20) ?since_id verbose =
   try
     let tl1 =
       let search word =
 	if verbose then
           (print_string (!%"searching with '%s'... " word); flush stdout);
-	let ts = value_or [] @@ maybe (Tw.search ~rpp:c) word in
+	let ts = value_or [] @@ maybe (Tw.search ~rpp:c ?since_id) word in
 	if verbose then
           (print_endline (!%"%d" (List.length ts)); flush stdout);
 	ts
@@ -187,21 +187,32 @@ let stop_polling ()  = is_polling_on := false
 let start_polling () =
   is_polling_on := true;
   let cache = Cache.init () in
-  let rec loop verbose c =
+  let rec loop ?last_id verbose c =
     if !is_polling_on = true then begin
-      begin try
+      let get () =
 	let tl =
-	  List.filter (Cache.is_new cache) (get_timeline ~c:c verbose)
+	  List.filter (Cache.is_new cache)
+            (get_timeline ~c:c ?since_id:last_id verbose)
 	in
 	List.iter begin fun t ->
           Cache.add cache t;
-	  print_endline (Tw.show_tweet t);
-          if !Config.talk then TTS.say_ja (!%"%s, %s" (sname t) (text t));
-        end tl
-      with e -> print_endline (Printexc.to_string e);
-      end;
+        end tl;
+        tl
+      in
+      let last_id = match maybe get () with
+      | Inl tl when List.length tl > 0 ->
+          List.iter begin fun t ->
+	    print_endline (Tw.show_tweet t);
+            if !Config.talk then TTS.say_ja (!%"%s, %s" (sname t) (text t));
+          end tl;
+          print_endline "";
+          Some (list_last tl |> Tw.status_id)
+      | Inl _ -> print_string "."; flush stdout; last_id
+      | Inr e -> print_endline (Printexc.to_string e);
+          last_id
+      in
       Thread.delay !Config.coffee_break;
-      loop false 20 (* verbose is only true at first time *)
+      loop false 20 ?last_id (* verbose is only true at first time *)
     end
   in
   let t = Thread.create (fun () -> loop true 20) in

@@ -13,7 +13,8 @@ val load : unit -> string * string * string
 val oauth : unit -> string * string * string
 val setup : unit -> unit
 val tw_sort : TwitterApi.tweet list -> TwitterApi.tweet list
-val get_timeline : ?c:int -> bool -> TwitterApi.tweet list
+val get_timeline : ?c:int -> ?since_id:TwitterApi.status_id -> bool ->
+  TwitterApi.tweet list
 val print_timeline : TwitterApi.tweet list -> unit
 val reload : unit -> TwitterApi.tweet list
 
