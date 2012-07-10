@@ -11,6 +11,8 @@ val ( !$ ) : 'a Lazy.t -> 'a
 val ( -- ) : int -> int -> int list
 val repeat : int -> ('a -> 'b) -> 'a -> unit
 val list_concatmap : ('a -> 'b list) -> 'a list -> 'b list
+val list_head : 'a list -> 'a
+val list_last : 'a list -> 'a
 val sint : int -> string
 val sfloat : float -> string
 val sbool : bool -> string
@@ -37,6 +39,7 @@ module Option :
       val opt_min : 'a t -> 'a t -> 'a t
       val maybe : ('a -> 'b) -> 'a -> 'b t
       val get_or_else : 'a -> 'a t -> 'a
+      val cat_options : 'a option list -> 'a list
     end
 val open_with : ('a -> 'b) * ('b -> 'c) -> 'a -> ('b -> 'd) -> 'd
 val open_in_with : string -> (in_channel -> 'a) -> 'a

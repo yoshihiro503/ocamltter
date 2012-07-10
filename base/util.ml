@@ -25,6 +25,15 @@ let rec repeat n f x =
 
 let list_concatmap f xs = List.concat (List.map f xs)
 
+let rec list_head = function
+  | [] -> raise (Invalid_argument "list_head: nil")
+  | x::_ -> x
+
+let rec list_last = function
+  | [] -> raise (Invalid_argument "list_last: nil")
+  | [x] -> x
+  | _::xs -> list_last xs
+
 let sint   = string_of_int
 let sfloat = string_of_float
 let sbool  = string_of_bool
@@ -104,6 +113,14 @@ module Option = struct
   let get_or_else default = function
     | Some x -> x
     | None -> default
+
+  let cat_options os =
+    let rec aux rev_xs = function
+      | [] -> List.rev rev_xs
+      | (Some x) :: os -> aux (x :: rev_xs) os
+      | None :: os -> aux rev_xs os
+    in
+    aux [] os
 end
 
 let open_with (opn, close) filepath f =
