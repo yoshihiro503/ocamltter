@@ -48,7 +48,10 @@ val home_timeline :
 
 val user_timeline :
   ?since_id:string ->
-  ?count:int -> OauthForTwitter.token -> string -> tweet list
+  ?count:int ->
+    ?page:int ->
+      ?max_id:string ->
+    OauthForTwitter.token -> string -> tweet list
 
 val show : status_id -> tweet
 
@@ -110,4 +113,4 @@ val help_test : unit -> Json.t
 
 (** {7 Search API Methods} *)
 
-val search : ?rpp:int -> string -> tweet list
+val search : ?rpp:int -> ?since_id:status_id -> string -> tweet list

@@ -57,7 +57,7 @@ let json = function
 
 
 let show_tweet =
-  let fmt d = !%"%02d/%02d %02d:%02d" (Date.mon d) (day d) (hour d) (min d) in
+  let fmt d = !%"%02d/%02d %02d:%02d:%02d" (Date.mon d) (day d) (hour d) (min d) (sec d) in
   function
     | U u -> !%" [%s] %s: %s %LdL %s" (fmt u.date) u.sname u.text u.id
 	  (sclient u.client)
@@ -162,9 +162,10 @@ let home_timeline ?since_id ?count oauth =
   twitter oauth GET "/1/statuses/home_timeline.json" params
     |> json2timeline
 
-let user_timeline ?since_id ?count oauth sname =
+let user_timeline ?since_id ?count ?page ?max_id oauth sname =
   let params = [("since_id",since_id); ("count", Option.map sint count);
-		("screen_name", Some sname)]
+		("screen_name", Some sname); ("page", Option.map sint page);
+              ("max_id", max_id)]
       |> list_filter_map (function
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
@@ -282,15 +283,19 @@ let help_test () =
 
 (** {7 Search API Methods} *)
 
-let search ?(rpp=20) word =
-  let ps = [("q",word);("rpp", !%"%d"rpp)] in
-  twitter_without_auth GET ~host:"search.twitter.com" "/search.json" ps
+let search ?(rpp=20) ?(since_id) word =
+  let params = Option.cat_options [
+    Some("q",word);
+    Some("rpp", !%"%d" rpp);
+    Option.map (fun sid -> ("since_id", !%"%Ld" sid)) since_id;
+  ] in
+  twitter_without_auth GET ~host:"search.twitter.com" "/search.json" params
     |> Json.getf "results"
     |> Json.as_list
     |> List.map (fun j ->
       let d = parse_date @@ Json.as_string @@ Json.getf "created_at" j in
       let sname = Json.as_string @@ Json.getf "from_user" j in
-      let text = "{"^word^"}" ^
+      let text =
 	Http.html_decode @@ Json.as_string @@ Json.getf "text" j
       in
       let id = Int64.of_string @@ Json.as_string @@ Json.getf"id_str" j in
