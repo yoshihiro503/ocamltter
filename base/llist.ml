@@ -16,6 +16,38 @@ let rec map f = function
   | Nil -> Nil
   | Cons (x, xs) -> Cons (f x, lazy (map f !$xs))
 
+let rec repeat x = Cons (x, lazy (repeat x));;
+
+let rec app xs ys =
+  match xs with
+  | Nil -> ys
+  | Cons (x, xs) -> Cons (x, lazy (app (!$ xs) ys))
+
+let rec combine xs ys =
+  match (xs,ys) with 
+  | Cons(x,xs),Cons(y,ys) -> Cons((x,y), lazy (combine !$xs !$ys))
+  | _ -> Nil
+
+let rec filter f xs =
+  match xs with
+  | Nil -> Nil
+  | Cons(x, xs) when f x -> Cons (x, lazy (filter f !$xs))
+  | Cons(x, xs) -> filter f !$xs
+
+let rec concat xss =
+  match xss with 
+  | Nil -> Nil
+  | Cons(Nil, xss') -> concat !$xss'
+  | Cons(Cons(x,lazy xs'), xss') -> Cons(x, lazy (concat (Cons(xs', xss'))))
+
+let rec unfoldr f b =
+  match f b with
+  | Some (a, new_b) -> Cons(a, lazy (unfoldr f new_b))
+  | None -> Nil
+
+let continually make =
+  let f () = try Some(make (), ()) with _ -> None in
+  unfoldr f ()
 
 (* int llist *)
 let rec from n = Cons (n, lazy (from (n+1)))
@@ -38,3 +70,4 @@ let sllist ?(items:int=20) delim show l =
 (* string -> llist *)
 let of_string =
   of_stream $ Stream.of_string
+

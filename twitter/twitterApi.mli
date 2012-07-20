@@ -44,7 +44,8 @@ val twitter_low :
 (** {7 Timeline Methods} *)
 
 val home_timeline :
-  ?since_id:string -> ?count:int -> OauthForTwitter.token -> tweet list
+  ?since_id:string -> ?count:int -> ?page:int ->
+    OauthForTwitter.token -> tweet list
 
 val user_timeline :
   ?since_id:string ->

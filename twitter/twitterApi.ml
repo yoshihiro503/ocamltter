@@ -153,8 +153,10 @@ let twitter_low ?(host="api.twitter.com") meth cmd params =
 
 (** {7 Timeline Methods} *)
 
-let home_timeline ?since_id ?count oauth =
-  let params = [("since_id",since_id); ("count", Option.map sint count)]
+let home_timeline ?since_id ?count ?page oauth =
+  let params = [("since_id",since_id); ("count", Option.map sint count);
+              ("page",Option.map sint page);
+              ]
       |> list_filter_map (function
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)

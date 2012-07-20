@@ -82,14 +82,14 @@ let print_timeline tw =
 let reload () =
   get_timeline true
 
-let l ?(c=20) ?u () : Tw.tweet list =
+let l ?(c=20) ?u ?page () : Tw.tweet list =
   print_endline "loading..."; flush stdout;
   match u with
-  | None -> tw_sort @@ Tw.home_timeline ~count:c (oauth())
-  | Some user -> tw_sort @@ Tw.user_timeline (oauth()) user
+  | None -> tw_sort @@ Tw.home_timeline ~count:c ?page (oauth())
+  | Some user -> tw_sort @@ Tw.user_timeline ?page (oauth()) user
 
-let lc count = l ~c:count ()
-let lu user  = l ~u:user  ()
+let lc ?page count = l ~c:count ?page ()
+let lu ?page user  = l ~u:user  ?page ()
 
 let m ?(c=20) () : Tw.tweet list =
   print_endline "loading..."; flush stdout;
