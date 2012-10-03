@@ -87,7 +87,7 @@ let tr = [
   ("gabu", "がぶ");
   ("kazu_yamamoto","カズヤマモト");
   ("chiguri", "チグリ");
-  ("camlspotter", "キャムルスポッター");
+  ("camloeba", "俺は天才キャミバ様");
   ("hamatz", "ハマッツ");
   ("pirapira", "ピラピラ");
   (*===== もの ====*)
