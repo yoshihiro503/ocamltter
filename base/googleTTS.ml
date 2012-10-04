@@ -51,7 +51,7 @@ let tr = [
   ("shimomura1004","下村");
   ("keigoi","ケイゴイ");
   ("twiSearchLog","ツイサーチログ");
-  ("bleis","");
+  ("bleis","ブレイスおにーちゃん");
   ("kmizu","ケイミズ");
   ("wof_moriguchi","WOF森口");
   ("F#","Fシャープ");
