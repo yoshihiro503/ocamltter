@@ -11,4 +11,10 @@ let watching_words =
     
 let coffee_break = ref 30.0 (* second *)
 
+let table = [
+  ("camloeba", "俺は天才キャミバ様");
+  ("ocamltter", "オーキャメルッター");
+  ("ocaml", "オーキャメル");
+    ]
+
 let talk = ref false

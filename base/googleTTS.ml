@@ -42,80 +42,11 @@ let say lang s =
   wget "say.mp3" url;*)
   play "say.mp3"
 
-let tr = [
-  ("ttlweb","TTLウェブ");
-  ("cho_tekitou","超適当");
-  ("mzp","ミズピー");
-  ("erutuf13","エルツフ");
-  ("aua2008","アウア");
-  ("shimomura1004","下村");
-  ("keigoi","ケイゴイ");
-  ("twiSearchLog","ツイサーチログ");
-  ("bleis","ブレイスおにーちゃん");
-  ("kmizu","ケイミズ");
-  ("wof_moriguchi","WOF森口");
-  ("F#","Fシャープ");
-  ("yoshihiro503","ヨシヒロ503");
-  ("soutaro","ソウタロウ");
-  ("shelarcy","シェラーシィ");
-  ("MoCo7","モコ7");
-  ("tmiya_","Tミヤ");
-  ("igeta","イゲタ");
-  ("sunflat","サンフラット");
-  ("bonotake","ボノタケ");
-  ("garriguejej","ガリグ");
-  ("50storms","50ストームズ");
-  ("ksknac","KSKナック");
-  ("wtakuo","Wタクオ");
-  ("kencoba","ケンコバ");
-  ("fukaminmin","フカミンミン");
-  ("dico_leque","ディコレキ");
-  ("yoriyuki","ヨリユキ");
-  ("kikx","キックス");
-  ("athos0220","アチョス");
-  ("nixie_san","にくしーさん");
-  ("mayahjp","まやJP");
-  ("ksuenaga","K末永");
-  ("camlspotter","キャムルスポッター");
-  ("Dominion525","ドミニオン525");
-  ("osiire","押入れ");
-  ("Gemmat","ゲンマッと");
-  ("esumii","Eすみい");
-  ("suer","すえぁ");
-  ("masahiro_sakai","まさひろさかい");
-  ("keita44_f4", "ケイタヨンヨン");
-  ("gabu", "がぶ");
-  ("kazu_yamamoto","カズヤマモト");
-  ("chiguri", "チグリ");
-  ("camloeba", "俺は天才キャミバ様");
-  ("hamatz", "ハマッツ");
-  ("pirapira", "ピラピラ");
-  (*===== もの ====*)
-  ("Android","アンドロイド");
-  ("ocaml","おきゃむる");
-  ("OCaml","おきゃむる");
-  ("Scala", "スカラ");
-  ("deploy","デプロイ");
-  ("Coq","コック");
-  ("Gallina","ガリナ");
-  ("haskell","ハスケル");
-  ("Haskell","ハスケル");
-  ("関数型", "カンスウガタ");
-  ("Alloy","アロイ");
-  ("javascript","ジャバスクリプト");
-  ("Javascript","ジャバスクリプト");
-  ("java", "ジャバ");
-  ("Java", "ジャバ");
-  ("RedBull","レッドブル");
-  ("Mac", "マック");
-  ("Book", "ブック");
-  ("#", "");
-]
+type table = (string * string) list
 
-
-let say_ja s =
+let say_ja table s =
   let s' =
     List.fold_left (fun s (a,b) ->
-      Str.global_replace (Str.regexp_string a) b s) s tr
+      Str.global_replace (Str.regexp_string a) b s) s table
   in
   say Ja s'

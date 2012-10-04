@@ -203,7 +203,8 @@ let start_polling () =
       | Inl tl when List.length tl > 0 ->
           List.iter begin fun t ->
 	    print_endline (Tw.show_tweet t);
-            if !Config.talk then TTS.say_ja (!%"%s, %s" (sname t) (text t));
+            if !Config.talk then
+              TTS.say_ja Config.table (!%"%s, %s" (sname t) (text t));
           end tl;
           print_endline "";
           Some (list_last tl |> Tw.status_id)
