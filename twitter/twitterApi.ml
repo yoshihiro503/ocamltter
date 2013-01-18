@@ -164,10 +164,17 @@ let home_timeline ?since_id ?count ?page oauth =
   twitter oauth GET "/1/statuses/home_timeline.json" params
     |> json2timeline
 
-let user_timeline ?since_id ?count ?page ?max_id oauth sname =
-  let params = [("since_id",since_id); ("count", Option.map sint count);
-		("screen_name", Some sname); ("page", Option.map sint page);
-              ("max_id", max_id)]
+let user_timeline ?id ?user_id ?count ?since ?since_id ?max_id ?page ?trim_user 
+    ?include_rts ?include_entities oauth sname =
+  let params = [
+    ("id", id); ("user_id", user_id); ("screen_name", Some sname);
+    ("count", Option.map sint count);
+    ("since", since); ("since_id", since_id); 
+    ("max_id", max_id); ("page", Option.map sint page);
+    ("trim_user", Option.map (!%"%B") trim_user);
+    ("include_rts", Option.map (!%"%B") include_rts);
+    ("include_entities", Option.map (!%"%B") include_entities);
+  ]
       |> list_filter_map (function
 	| (key, Some v) -> Some (key, v)
 	| (_, None) -> None)
