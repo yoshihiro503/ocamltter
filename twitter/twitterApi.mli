@@ -1,5 +1,5 @@
 (**
-   Twitter APIs.
+   Twitter APIs (version 1.0).
 *)
 open Util
 
