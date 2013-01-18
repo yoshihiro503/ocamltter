@@ -50,6 +50,11 @@ let text = function
   | RT (rt,_) -> rt.text
   | RE (re,_) -> re.text
 
+let set_text s = function
+  | U u -> U {u with text=s}
+  | RT (rt, orig) -> RT ({rt with text=s}, orig)
+  | RE (re, orig) -> RE ({re with text=s}, orig)
+
 let json = function
   | U u -> u.json
   | RT (rt,_) -> rt.json

@@ -19,6 +19,7 @@ val sname : tweet -> string
 val status_id : tweet -> status_id
 val client : tweet -> Xml.xml
 val text : tweet -> string
+val set_text : string -> tweet -> tweet
 val json : tweet -> Json.t
 
 val show_tweet : tweet -> string
