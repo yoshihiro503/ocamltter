@@ -62,7 +62,7 @@ let get_timeline ?(c=20) ?since_id verbose =
 	let ts = value_or [] @@ maybe (Tw.search ~rpp:c ?since_id) word in
 	if verbose then
           (print_endline (!%"%d" (List.length ts)); flush stdout);
-	ts
+	List.map (fun t -> Tw.set_text (!%"{%s}%s" word (Tw.text t)) t) ts
       in
       list_concatmap search Config.watching_words
     in
@@ -205,7 +205,6 @@ let start_polling () =
 	    print_endline (Tw.show_tweet t);
             if !Config.talk then TTS.say_ja (!%"%s, %s" (sname t) (text t));
           end tl;
-          print_endline "";
           Some (list_last tl |> Tw.status_id)
       | Inl _ -> print_string "."; flush stdout; last_id
       | Inr e -> print_endline (Printexc.to_string e);
