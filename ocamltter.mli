@@ -18,9 +18,9 @@ val get_timeline : ?c:int -> ?since_id:TwitterApi.status_id -> bool ->
 val print_timeline : TwitterApi.tweet list -> unit
 val reload : unit -> TwitterApi.tweet list
 
-val l : ?c:int -> ?u:string -> unit -> TwitterApi.tweet list
-val lc : int -> TwitterApi.tweet list
-val lu : string -> TwitterApi.tweet list
+val l : ?c:int -> ?u:string -> ?page:int -> unit -> TwitterApi.tweet list
+val lc : ?page:int -> int -> TwitterApi.tweet list
+val lu : ?page:int -> string -> TwitterApi.tweet list
 val m : ?c:int -> unit -> TwitterApi.tweet list
 val kwsk : TwitterApi.status_id -> TwitterApi.tweet list
 

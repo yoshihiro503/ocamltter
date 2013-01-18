@@ -1,5 +1,5 @@
 (**
-   Twitter APIs.
+   Twitter APIs (version 1.0).
 *)
 open Util
 
@@ -44,14 +44,14 @@ val twitter_low :
 (** {7 Timeline Methods} *)
 
 val home_timeline :
-  ?since_id:string -> ?count:int -> OauthForTwitter.token -> tweet list
+  ?since_id:string -> ?count:int -> ?page:int ->
+    OauthForTwitter.token -> tweet list
 
 val user_timeline :
-  ?since_id:string ->
-  ?count:int ->
-    ?page:int ->
-      ?max_id:string ->
-    OauthForTwitter.token -> string -> tweet list
+    ?id:string -> ?user_id:string -> ?count:int -> ?since:string ->
+      ?since_id:string -> ?max_id:string -> ?page:int -> ?trim_user:bool ->
+        ?include_rts:bool -> ?include_entities:bool ->
+          OauthForTwitter.token -> string -> tweet list
 
 val show : status_id -> tweet
 
