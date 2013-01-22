@@ -1,15 +1,14 @@
-open Lazy
 open Util
 
 type 'a llist = Nil | Cons of 'a * 'a llist Lazy.t
 
-let hd = function | Nil -> failwith "hd" | Cons (x, xs) -> x
-let tl = function | Nil -> failwith "tl" | Cons (x, xs) -> !$xs
+let hd = function | Nil -> failwith "hd" | Cons (x, _xs) -> x
+let tl = function | Nil -> failwith "tl" | Cons (_x, xs) -> !$xs
 
 let rec take n l =
   match n, l with
   | 0, _ -> []
-  | n, Nil -> []
+  | _n, Nil -> []
   | n, Cons (x, xs) -> x :: take (n-1) !$xs
 
 let rec map f = function
@@ -32,7 +31,7 @@ let rec filter f xs =
   match xs with
   | Nil -> Nil
   | Cons(x, xs) when f x -> Cons (x, lazy (filter f !$xs))
-  | Cons(x, xs) -> filter f !$xs
+  | Cons(_x, xs) -> filter f !$xs
 
 let rec concat xss =
   match xss with 

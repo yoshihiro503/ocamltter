@@ -11,6 +11,6 @@ ocamlc -c ${incl} \
     config.mli ocamltter.mli
 mkdir -p doc
 ocamldoc -html -d doc ${incl} \
-    twitter/oauthForTwitter.mli twitter/twitterApi.mli \
-    config.mli ocamltter.mli
+    twitter/auth.mli twitter/api.mli \
+    oConfig.mli ocamltter.mli
 cd $prevdir

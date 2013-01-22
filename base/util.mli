@@ -4,7 +4,7 @@ val id : 'a -> 'a
 val p : ('a, out_channel, unit) format -> 'a
 val pr : string -> unit
 val tee : ('a -> 'b) -> 'a -> 'a
-val ( |> ) : 'a -> ('a -> 'b) -> 'b
+external (|>) : 'a -> ('a -> 'b) -> 'b = "%revapply"
 val const : 'a -> 'b -> 'a
 val ( !% ) : ('a, unit, string) format -> 'a
 val ( !$ ) : 'a Lazy.t -> 'a

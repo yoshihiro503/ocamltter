@@ -1,0 +1,617 @@
+# ==========================
+# OMyMakefile
+# ==========================
+# Useful functions to build OCaml projects
+
+#| A flag to tell that we can use OMyMakefile functions
+WithOMy=true
+
+#| The prefix. Equal to the PREFIX environment variable
+try
+  PREFIX=$(getenv PREFIX)
+default
+  eprintln(Specify PREFIX or prefix environment variable.)
+  exit 1 
+
+# OCaml 
+# ========================================================================
+
+#|Path to the OCaml library directory
+OCAML_WHERE = $(shell ocamlc -where)
+
+#|Version without extensions
+OCAML_VERSION = $(shell ocamlc -version | sed -e 's/^\([0-9.]*\).*/\1/')
+
+#|OMy requires OCamlFind!
+USE_OCAMLFIND = true
+OCAMLFIND_DESTDIR= $(shell ocamlfind printconf destdir)
+
+#|Set NATIVE_ENABLED false locally if a project does not requre opt compilation.
+NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
+NATIVE_SHARED_ENABLED = $(OCAMLOPT_EXISTS)
+BYTE_ENABLED = true
+
+#|The default warning and errors. If you want to use different warning and error switches, use redefine the variable.
+OCAMLFLAGS = -w A-4-9 -warn-error A-4-9
+
+#|Global variable to be defined as empty
+OCAMLPACKAGEFLAGS=
+
+#|Preinstalled libraries which are always available for normal ocaml.
+#
+# You may want to add the required packages which are built and installed out of OMy framework:
+#
+#::
+#
+#   include OMyMakefile
+#   
+#   OCAML_PREINSTALLED_PACKS += llvm # llvm has been installed already, independently
+#   
+#   Subdirs()
+#
+# It includes "findlib" by default. If you want to build findlib in OMy framework, you have to remove it from the list.
+OCAML_PREINSTALLED_PACKS[]= bigarray camlp4 dbm dynlink graphics num num-top stdlib str threads unix findlib compiler-libs compiler-libs.common
+
+#|Redefinition of compiler commands
+public.OCamlC() =
+    value $(OCAMLFIND) $(OCAMLC) $(OCAMLPACKAGEFLAGS) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS)\
+              $(OCAMLCFLAGS) $(OCAMLPPFLAGS) $(PREFIXED_OCAMLINCLUDES)
+# Why we need "public." ?
+
+public.OCamlOpt() =
+    value $(OCAMLFIND) $(OCAMLOPT) $(OCAMLPACKAGEFLAGS) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS)\
+              $(OCAMLOPTFLAGS) $(OCAMLPPFLAGS) $(PREFIXED_OCAMLINCLUDES)
+
+if $(and $(not $(NATIVE_ENABLED)) $(not $(BYTE_ENABLED)))
+   err. =
+       extends $(UnbuildableException)
+       message = $(string $"You must turn on either NATIVE_ENABLED or BYTE_ENABLED")
+       raise $(err)
+
+#|Additional implicit rules by file extensions
+# annot, cmt, cmti files
+%.annot %.cmt: %.ml %.cmi
+	$(OCamlC) -c -annot -bin-annot $<
+
+%.spit %.cmti: %.mli 
+	$(OCamlC) -c -bin-annot $<
+
+#|Define OCAML_ANNOT so that ocamlc/ocamlopt automatically create spot/spit/annot/cmt/cmti files, even without -annot/-bin-annot option. This requires a special compiler patch 
+setenv(OCAML_ANNOT, 1)
+
+#|Enable the backtrace
+setenv(OCAMLRUNPARAM, b)
+
+# Common phonies
+# ==================================================================
+.PHONY: all install uninstall clean
+
+# Directories
+# =====================================================================
+
+#| The build root directory  
+BIG_ROOT=$(dir .)
+
+# Installation mark files
+# =======================================================================
+
+#| To enable the installation mark files, you must define INSTALLED path variable
+# for the mark file directory like INSTALLED=$(BIG_ROOT)/installed and make sure
+# the directory $(INSTALLED) exists. This preparation must be done outside of 
+# this OMyMakefile.
+
+#|Returns the installation mark files of $(packs)
+Installed(packs) = 
+  if $(defined INSTALLED)
+      return $(addprefix $(INSTALLED)/, $(packs))
+  else
+      return $(array)
+
+#|Create md5 sum file of files $(targets)
+CreateCheckSum(pack, targets)=
+    chan=$(fopen $(pack), w)
+    fprintln($(chan), $(string $(targets)))
+    fprintln($(chan), $(string $(digest $(targets))))
+    close($(chan))
+
+#|Create $(Installed $(pack)) file from the digests of $(targets)
+CreateInstalled(pack, targets)=
+    if $(defined INSTALLED)
+        println(dump md5 $(INSTALLED)/$(pack))
+        CreateCheckSum($(INSTALLED)/$(pack), $(targets))
+
+# Packages
+# =========================================================
+
+#| OCaml packages required for compilation. MyCaml* functions automatically add necessary dependencies over packages in $(OCAMLPACKS).
+# 
+# .. note:: They are also required for dependency analysis.
+public.OCAMLPACKS[]=
+
+#| CamlP4 syntax extension packages required for parsing. MyCaml* functions automatically add necessary dependencies over packages in $(CAMLP4PACKS).
+public.CAMLP4PACKS[]=
+
+# Dependencies
+# =========================================================================
+
+#|Returns packages managed by OMy framework
+OMyManagedPackages(packages) =
+   return $(set-diff $(packages), $(OCAML_PREINSTALLED_PACKS))
+
+#|Add dependencies of OCaml compiled files (cmx, cmo, etc.) over $(files).
+#
+# .. note:: These functions introduce implicit rules: *you may need to export it, if you use this function in a local context.*
+OCamlRequire(files) =
+    %.cmx %.cmo %.cmi %.cma %.cmxa %.annot %.spot %.spit %.cmt %.cmti: $(files)
+    export
+
+#|Add dependencies of OCaml compiled files (cmx, cmo, etc.) over $(packages).
+# $(packages) listed in OCAML_PREINSTALLED_PACKS are ignored.
+#
+# .. note:: These functions introduce implicit rules: *you may need to export it, if you use this function in a local context.*
+#
+# .. note:: Usually you do not need to call this function. Use OCAMLPACKS variable instead. 
+OCamlRequirePackages(packages) =
+    required_packs = $(OMyManagedPackages $(packages))
+    if $(defined INSTALLED)
+      %.cmx %.cmo %.cmi %.cma %.cmxa %.annot %.spot %.spit %.cmt %.cmti: $(Installed $(required_packs))
+      export
+    export
+
+#|Add dependencies of OCaml dependency analysis and build over $(packages).
+# Use this for adding dependencies for CamlP4 extensions.
+# $(packages) listed in OCAML_PREINSTALLED_PACKS are ignored.
+#
+# .. note:: These functions introduce implicit rules: *you may need to export it, if you use this function in a local context.*
+#
+# .. note:: Usually you do not need to call this function. Use CAML4PACKS variable instead. 
+OCamlRequireCamlP4Packages(packages) =
+    required_packs = $(OMyManagedPackages $(packages))
+    if $(defined INSTALLED)
+      .SCANNER: scan-ocaml-%: $(Installed $(required_packs))
+      %.cmx %.cmo %.cmi %.cma %.cmxa %.annot %.spot %.spit : $(Installed $(required_packs))
+      export 
+    export
+
+#|``omake xxx.auto.mli`` generates .mli file from xxx.ml 
+%.auto.mli: %.ml
+	$(OCamlC) -i -c $< > $@
+
+# Build rules
+# ==========================================================
+
+# Extend the bundled OCamlPackage with .spot creation
+public.OCamlLibrary(name, files) =
+   # XXX: JYH: these variables should be marked private in 0.9.9
+   protected.name = $(file $(name))
+
+   protected.OFILES   = $(addsuffix $(EXT_OBJ), $(files))
+   protected.CMOFILES = $(addsuffix .cmo, $(files))
+   protected.CMXFILES = $(addsuffix .cmx, $(files))
+
+   protected.CLIB      = $(file $(name)$(EXT_LIB))
+   protected.BYTELIB   = $(file $(name).cma)
+   protected.NATIVELIB = $(file $(name).cmxa)
+   protected.NATIVESHAREDLIB = $(file $(name).cmxs)
+
+   #
+   # Link commands
+   #
+   $(BYTELIB): $(CMOFILES)
+        $(OCAMLFIND) $(OCAMLLINK) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) $(OCAMLCFLAGS) \
+                $(OCAML_LIB_FLAGS) -a -o $@ $(OCamlLinkSort $(CMOFILES))
+
+   $(NATIVELIB) $(CLIB): $(CMXFILES) $(OFILES)
+        $(OCAMLFIND) $(OCAMLOPTLINK) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) $(OCAMLOPTFLAGS) \
+                $(OCAML_LIB_FLAGS) -a -o $(NATIVELIB) $(OCamlLinkSort $(CMXFILES))
+
+   $(NATIVESHAREDLIB): $(CMXFILES) $(OFILES)
+         $(OCAMLFIND) $(OCAMLOPTLINK) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) $(OCAMLOPTFLAGS) \
+                 $(OCAML_LIB_FLAGS) -shared -o $(NATIVESHAREDLIB) $(OCamlLinkSort $(CMXFILES))
+
+   return $(array $(if $(NATIVE_ENABLED), $(NATIVELIB)), \
+                  $(if $(NATIVE_ENABLED), $(CLIB)), \
+                  $(if $(NATIVE_SHARED_ENABLED), $(NATIVESHAREDLIB)), \
+                  $(if $(BYTE_ENABLED), $(BYTELIB)))
+
+# Extend the bundled OCamlPackage with .spot creation
+public.OCamlPackage(name, files) =
+   # XXX: JYH: these variables should be marked private in 0.9.9
+   protected.OFILES   = $(addsuffix $(EXT_OBJ), $(files))
+   protected.CMOFILES = $(addsuffix .cmo, $(files))
+   protected.CMXFILES = $(addsuffix .cmx, $(files))
+
+   protected.OBJ       = $(file $(name)$(EXT_OBJ))
+   protected.CMO       = $(file $(name).cmo)
+   protected.CMX       = $(file $(name).cmx)
+   protected.CMI       = $(file $(name).cmi)
+   protected.MLI       = $(file $(name).mli)
+
+   protected.BYTE_TARGETS   = $(CMO)
+   protected.NATIVE_TARGETS = $(CMX) $(OBJ)
+
+   if $(BYTE_ENABLED)
+      BYTE_TARGETS += $(file $(name).cmt)
+      export
+   else
+      NATIVE_TARGETS += $(file $(name).cmt)
+      export
+   export
+
+   protected.TARGETS = $(CMI)
+   if $(NATIVE_ENABLED)
+       TARGETS += $(NATIVE_TARGETS)
+       export
+
+   if $(BYTE_ENABLED)
+       TARGETS += $(BYTE_TARGETS)
+       export
+
+   #
+   # Link commands
+   #
+   protected.BYTE_DEPS = $(CMOFILES)
+   $(BYTE_TARGETS): $(CMOFILES)
+      section rule
+         if $(or $(NATIVE_ENABLED), $(target-exists $(MLI)))
+             BYTE_DEPS += $(CMI)
+             export
+         else
+             BYTE_TARGETS += $(CMI)
+             export
+         $(BYTE_TARGETS): $(BYTE_DEPS)
+            $(OCAMLFIND) $(OCAMLC) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) \
+                $(OCAMLCFLAGS) $(OCAML_LIB_FLAGS) -pack -bin-annot -o $(CMO) $(OCamlLinkSort $(CMOFILES))
+
+   protected.NATIVE_DEPS = $(CMXFILES) $(OFILES)
+   $(NATIVE_TARGETS): $(NATIVE_DEPS)
+      section rule
+         if $(target-exists $(MLI))
+            NATIVE_DEPS += $(CMI)
+            export
+         else
+            NATIVE_TARGETS += $(CMI)
+            export
+         $(NATIVE_TARGETS): $(NATIVE_DEPS)
+            $(OCAMLFIND) $(OCAMLOPTLINK) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) \
+                $(OCAMLOPTFLAGS) $(OCAML_LIB_FLAGS) -pack -bin-annot -o $(CMX) $(OCamlLinkSort $(CMXFILES))
+
+   $(CMI):
+      section rule
+         if $(target-exists $(MLI))
+            $(CMI): $(MLI) :scanner: scan-ocaml-$(name).mli
+                $(OCamlC) -c $<
+         elseif $(NATIVE_ENABLED)
+            $(NATIVE_TARGETS) $(CMI): $(NATIVE_DEPS)
+               $(OCAMLFIND) $(OCAMLOPTLINK) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) \
+                   $(OCAMLOPTFLAGS) $(OCAML_LIB_FLAGS) -pack -o $(CMX) $(OCamlLinkSort $(CMXFILES))
+         else
+            $(BYTE_TARGETS) $(CMI): $(BYTE_DEPS)
+               $(OCAMLFIND) $(OCAMLC) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) \
+                   $(OCAMLCFLAGS) $(OCAML_LIB_FLAGS) -pack -o $(CMO) $(OCamlLinkSort $(CMOFILES))
+
+   return $(TARGETS)
+
+# Add implicit dependencies over the packages declared in OCAMLPACKS and CAMLP4PACKS
+# If this function is used in a local scope, you may want to export. 
+AddLocalOCamlPackageDependencies() =
+  # We make sure the required libraries are installed
+  OCamlRequirePackages($(OCAMLPACKS)) # must be exported!
+  OCamlRequireCamlP4Packages($(OCAMLPACKS) $(CAMLP4PACKS))
+  export
+
+#| Add a rule for OCaml package $(library_name).cmo, $(library_name).cmx and etc.
+#     library_name
+#         target package name
+#     files
+#         ML module names (without .ml)
+#     cmodules
+#         C source files (without .c)
+#     linkopts
+#         C library link option (without OCaml -cclib options)    
+#
+#  You can specify MyOCamlPackageExtras before using this function to install files out of the scope of this rule.   
+#  
+#  If $(NO_INSTALL) is defined, omake install does not install the package
+#
+#  Example::
+#
+#      MyOCamlPackage(foo, alpha beta, $(EMPTY), $(EMPTY))
+#
+#  Todo: external C library
+MyOCamlPackage(library_name, files, cmodules, linkopts) =
+  AddLocalOCamlPackageDependencies()
+  export # The above thing is local: need to be exported
+
+  CSTUBS=$(addsuffix .o,$(cmodules))
+  CMOS=$(addsuffix .cmo,$(library_name))
+  CMXS=$(addsuffix .cmx,$(library_name))
+  CMA=$(library_name).cma
+  CMXA=$(library_name).cmxa
+
+  if $(not $(defined MyOCamlPackageExtras))
+      MyOCamlPackageExtras[]=
+      export
+
+  CSTUBLIBRARIES=
+  if $(not $(equal $(cmodules), $(EMPTY)))
+      CSTUBLIBRARIES= dll$(library_name).so lib$(library_name).a 
+      export
+
+  # CR jfuruse: I guess we do not need the following
+  # export # export the implicit rule above
+
+  .PHONY: install-lib
+  install-lib: $(library_name).cmo $(library_name).cmx $(library_name).cma $(library_name).cmxa $(MyOCamlPackageExtras)
+
+  $(CMA) $(CMXA) $(library_name).a $(CSTUBLIBRARIES) : $(CSTUBS) $(CMOS) $(CMXS)
+      if $(not $(equal $(cmodules), $(EMPTY)))
+          ocamlmklib -verbose -o $(library_name) $(CSTUBS) $(linkopts) $(CMOS) $(CMXS)
+      else
+          $(OCamlC) -a -o $(CMA) $(CMOS)
+          $(OCamlOpt) -a -o $(CMXA) $(CMXS)
+
+  ## the followings are necessary for packing
+
+  OCAMLPACKAGEFLAGS += -for-pack $(capitalize $(library_name))
+  # export OCAMLPACKAGEFLAGS
+
+  ## build rule
+
+  .DEFAULT: $(OCamlPackage $(library_name), $(files))
+
+  ## clean
+  AutoClean()
+  clean:
+	rm -f $(library_name).spot $(library_name).cmt
+
+  ## install
+
+  # CR jfuruse: x.cmi is required if x.mli does not exist!
+  targets[]=META $(glob i, *.mli) $(library_name).cmi $(library_name).cmo $(library_name).cmx $(library_name).cma $(library_name).cmxa $(library_name).o $(library_name).a $(CSTUBLIBRARIES) $(MyOCamlPackageExtras)
+
+  targets[]+= $(library_name).cmt
+
+  if $(not $(defined NO_INSTALL))
+    if $(defined INSTALLED)
+      $(Installed $(library_name)): $(targets)
+        $(OCAMLFIND) remove $(library_name)
+        section:
+              $(OCAMLFIND) install $(library_name) $(targets)
+              CreateInstalled($(library_name), $(targets))
+
+      install: $(Installed $(library_name))
+
+      uninstall:
+        rm -f $(Installed $(library_name))
+        $(OCAMLFIND) remove $(library_name)
+      export
+    else
+      install: $(targets)
+        $(OCAMLFIND) remove $(library_name)
+        $(OCAMLFIND) install $(library_name) $(targets)
+
+      uninstall:
+	$(OCAMLFIND) remove $(library_name)
+      export
+    export
+
+############################################################## build ocaml exec
+
+#| Add a rule to build a program $(name)
+#      name
+#          Name of the program
+#      files
+#          OCaml module names (without .ml)
+MyOCamlTestProgram(name, files) =
+  AddLocalOCamlPackageDependencies()
+  export # The above thing is local: need to be exported
+
+  $(name).run $(name).opt: $(Installed $(OMyManagedPackages $(OCAMLPACKS)))
+
+  # CR jfuruse: forgot to add the deps over the packages!
+  .DEFAULT: $(OCamlProgram $(name), $(files))
+
+  # The following clean the files twice if MyOCamlPackge coexists,
+  # but who cases ?
+  AutoClean()
+
+#| Add a rule to build a program $(name)
+#      name
+#          Name of the program
+#      files
+#          OCaml module names (without .ml)
+#  In addition to MyOCamlTestProgram, the binary is installed by omake install
+MyOCamlProgram(name, files) =
+  MyOCamlTestProgram($(name), $(files))
+  export # The above thing is local: need to be exported
+
+  if $(not $(defined NO_INSTALL))
+    install: $(name) $(name).run $(name).opt
+      install $(name) $(name).run $(name).opt $(PREFIX)/bin
+    uninstall:
+      rm -f $(PREFIX)/bin/$(name) $(PREFIX)/bin/$(name).run $(PREFIX)/bin/$(name).opt
+    export
+
+#| Add a rule to build a toplevel $(name)
+#      name
+#          Name of the program
+#      files
+#          OCaml module names (without .ml)
+OCamlTop(name, files) =
+   # XXX: JYH: these variables should be marked private in 0.9.9
+   protected.CMOFILES  = $(addsuffix .cmo, $(files))
+   # protected.CMXFILES  = $(addsuffix .cmx, $(files))
+   # protected.OFILES    = $(addsuffix $(EXT_OBJ), $(files))
+
+   protected.CMAFILES  = $(addsuffix .cma,  $(OCAML_LIBS))
+   # protected.CMXAFILES = $(addsuffix .cmxa, $(OCAML_LIBS))
+   protected.ARFILES   = $(addsuffix $(EXT_LIB), $(OCAML_LIBS))
+   protected.CMA_OTHER_FILES = $(addsuffix .cma, $(OCAML_OTHER_LIBS))
+   # protected.CMXA_OTHER_FILES = $(addsuffix .cmxa, $(OCAML_OTHER_LIBS))
+
+   protected.CLIBS = $(addsuffix $(EXT_LIB), $(OCAML_CLIBS))
+
+   protected.name = $(file $(name))
+
+   protected.PROG     = $(file $(name)$(EXE))
+   protected.BYTEPROG = $(file $(name).run)
+   # protected.OPTPROG  = $(file $(name).opt)
+
+   #
+   # Rules to build byte-code and native targets
+   #
+   $(BYTEPROG): $(CMAFILES) $(CMOFILES) $(CLIBS)
+        $(OCAMLFIND) $(OCAMLMKTOP) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) $(OCAMLCFLAGS)\
+                $(PREFIXED_OCAMLINCLUDES) $(OCAML_BYTE_LINK_FLAGS)\
+                -o $@ $(CMA_OTHER_FILES) $(CMAFILES) $(OCamlLinkSort $(CMOFILES))\
+                $(CLIBS) $(OCAML_LINK_FLAGS)
+
+   $(PROG): $(BYTEPROG)
+        ln-or-cp $< $@
+
+   return $(array $(PROG), $(BYTEPROG))
+
+MyOCamlTop(name, files) =
+  AddLocalOCamlPackageDependencies()
+  export # The above thing is local: need to be exported
+
+  $(name): $(Installed $(OMyManagedPackages $(OCAMLPACKS)))
+
+  # CR jfuruse: forgot to add the deps over the packages!
+  .DEFAULT: $(OCamlTop $(name), $(files))
+
+  # The following clean the files twice if MyOCamlPackge coexists,
+  # but who cases ?
+  AutoClean()
+  export # The above thing is local: need to be exported
+
+  if $(not $(defined NO_INSTALL))
+    install: $(name) $(name).run
+      install $(name) $(name).run $(PREFIX)/bin
+    uninstall:
+      rm -f $(PREFIX)/bin/$(name) $(PREFIX)/bin/$(name).run
+    export
+
+#|  Add rules to build OCaml library $(name)
+#        name
+#            Name of the library
+#        files
+#            OCaml module name (without .ml)
+#
+#   .. note :: Probably you should use MyOCamlPackage
+MyOCamlLibrary(library_name, files) =
+  AddLocalOCamlPackageDependencies()
+  protected.CMIFILES = $(addsuffix .cmi, $(files))
+  targets = $(OCamlLibrary $(library_name), $(files)) $(CMIFILES) $(glob i, *.mli) 
+
+  .DEFAULT: $(targets)
+
+  export # The above thing is local: need to be exported
+
+  if $(not $(defined NO_INSTALL))
+    targets[] += META 
+    if $(defined INSTALLED)
+      $(Installed $(library_name)): $(targets)
+        $(OCAMLFIND) remove $(library_name)
+        section:
+              $(OCAMLFIND) install $(library_name) $(targets)
+              CreateInstalled($(library_name), $(targets))
+
+      install: $(Installed $(library_name))
+
+      uninstall:
+        rm -f $(Installed $(library_name))
+        $(OCAMLFIND) remove $(library_name)
+      export
+    else
+      install: $(targets)
+        $(OCAMLFIND) remove $(library_name)
+        $(OCAMLFIND) install $(library_name) $(targets)
+
+      uninstall:
+	$(OCAMLFIND) remove $(library_name)
+      export
+    export
+
+  # The following clean the files twice if MyOCamlPacakge coexists,
+  # but who cases ?
+  AutoClean()
+
+# Auto clean
+# ====================================================================
+
+#| Install clean command which cleans all the target files exists under the directory. Use with care.
+AutoClean()=
+    .PHONY: clean
+    clean:
+        rm -f $(filter-proper-targets $(ls R, .))
+
+# Subdir traversal
+# =====================================================================
+
+#| Recursively traverse the subdirs except $(dirs)
+Subdirs_except(dirs) =
+  # println(PWD: $(shell pwd))
+
+  # need to export since .SUBDIRS is evaluated in the global scope
+  export VISIT_SUBDIRS
+
+  sub_omakefiles = $(glob i, */OMakefile)
+  subdirs = $(sub_omakefiles.map $(dirname))
+
+  VISIT_SUBDIRS=$(set-diff $(subdirs), $(dirs))
+
+  # println(SUBDIRS: $(string $(VISIT_SUBDIRS)))
+
+  # The rule
+  .SUBDIRS: $(VISIT_SUBDIRS)
+
+#| Recursively traverse all the subdirs
+Subdirs() =
+  Subdirs_except($(array))
+
+#| Recursively traverse the given subdirs $(dirs)
+Subdirs_only(dirs) =
+ .SUBDIRS: $(dirs)
+
+# Dependency dot files for Graphviz
+# ======================================================================
+
+#| Add a rule for ``depend.dot`` for a dependency graph of OCaml files in the current directory
+Dot() =
+	depend.dot: $(ls *.ml *.mli)
+	    $(OCAMLFIND) ocamldoc -I +threads $(OCAMLPACKAGEFLAGS) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLPPFLAGS) $(PREFIXED_OCAMLINCLUDES) -dot -dot-include-all -dot-reduce $+ -o $@
+
+
+#| filter list
+#  example::
+#     is_url(file) =
+#       match $(file)
+#       case $'://'
+#         return true
+#       default
+#         return false
+# 
+#     DOWNLOAD_URLS[]=$(list_filter $(fun x, $(is_url $(x))), $(URLS))
+list_filter(pred, list) =
+  result=
+  foreach(x, $(list))
+    if $(apply $(pred), $(x))
+      result+=$(x)
+      export
+    export
+  return $(result)
+
+#| Obtain files installed as PACK
+GET_OCAMLFIND_OBJS(pack)=
+    return $(Files $(OCAMLFIND_DESTDIR)/$(pack))
+
+# Misc tools
+# ======================================================================
+
+#|ditto.
+mkdir_if_not_exists(dir) =
+  if $(not $(test -e $(dir))):
+    mkdir $(dir) 
+  return

@@ -12,14 +12,14 @@ type ('a, 'b) prod =
 (** val fst : ('a1, 'a2) prod -> 'a1 **)
 
 let fst = function
-  | Pair (x, y) -> x
+  | Pair (x, _y) -> x
 
 (** val snd : ('a1, 'a2) prod -> 'a2 **)
 
 let snd = function
-  | Pair (x, y) -> y
+  | Pair (_x, y) -> y
 
-type 'a sig0 = 'a
+type 'a _sig0 = 'a
   (* singleton inductive, whose constructor was exist *)
 
 (** val plus : nat -> nat -> nat **)
@@ -54,7 +54,7 @@ let bool_dec b1 b2 =
 
 let rec length = function
   | [] -> O
-  | a :: m -> S (length m)
+  | _a :: m -> S (length m)
 
 (** val app : 'a1 list -> 'a1 list -> 'a1 list **)
 
@@ -111,7 +111,7 @@ let app2 f a b =
 (** val shift : bool -> ascii -> ascii **)
 
 let shift c = function
-  | Ascii (a1, a2, a3, a4, a5, a6, a7, a8) -> Ascii (c, a1, a2, a3, a4, a5,
+  | Ascii (a1, a2, a3, a4, a5, a6, a7, _a8) -> Ascii (c, a1, a2, a3, a4, a5,
       a6, a7)
 
 (** val ascii_dec : ascii -> ascii -> bool **)
@@ -188,7 +188,7 @@ let rec eq_nat_dec n m =
   match n with
     | O -> (match m with
               | O -> true
-              | S m0 -> false)
+              | S _m0 -> false)
     | S n0 -> (match m with
                  | O -> false
                  | S m0 -> eq_nat_dec n0 m0)
@@ -222,13 +222,13 @@ type 'a vec =
 
 (** val vec_of_list : nat -> 'a1 list -> 'a1 vec **)
 
-let rec vec_of_list n = function
+let rec vec_of_list _n = function
   | [] -> VNil
   | x :: xs0 -> VCons ((length xs0), x, (vec_of_list (length xs0) xs0))
 
 (** val list_of_vec : nat -> 'a1 vec -> 'a1 list **)
 
-let rec list_of_vec n = function
+let rec list_of_vec _n = function
   | VNil -> []
   | VCons (n0, x, xs) -> x :: (list_of_vec n0 xs)
 
@@ -295,11 +295,11 @@ let rec cm n = function
   | [] -> []
   | v :: vs0 -> app (list_of_vec n v) (cm n vs0)
 
-type mlchar = char
+type _mlchar = char
 
-type mlint = int
+type _mlint = int
 
-type mlstring = string
+type _mlstring = string
 
 (** val mlint_of_nat : nat -> mlint **)
 
@@ -359,28 +359,28 @@ let asciilist_of_mlstring x =
 
 let ascii_of_bool6 = function
   | VNil -> assert false (* absurd case *)
-  | VCons (n, h, h0) ->
+  | VCons (_n, h, h0) ->
       (match h0 with
          | VNil -> assert false (* absurd case *)
-         | VCons (n0, h2, h3) ->
+         | VCons (_n0, h2, h3) ->
              (match h3 with
                 | VNil -> assert false (* absurd case *)
-                | VCons (n1, h5, h6) ->
+                | VCons (_n1, h5, h6) ->
                     (match h6 with
                        | VNil -> assert false (* absurd case *)
-                       | VCons (n2, h8, h9) ->
+                       | VCons (_n2, h8, h9) ->
                            (match h9 with
                               | VNil -> assert false (* absurd case *)
-                              | VCons (n3, h11, h12) ->
+                              | VCons (_n3, h11, h12) ->
                                   (match h12 with
                                      | VNil -> assert false (* absurd case *)
-                                     | VCons (n4, h14, h15) -> Ascii (h14,
+                                     | VCons (_n4, h14, _h15) -> Ascii (h14,
                                          h11, h8, h5, h2, h, false, false))))))
 
 (** val bool6_of_ascii : ascii -> bool vec **)
 
 let bool6_of_ascii = function
-  | Ascii (a, b, c0, d, e, f, b0, b1) ->
+  | Ascii (a, b, c0, d, e, f, _b0, _b1) ->
       vec_of_list (S (S (S (S (S (S O)))))) (f :: (e :: (d :: (c0 :: (b :: (a
         :: []))))))
 
@@ -388,34 +388,34 @@ let bool6_of_ascii = function
 
 let ascii_of_bool8 = function
   | VNil -> assert false (* absurd case *)
-  | VCons (n, h, h0) ->
+  | VCons (_n, h, h0) ->
       (match h0 with
          | VNil -> assert false (* absurd case *)
-         | VCons (n0, h2, h3) ->
+         | VCons (_n0, h2, h3) ->
              (match h3 with
                 | VNil -> assert false (* absurd case *)
-                | VCons (n1, h5, h6) ->
+                | VCons (_n1, h5, h6) ->
                     (match h6 with
                        | VNil -> assert false (* absurd case *)
-                       | VCons (n2, h8, h9) ->
+                       | VCons (_n2, h8, h9) ->
                            (match h9 with
                               | VNil -> assert false (* absurd case *)
-                              | VCons (n3, h11, h12) ->
+                              | VCons (_n3, h11, h12) ->
                                   (match h12 with
                                      | VNil -> assert false (* absurd case *)
-                                     | VCons (n4, h14, h15) ->
+                                     | VCons (_n4, h14, h15) ->
                                          (match h15 with
                                             | VNil -> assert false
                                                 (* absurd case *)
                                             | VCons (
-                                                n5, h17, h18) ->
+                                                _n5, h17, h18) ->
                                                 (match h18 with
                                                    | 
                                                  VNil -> assert false
                                                   (* absurd case *)
                                                    | 
                                                  VCons (
-                                                  n6, h20, h21) -> Ascii
+                                                  _n6, h20, _h21) -> Ascii
                                                   (h20, h17, h14, h11, h8,
                                                   h5, h2, h))))))))
 

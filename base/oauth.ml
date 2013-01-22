@@ -1,6 +1,6 @@
+open Ocaml_conv
 open Util
 open Http
-open Base64
 
 let opt_param name param =
   match param with
@@ -76,8 +76,8 @@ let check_rsa_sha1_hash text rsa_key signature =
 let signature_base_string
     ~http_method ~url
     ~oauth_signature_method
-    ~oauth_consumer_key ~oauth_consumer_secret
-    ?oauth_token ?oauth_token_secret
+    ~oauth_consumer_key ~oauth_consumer_secret:_
+    ?oauth_token ?oauth_token_secret:_
     ~oauth_timestamp ~oauth_nonce ~oauth_version
     ?(params = [])
     () =
@@ -89,7 +89,7 @@ let signature_base_string
       "oauth_version", oauth_version;
   ] @
     opt_param "oauth_token" oauth_token @
-    List.filter (fun (k, v) -> k <> "oauth_signature") params in
+    List.filter (fun (k, _v) -> k <> "oauth_signature") params in
 
   List.map rfc3986_encode
     [
@@ -132,6 +132,7 @@ let sign
       ~oauth_timestamp ~oauth_nonce ~oauth_version
       ?params
       () in
+prerr_endline ("SIGBASE: " ^ signature_base_string);
   match oauth_signature_method with
     | `Plaintext -> rfc3986_encode key
     | `Hmac_sha1 -> hmac_sha1_hash signature_base_string key
@@ -139,7 +140,7 @@ let sign
 
 
 
-let check_signature
+let _check_signature
     ~http_method ~url
     ~oauth_signature_method ~oauth_signature
     ~oauth_consumer_key ~oauth_consumer_secret
@@ -281,9 +282,9 @@ let access_resource
       ?(oauth_version = "1.0") ?(oauth_signature_method = `Hmac_sha1)
       ~oauth_consumer_key ~oauth_consumer_secret
       ~oauth_token ~oauth_token_secret
-      ~verif
+      ~verif:_
       ?(oauth_timestamp = make_timestamp ()) ?(oauth_nonce = make_nonce ())
-      ?(params=[]) ?body
+      ?(params=[]) ?body:_
       () =
   let url = "http://" ^ host ^ path in
     let oauth_signature =
@@ -305,11 +306,40 @@ let access_resource
     ] in
     Http.conn host http_method ~headers:headers path params
 
-type oauth = {
+let access_resource_https
+      ?(http_method = GET) ~host ~path
+      ?(oauth_version = "1.0") ?(oauth_signature_method = `Hmac_sha1)
+      ~oauth_consumer_key ~oauth_consumer_secret
+      ~oauth_token ~oauth_token_secret
+      ~verif:_
+      ?(oauth_timestamp = make_timestamp ()) ?(oauth_nonce = make_nonce ())
+      ?(params=[]) ?body:_
+      () =
+  let url = "https://" ^ host ^ path in
+    let oauth_signature =
+      sign
+        ~http_method ~url
+        ~oauth_version ~oauth_signature_method
+        ~oauth_consumer_key ~oauth_consumer_secret
+        ~oauth_token ~oauth_token_secret
+        ~oauth_timestamp ~oauth_nonce
+        ~params
+        () in
+    let headers = [
+      authorization_header2
+        ~oauth_version ~oauth_signature_method ~oauth_signature
+        ~oauth_consumer_key ~oauth_token
+        ~oauth_timestamp ~oauth_nonce
+	~ps:[]
+        ()
+    ] in
+    Http.https host http_method ~headers:headers path params
+
+type t = {
     consumer_key:string; consumer_secret:string;
     access_token:string; access_token_secret:string;
     verif: string;
-  }
+  } with conv(ocaml)
 
 let access oauth meth host path params f =
   access_resource ~http_method:meth ~host:host ~path:path
@@ -321,3 +351,13 @@ let access oauth meth host path params f =
     ~params:params
     ()
     f
+
+let access_https oauth meth host path params =
+  access_resource_https ~http_method:meth ~host:host ~path:path
+    ~oauth_consumer_key:oauth.consumer_key
+    ~oauth_consumer_secret:oauth.consumer_secret
+    ~oauth_token:oauth.access_token
+    ~oauth_token_secret:oauth.access_token_secret
+    ~verif:oauth.verif
+    ~params:params
+    ()

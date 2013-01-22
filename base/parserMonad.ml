@@ -4,7 +4,7 @@ open Llist
 type ts = char llist
 type state = int * int * (char list * char * char list)
 type error = state * string
-type 'a parser = state -> ts -> ('a * state * ts, error) either
+type 'a t = state -> ts -> ('a * state * ts, error) either
 
 exception ParseError of string
 
@@ -20,29 +20,29 @@ let showerr ((line,pos,(pre,c,post)),msg) =
   !%"{\n  line %d, %d: %s\n%s[%c]%s\n}"line pos msg (string_of_chars pre)
   c (string_of_chars post)
     
-let return : 'a -> 'a parser =
+let return : 'a -> 'a t =
     fun x ->
       fun state code -> Inl (x, state, code)
 
 
 let error msg = fun state _code -> Inr (state, msg)
 
-let (>>=) : 'a parser -> ('a -> 'b parser) -> 'b parser =
+let (>>=) : 'a t -> ('a -> 'b t) -> 'b t =
     fun p f ->
       fun state code ->
 	match p state code with
 	| Inl (x, state', ts) -> f x state' ts
 	| Inr err -> Inr err
 	      
-let (>>) : 'a parser -> 'b parser -> 'b parser =
+let (>>) : 'a t -> 'b t -> 'b t =
     fun p1 p2 ->
       p1 >>= fun _ -> p2
 
-let (<<) : 'a parser -> 'b parser -> 'a parser =
+let (<.<) : 'a t -> 'b t -> 'a t =
     fun p1 p2 ->
       p1 >>= fun x -> p2 >> return x
 
-let ( ^? ) : 'a parser -> string -> 'a parser =
+let ( ^? ) : 'a t -> string -> 'a t =
     fun p msg ->
       fun state code ->
 	match p state code with
@@ -50,7 +50,7 @@ let ( ^? ) : 'a parser -> string -> 'a parser =
 	| Inr (st,msg0) -> Inr (st,msg ^": "^msg0)
     
     (* (<|>) : 'a m -> 'a m -> 'a m *)
-let (<|>) : 'a parser -> 'a parser -> 'a parser =
+let (<|>) : 'a t -> 'a t -> 'a t =
     fun p1 p2 ->
       fun state code ->
 	match p1 state code with
@@ -73,7 +73,7 @@ let (<|?>) p1 p2 = fun state code ->
       end
 *)	
 
-let rec many : 'a parser -> ('a list) parser =
+let rec many : 'a t -> ('a list) t =
     fun p ->
       (p >>= fun x -> many p >>= fun xs -> return (x::xs))
 	<|> (return [])
@@ -86,12 +86,12 @@ let sep separator p =
     <|> (return [])
 
 
-let opt : 'a parser -> ('a option) parser =
+let opt : 'a t -> ('a option) t =
     fun p ->
       (p >>= fun x -> return (Some x)) <|> (return None)
 
 
-let char1_with_debug state = function
+let _char1_with_debug state = function
   | Nil -> Inr (state,"(Nil)")
   | Cons (x,xs) ->
       let next (pre,x0, _) =
@@ -101,7 +101,7 @@ let char1_with_debug state = function
 	(pre' , x, Llist.take 100 !$xs)
       in
       match x, state with
-      | '\n', (line,pos,cs) ->
+      | '\n', (line,_pos,cs) ->
 	  Inl (x,(line+1,-1, next cs), !$xs)
       | _, (line,pos,cs) ->
 	  Inl (x,(line, pos+1, next cs),!$xs)
@@ -141,7 +141,7 @@ let int =
 
 let run p state ts =
   match p state ts with
-  | Inl (x,state',xs) -> x
+  | Inl (x,_state',_xs) -> x
   | Inr err -> 
       raise (ParseError (showerr err))
 

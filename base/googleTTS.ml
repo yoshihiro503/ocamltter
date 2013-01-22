@@ -1,5 +1,4 @@
 open Util
-open Http
 
 let play_command = "mpg123"
 
@@ -14,7 +13,7 @@ let cmd s =
 
 let agent = "Mozilla/5.0 (X11; U; Linux i686; ja; rv:1.9.2.11) Gecko/20101013 Ubuntu/9.04 (jaunty) Firefox/3.6.11"
 
-let wget outfile url =
+let _wget outfile url =
   cmd (!%"wget -O %s -U '%s' '%s' >> log 2>> log" outfile agent url)
     
 
@@ -42,11 +41,80 @@ let say lang s =
   wget "say.mp3" url;*)
   play "say.mp3"
 
-type table = (string * string) list
+let tr = [
+  ("ttlweb","TTLウェブ");
+  ("cho_tekitou","超適当");
+  ("mzp","ミズピー");
+  ("erutuf13","エルツフ");
+  ("aua2008","アウア");
+  ("shimomura1004","下村");
+  ("keigoi","ケイゴイ");
+  ("twiSearchLog","ツイサーチログ");
+  ("bleis","");
+  ("kmizu","ケイミズ");
+  ("wof_moriguchi","WOF森口");
+  ("F#","Fシャープ");
+  ("yoshihiro503","ヨシヒロ503");
+  ("soutaro","ソウタロウ");
+  ("shelarcy","シェラーシィ");
+  ("MoCo7","モコ7");
+  ("tmiya_","Tミヤ");
+  ("igeta","イゲタ");
+  ("sunflat","サンフラット");
+  ("bonotake","ボノタケ");
+  ("garriguejej","ガリグ");
+  ("50storms","50ストームズ");
+  ("ksknac","KSKナック");
+  ("wtakuo","Wタクオ");
+  ("kencoba","ケンコバ");
+  ("fukaminmin","フカミンミン");
+  ("dico_leque","ディコレキ");
+  ("yoriyuki","ヨリユキ");
+  ("kikx","キックス");
+  ("athos0220","アチョス");
+  ("nixie_san","にくしーさん");
+  ("mayahjp","まやJP");
+  ("ksuenaga","K末永");
+  ("camlspotter","キャムルスポッター");
+  ("Dominion525","ドミニオン525");
+  ("osiire","押入れ");
+  ("Gemmat","ゲンマッと");
+  ("esumii","Eすみい");
+  ("suer","すえぁ");
+  ("masahiro_sakai","まさひろさかい");
+  ("keita44_f4", "ケイタヨンヨン");
+  ("gabu", "がぶ");
+  ("kazu_yamamoto","カズヤマモト");
+  ("chiguri", "チグリ");
+  ("camloeba", "俺は天才キャミバ様");
+  ("hamatz", "ハマッツ");
+  ("pirapira", "ピラピラ");
+  (*===== もの ====*)
+  ("Android","アンドロイド");
+  ("ocaml","おきゃむる");
+  ("OCaml","おきゃむる");
+  ("Scala", "スカラ");
+  ("deploy","デプロイ");
+  ("Coq","コック");
+  ("Gallina","ガリナ");
+  ("haskell","ハスケル");
+  ("Haskell","ハスケル");
+  ("関数型", "カンスウガタ");
+  ("Alloy","アロイ");
+  ("javascript","ジャバスクリプト");
+  ("Javascript","ジャバスクリプト");
+  ("java", "ジャバ");
+  ("Java", "ジャバ");
+  ("RedBull","レッドブル");
+  ("Mac", "マック");
+  ("Book", "ブック");
+  ("#", "");
+]
 
-let say_ja table s =
+
+let say_ja s =
   let s' =
     List.fold_left (fun s (a,b) ->
-      Str.global_replace (Str.regexp_string a) b s) s table
+      Str.global_replace (Str.regexp_string a) b s) s tr
   in
   say Ja s'

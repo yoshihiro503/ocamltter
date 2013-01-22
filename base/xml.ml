@@ -27,13 +27,13 @@ let ident =
   (many1 @@ char_when (fun c -> List.mem c igs = false)) >>=
   (return $ string_of_chars)
 
-let pattr : attr parser =
+let pattr : attr t =
   let k_char c =
     List.mem c ['='; '<'; '>'; '?'; '/'; ' '; '\t'; '\r'; '\n'] = false
   in
   let ident0 = many (char_when ((<>) '\"')) >>= (return $ string_of_chars) in
     whitespace >> make_ident k_char >>= fun k -> char '=' >> char '\"' >>
-    ident0 << char '\"' >>= fun v -> return (k,v)
+    ident0 <.< char '\"' >>= fun v -> return (k,v)
 
 let pcdata =
   let igs = ['<'; '>'] in
@@ -41,28 +41,28 @@ let pcdata =
   (many1 @@ char_when (fun c -> List.mem c igs = false)) >>= fun cs ->
     return @@ PCData(string_of_chars cs)
     
-let rec parser =
+let parser_ =
     let rec iter () =
       let top = char '<' >> char '?' >> many ident >> char '?' >> char '>'
 	  >>= fun _ -> iter()
       in
       let tag1 = char '<' >> ident >>= fun name ->
-	many pattr << char '>' >>= fun attrs ->
+	many pattr <.< char '>' >>= fun attrs ->
 	many (iter()) >>= fun children ->
-	whitespace >> char '<' >> char '/' >> ident << char '>' >>= fun name' ->
+	whitespace >> char '<' >> char '/' >> ident <.< char '>' >>= fun _name' ->
 	return (Tag(name, attrs, children))
       in
       let tag2 = char '<' >> ident >>= fun name ->
-	many pattr << char '/' << char '>' >>= fun attrs ->
+	many pattr <.< char '/' <.< char '>' >>= fun attrs ->
 	return (Tag(name, attrs, []))
       in
       whitespace >> (top <|> tag1^?"tag1" <|> tag2^?"tag2" <|> pcdata)
     in
     iter() ^? "xml"
     
-let parse_ch = run_ch parser
-let parse_file = run_file parser
-let parse_string s = try run_string parser s with e -> prerr_endline ("[[[\n"^s^"\n]]]\n"); raise e
+let parse_ch = run_ch parser_
+let parse_file = run_file parser_
+let parse_string s = try run_string parser_ s with e -> prerr_endline ("[[[\n"^s^"\n]]]\n"); raise e
 let getname = function
   | Tag(name, _, _) -> name
   | PCData s -> failwith("getname: PCData("^s^")")
@@ -70,7 +70,7 @@ let getname = function
 let getchild name : xml -> xml = function
   | Tag(_, _, xmls) ->
       begin try List.find (fun x -> getname x = name) xmls with
-      | e -> failwith ("getchild: notfound:\""^name^"\":\n"^slist"\n"show xmls)
+      | _e -> failwith ("getchild: notfound:\""^name^"\":\n"^slist"\n"show xmls)
       end
   | PCData s -> failwith("getchild: PCData("^s^")")
 let (%%) xml name = getchild name xml
@@ -92,5 +92,5 @@ let (%%<) xml name = getchildren (xml %% name)
 let attr name = function
   | Tag(_, attrs, _) when List.mem_assoc name attrs ->
       List.assoc name attrs
-  | Tag(_, attrs, _) -> failwith("attr: not member("^name^")")
+  | Tag(_, _attrs, _) -> failwith("attr: not member("^name^")")
   | PCData s -> failwith("attr: PCData("^s^")")

@@ -15,3 +15,13 @@ val conn :
   string -> (string * string) list ->
   ?rawdata:string ->
     (header -> in_channel -> 'a) -> 'a
+
+(** https access via cURL *)
+val https : 
+  string  (** hostname *)
+  -> meth  (** GET/POST *)
+  -> ?headers:(string * string) list 
+  -> string (** path *)
+  -> ?rawdata:string (** raw additional post *)
+  -> (string * string) list (** posts *)
+  -> [> `Error of [> `Http of int * string ] | `Ok of string ]

@@ -12,13 +12,17 @@ Requirements
 	
 * [OCaml](http://caml.inria.fr/) >= 3.10
 * [Cryptokit](http://pauillac.inria.fr/~xleroy/software.html) >= 1.3
-
+* OCurl(known also as ocaml-curl or curl for OCaml) >= 0.5.3
+* Type_conv
+* Meta_conv
+* Tiny_json_conv
+* OMake
 
 Installation
 ------------
 
-Nothing to do.
-
+* Install required libraries. OPAM is an easy and highly recommended way to install them semi-automatically.
+* omake
 
 How to use
 ----------

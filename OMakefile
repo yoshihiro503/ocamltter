@@ -1,0 +1,56 @@
+# How-to-build using OMake
+#
+# yes no | omake --install # to create OMakeroot for the first time
+
+# If OMakeroot is here, include OMyMakefile
+if $(file-exists OMakeroot)
+   include OMyMakefile
+   export
+
+# for OCaml 4.00.0
+OCAMLFLAGS = -thread -w A-4 -warn-error A-4
+
+####################################################### 
+
+PWD=$(dir .)
+OCAMLINCLUDES = $(PWD)/base $(PWD)/twitter .
+
+OCAMLPACKS[] = cryptokit str spotlib tiny_json_conv ocaml_conv curl
+CAMLP4PACKS[] = meta_conv
+
+OCAMLDEPFLAGS= -syntax camlp4o -package meta_conv.syntax
+OCAMLPPFLAGS = -syntax camlp4o -package meta_conv.syntax
+
+LIBFILES[] = 
+    base/base64
+    base/parserMonad
+    base/xml
+    base/googleTTS
+    base/llist
+    base/utf16
+    base/http
+    base/oauth
+    base/util
+    twitter/auth
+    twitter/api_intf
+    twitter/api
+    twitter/api11
+
+MyOCamlPackage(twitter, $(LIBFILES), $(EMPTY), $(EMPTY))
+
+OCAML_LIBS= twitter
+
+FILES[] = 
+    oConfig
+    ocamltter
+
+# oConfig.cmi oConfig.cmo oConfig.cmx oConfig.o ocamltter.cmi ocamltter.cmo ocamltter.cmx ocamltter.o: twitter.cmi
+
+Subdirs()
+
+# MyOCamlTop(ocamltter_top, $(FILES))
+OCAMLFLAGS = -thread -w A-4-31 -warn-error A-4-31
+MyOCamlTop(ocamltter_top, $(FILES))
+
+.DEFAULT: ocamltter_top
+

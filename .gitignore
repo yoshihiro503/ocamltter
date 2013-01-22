@@ -6,3 +6,12 @@
 *.glob
 *~
 .ocamltter
+*.annot
+ocamltter_top*
+*.omc
+*.cm*
+*.o
+*.a
+.hg
+.hgignore
+*.orig

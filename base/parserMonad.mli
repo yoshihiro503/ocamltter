@@ -1,33 +1,33 @@
 type ts
 type state
 type error
-type 'a parser
+type 'a t
 
-val error : string -> 'a parser
+val error : string -> 'a t
 val showerr : error -> string
 
-val return : 'a -> 'a parser
-val ( >>= ) : 'a parser -> ('a -> 'b parser) -> 'b parser
+val return : 'a -> 'a t
+val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
 
-val ( >> ) : 'a parser -> 'b parser -> 'b parser
-val ( << ) : 'a parser -> 'b parser -> 'a parser
-val ( ^? ) : 'a parser -> string -> 'a parser
-val ( <|> ) : 'a parser -> 'a parser -> 'a parser
+val ( >> ) : 'a t -> 'b t -> 'b t
+val ( <.< ) : 'a t -> 'b t -> 'a t
+val ( ^? ) : 'a t -> string -> 'a t
+val ( <|> ) : 'a t -> 'a t -> 'a t
 
-val many : 'a parser -> 'a list parser
-val many1 : 'a parser -> 'a list parser
-val sep : 'a parser -> 'b parser -> 'b list parser
-val opt : 'a parser -> 'a option parser
+val many : 'a t -> 'a list t
+val many1 : 'a t -> 'a list t
+val sep : 'a t -> 'b t -> 'b list t
+val opt : 'a t -> 'a option t
 
-val char1 : char parser
-val char_when : (char -> bool) -> char parser
-val char : char -> char parser
-val keyword : string -> string parser
-val make_ident : (char -> bool) -> string parser
-val int : int parser
+val char1 : char t
+val char_when : (char -> bool) -> char t
+val char : char -> char t
+val keyword : string -> string t
+val make_ident : (char -> bool) -> string t
+val int : int t
 
 val init_state : state
-val run_ch : 'a parser -> in_channel -> 'a
-val run_stdin : 'a parser -> 'a
-val run_file : 'a parser -> string -> 'a
-val run_string : 'a parser -> string -> 'a
+val run_ch : 'a t -> in_channel -> 'a
+val run_stdin : 'a t -> 'a
+val run_file : 'a t -> string -> 'a
+val run_string : 'a t -> string -> 'a

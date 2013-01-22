@@ -4,7 +4,7 @@ let id x = x
 let p = Printf.printf
 let pr = print_endline
 let tee f x = ignore @@ f x; x
-let (|>) x f = f x
+external (|>) : 'a -> ('a -> 'b) -> 'b = "%revapply"
 let const c = fun _ -> c
 
 let (!%) = Printf.sprintf
@@ -25,7 +25,7 @@ let rec repeat n f x =
 
 let list_concatmap f xs = List.concat (List.map f xs)
 
-let rec list_head = function
+let list_head = function
   | [] -> raise (Invalid_argument "list_head: nil")
   | x::_ -> x
 
