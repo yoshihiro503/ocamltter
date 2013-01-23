@@ -1,4 +1,5 @@
 open Meta_conv.Open
+open Meta_conv.Result.Open
 open Ocaml_conv
 open Json_conv
 
@@ -6,6 +7,7 @@ open Spotlib.Spot
 
 open Http
 open Api_intf
+
 
 (** {6 HTTP parameters} *)
 
@@ -22,15 +24,14 @@ let (~?) l = List.filter_map (function
 
 (* Api 1.1 seems to requir https *)
 let twitter oauth ?(host="api.twitter.com") meth cmd params =
-  let open Meta_conv.Result in
   prerr_endline cmd;
   List.iter (fun (k,v) -> Format.eprintf "%s=%s@." k v) params;
   Auth.access_https oauth meth host cmd params
   >>| Json.parse
 
-(* To live with other errors like `HTTP, Json decoding erros are
-   tagged with `Json. *)
 (* CR jfuruse: Should we use `JSON instead of `Json? *)
+(** To live with other errors like `HTTP, Json decoding erros are
+    tagged with `Json. *)
 let json_error_wrap f v = match v with
   | `Error e -> `Error e
   | `Ok res ->
@@ -39,7 +40,7 @@ let json_error_wrap f v = match v with
       | `Error e -> `Error (`Json e)
 
 (** 
-  [api post meth fmt ... params oauth] 
+  [api post meth fmt ...(format args)... params oauth] 
 
   post : Parser of JSON. If you want to have the raw JSON, use [fun x -> `Ok x].
   meth : GET or POST
@@ -60,23 +61,23 @@ module Arg = struct
 
   let (>>|) v f = Option.map ~f v
   
-  let of_bool x  = x >>| string_of_bool
+  let of_bool  x = x >>| string_of_bool
   let of_int64 x = x >>| Int64.to_string
-  let of_int x   = x >>| string_of_int
+  let of_int   x = x >>| string_of_int
   let of_float x = x >>| string_of_float
   let of_string (x : string option) = x
 
   (** Common optional arguments *)
 
   let gen k opts addition = k (addition @ opts)
-  (** optional argument generator generator *)
+  (** optional argument function accumulation *)
 
   let run optf consumer = optf consumer []
-  (** "runs" optional argument generator [optf] with the init empty
+  (** "runs" optional argument function [optf] with the init empty
       parameters, then give the final set of parameters to [consumer] *)
 
   (* Being puzzled? Yes so was I... *)
-  let get post pathfmt optf = run optf & api post GET pathfmt
+  let get post pathfmt optf  = run optf & api post GET  pathfmt
   let post post pathfmt optf = run optf & api post POST pathfmt
 
   (* Here, we define the set of optional argument generators 
@@ -95,7 +96,9 @@ module Arg = struct
   *)
      
   (*
-    val <name> : (params -> 'a)  ->  params -> ?<name>:<t> -> 'a
+    val <name> : (params -> 'a)  ->  (params -> ?<name>:<t> -> 'a)
+
+    They are to add new arguments just after [params].
   *)
 
   let count k opts ?count = gen k opts 
@@ -131,7 +134,7 @@ module Arg = struct
 
   let required_either_user_id_or_screen_name k opts ?user_id ?screen_name = 
     match user_id, screen_name with
-    | None, None -> assert false (* CR jfuruse: better error message *)
+    | None, None -> failwithf "Neither user_id nor screen_name is set"
     | _ -> 
         gen k opts
           [ "screen_name" , of_string screen_name
@@ -234,7 +237,7 @@ end = struct
 end
 
 (* Basic API function can be implemented by the following simple rule,
-   even if you do not understand the funcitonal tricks I did here.
+   even if you do not understand the funcitonal tricks I used here.
 
    let <name> = <get/post> <postprocess_function> <path format>
      &  <argment_functions concatenated by **>
@@ -254,11 +257,12 @@ end
    * The URL piece is "statuses/show/%Ld.json" 
    * It has trim_user, include_my_tweet and include_entities parameters.
        They are defined in Arg module.
-   * It also takes one format argument for "%Ld", so format1 is added.
+   * It also takes one format argument for "%Ld", so format1 is added
+     at the end.
 
 *)
 
-module Timelines = struct
+module Timelines = struct (* CR jfuruse: or Statuses ? *)
   (* Careful. The returned JSON may have different type based on the options *)
 
   let mentions_timeline = get Tweet.ts_of_json "statuses/mentions_timeline.json"
@@ -408,7 +412,7 @@ module Friendships = struct
   let lookup ?screen_name ?user_id oauth =
     api ts_of_json GET "friendships/lookup.json"
       [ "screen_name", 
-        Option.map ~f:(fun xs -> String.concat "," xs) screen_name
+        Option.map ~f:(String.concat ",") screen_name
 
       ; "user_id", 
         Option.map ~f:(String.concat "," ** List.map Int64.to_string) user_id
