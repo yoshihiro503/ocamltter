@@ -9,6 +9,8 @@ open Json_conv
 open Meta_conv.Open
 open Xml
 
+(* Warning: API version 1 will not work after 2013/Mar/05 *)
+
 (** {6 HTTP parameters} *)
 
 let (~?) l = list_filter_map (function
@@ -149,6 +151,8 @@ let twitter oauth ?(host="api.twitter.com") meth cmd params =
 (** {6 APIs} *)
 
 (** {7 Access with Cursor} *)
+
+(* This is now deprecated. Use Api11.Cursor interface *)
 
 module Cursor : sig
 
@@ -398,11 +402,6 @@ let favorites_destroy oauth status_id =
 
 let report_spam oauth sname =
   twitter oauth POST "/1/report_spam.json" [("screen_name",sname)]
-
-(** {7 OAuth Methods} *)
-
-let fetch_request_token = Auth.fetch_request_token
-let fetch_access_token  = Auth.fetch_access_token
 
 (** {7 Help Methods} *)
 
