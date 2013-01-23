@@ -148,11 +148,6 @@ val favorites_destroy : Oauth.t -> status_id -> Json.t
 
 val report_spam : Oauth.t -> string -> Json.t
 
-(** {7 Oauth.T Methods} *)
-
-val fetch_request_token : Auth.Consumer.t -> string (* URL *) * Auth.Token.t
-val fetch_access_token : Auth.Consumer.t -> Auth.VerifiedToken.t -> string (* username *) * Auth.Token.t
-
 (** {7 Help Methods} *)
 
 val help_test : unit -> Json.t
