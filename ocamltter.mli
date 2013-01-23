@@ -5,6 +5,8 @@ open Tiny_json
 open Meta_conv
 open Api_intf
 
+type tweet = Api1.tweet
+
 module Auth : sig
   type t = { username : string; oauth : Oauth.t; } with conv(ocaml)
   
@@ -25,24 +27,24 @@ end
 module Cache : sig
   type t
   val init : unit -> t
-  val is_new : t -> Api.tweet -> bool
-  val add : t -> Api.tweet -> unit
+  val is_new : t -> tweet -> bool
+  val add : t -> tweet -> unit
 end
 
 val config_file : string ref
 val get_oauth : unit -> Oauth.t
 val setup : unit -> Oauth.t
-val tw_sort : Api.tweet list -> Api.tweet list
+val tw_sort : tweet list -> tweet list
 val get_timeline : ?c:int -> ?since_id:status_id -> bool ->
-  Api.tweet list
-val print_timeline : Api.tweet list -> unit
-val reload : unit -> Api.tweet list
+  tweet list
+val print_timeline : tweet list -> unit
+val reload : unit -> tweet list
 
-val l : ?c:int -> ?u:string -> ?page:int -> unit -> Api.tweet list
-val lc : ?page:int -> int -> Api.tweet list
-val lu : ?page:int -> string -> Api.tweet list
-val m : ?c:int -> unit -> Api.tweet list
-val kwsk : status_id -> Api.tweet list
+val l : ?c:int -> ?u:string -> ?page:int -> unit -> tweet list
+val lc : ?page:int -> int -> tweet list
+val lu : ?page:int -> string -> tweet list
+val m : ?c:int -> unit -> tweet list
+val kwsk : status_id -> tweet list
 
 val u : string -> status_id
 val rt : status_id -> unit
@@ -61,7 +63,7 @@ val frt : status_id -> unit
 
 val report_spam : string -> unit
 
-val s : string -> Api.tweet list
+val s : string -> tweet list
 val limit_status : unit -> Json.t
 val help : string
 

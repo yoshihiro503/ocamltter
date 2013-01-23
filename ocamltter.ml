@@ -3,8 +3,10 @@ open Spotlib.Spot
 
 open Twitter
 open Util
-open Api
+open Api1
 module TTS = GoogleTTS
+
+type tweet = Api1.tweet
 
 module Consumer = Auth.Consumer
 
@@ -29,12 +31,12 @@ end = struct
   type t = { username : string; oauth : Oauth.t } with conv(ocaml)
 
   let authorize app (_, verif as verified_token) = 
-    let username, token = Api.fetch_access_token app verified_token in
+    let username, token = Auth.fetch_access_token app verified_token in
     let oauth = Auth.oauth app (token, verif) in
     { username; oauth }
   
   let authorize_interactive appname app = 
-    let url, req_resp_token = Api.fetch_request_token app in
+    let url, req_resp_token = Auth.fetch_request_token app in
     print_endline & "Please grant access to " ^ appname ^ " and get a PIN at :";
     print_endline & "  " ^ url;
     print_string "Give me a PIN: "; flush stdout;
@@ -120,7 +122,7 @@ let setup () =
   prerr_endline "oauth done";
   o
 
-let tw_sort = List.sort Api.tw_compare
+let tw_sort = List.sort Api1.tw_compare
 
 let get_timeline ?(c=20) ?since_id verbose =
   try
@@ -128,7 +130,7 @@ let get_timeline ?(c=20) ?since_id verbose =
       let search word =
 	if verbose then
           (print_string (!%"searching with '%s'... " word); flush stdout);
-	let ts = value_or [] @@ maybe (Api.search ~rpp:c ?since_id) word in
+	let ts = value_or [] @@ maybe (Api1.search ~rpp:c ?since_id) word in
 	if verbose then
           (print_endline (!%"%d" (List.length ts)); flush stdout);
 	ts
@@ -137,7 +139,7 @@ let get_timeline ?(c=20) ?since_id verbose =
     in
     let tl2 =
       if verbose then (print_endline "loading..."; flush stdout);
-      List.filter OConfig.filter @@ Api.home_timeline ~count:c (get_oauth ())
+      List.filter OConfig.filter @@ Api1.home_timeline ~count:c (get_oauth ())
     in
     tw_sort (tl1 @ tl2)
   with
@@ -151,18 +153,18 @@ let print_timeline tw =
 let reload () =
   get_timeline true
 
-let l ?(c=20) ?u ?page () : Api.tweet list =
+let l ?(c=20) ?u ?page () : Api1.tweet list =
   print_endline "loading..."; flush stdout;
   match u with
-  | None -> tw_sort @@ Api.home_timeline ~count:c ?page (get_oauth ())
-  | Some user -> tw_sort @@ Api.user_timeline ?page (get_oauth ()) user
+  | None -> tw_sort @@ Api1.home_timeline ~count:c ?page (get_oauth ())
+  | Some user -> tw_sort @@ Api1.user_timeline ?page (get_oauth ()) user
 
 let lc ?page count = l ~c:count ?page ()
 let lu ?page user  = l ~u:user  ?page ()
 
-let m ?(c=20) () : Api.tweet list =
+let m ?(c=20) () : Api1.tweet list =
   print_endline "loading..."; flush stdout;
-  tw_sort @@ Api.mentions (get_oauth ()) c
+  tw_sort @@ Api1.mentions (get_oauth ()) c
 
 let kwsk id =
   let rec iter store id =
@@ -173,18 +175,18 @@ let kwsk id =
   iter [] id
     
 let u text =
-  Api.update (get_oauth ()) text |> Api.status_id
+  Api1.update (get_oauth ()) text |> Api1.status_id
 
 let re status_id text =
-  Api.update ~in_reply_to_status_id:(Int64.to_string status_id) (get_oauth ()) text
-  |> Api.status_id
+  Api1.update ~in_reply_to_status_id:(Int64.to_string status_id) (get_oauth ()) text
+  |> Api1.status_id
     
 
 let rt status_id =
-  Api.retweet (get_oauth ()) (Int64.to_string status_id) |> ignore
+  Api1.retweet (get_oauth ()) (Int64.to_string status_id) |> ignore
 
 let del id =
-  ignore @@ Api.destroy (get_oauth ()) id
+  ignore @@ Api1.destroy (get_oauth ()) id
 
 let qt st_id comment =
   let tw = get_tweet st_id in
@@ -202,22 +204,22 @@ let reqt st_id comment =
   re st_id (!%"%s QT @%s: %s" comment (sname tw) (text tw))
 
 let follow sname =
-  ignore @@ Api.friendship_create (get_oauth ()) sname
+  ignore @@ Api1.friendship_create (get_oauth ()) sname
 
 let unfollow sname =
-  ignore @@ Api.friendship_destroy (get_oauth ()) sname
+  ignore @@ Api1.friendship_destroy (get_oauth ()) sname
 
 let fav id =
-  ignore @@ Api.favorites_create (get_oauth ()) id
+  ignore @@ Api1.favorites_create (get_oauth ()) id
 
 let frt id = fav id; rt id
 
 let report_spam sname =
-  ignore @@ Api.report_spam (get_oauth ()) sname
+  ignore @@ Api1.report_spam (get_oauth ()) sname
 
-let s word = List.sort tw_compare @@ Api.search ~rpp:100 word
+let s word = List.sort tw_compare @@ Api1.search ~rpp:100 word
 
-let limit_status () = Api.rate_limit_status ()
+let limit_status () = Api1.rate_limit_status ()
 
 let help =
 "commands:
@@ -249,44 +251,6 @@ let help =
   #quite               quite ocamltter
 "
 
-
-(* CR jfuruse: this code no longer works, and it is also an application.
-type ids = int64 list
-
-let save_friends () =
-  let o = get_oauth () in
-  let friends = Api.friends o in
-  Sexplib.Sexp.save_hum "friends.sexp" (sexp_of_ids friends)
-  
-let load_friends () =
-  Sexplib.Sexp.load_sexp_conv_exn "friends.sexp" ids_of_sexp
-
-type _res = Api_intf.User.t
-
-let sync_friends () =
-  let o = get_oauth () in
-  let goal = load_friends () in
-  let cur = Api.friends o in
-  let add = List.filter (fun i -> not (List.mem i cur)) goal in
-  List.iter (fun i ->
-    Format.eprintf "adding %Ld@." i;
-    try
-    match Api.friendship_create_id o i with
-    | `Ok _res -> 
-(*
-        Format.eprintf "RES: %a@." Sexplib.Sexp.pp_hum (sexp_of_res res);
-*)
-        Unix.sleep 1
-    | `Error e ->
-        Json_conv.format_full_error Format.stderr e;
-        raise Exit
-    with          
-    | Api.TwErr s ->
-        Format.eprintf "TW ERROR: %s@." s;
-        Unix.sleep 1
-  ) add
-*)
-
 let is_polling_on = ref false
 
 let stop_polling ()  = is_polling_on := false
@@ -309,11 +273,11 @@ let start_polling () =
       let last_id = match maybe get () with
       | Inl tl when List.length tl > 0 ->
           List.iter begin fun t ->
-	    print_endline (Api.show_tweet t);
+	    print_endline (Api1.show_tweet t);
             if !OConfig.talk then TTS.say_ja (!%"%s, %s" (sname t) (text t));
           end tl;
           print_endline "";
-          Some (list_last tl |> Api.status_id)
+          Some (list_last tl |> Api1.status_id)
       | Inl _ -> print_string "."; flush stdout; last_id
       | Inr e -> print_endline (Printexc.to_string e);
           last_id

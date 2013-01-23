@@ -16,13 +16,22 @@ val oauth : Consumer.t -> VerifiedToken.t -> Oauth.t
 val fetch_request_token : Consumer.t -> string (* URL *) * Token.t
 val fetch_access_token  : Consumer.t -> VerifiedToken.t -> string (* username *) * Token.t
 
+(** Access via HTTP *)
 val access :
-    Oauth.t -> Http.meth -> string -> string -> (string * string) list ->
-    (Http.header -> in_channel -> 'a) -> 'a
-
-val access_https : Oauth.t 
+  Oauth.t 
   -> Http.meth 
-  -> string 
-  -> string 
-  -> (string * string) list 
-  -> [> `Error of [> `Http of int * string ] | `Ok of string ]
+  -> string (* host name *)
+  -> string (* path *)
+  -> (string * string) list (* GET/POST parameters *)
+  -> (Http.header -> in_channel -> 'a) (* reader *)
+  -> 'a
+
+(** Access via HTTPS, required for API ver 1.1 *)
+val access_https : 
+  Oauth.t 
+  -> Http.meth 
+  -> string (* host name *)
+  -> string (* path *) 
+  -> (string * string) list (* GET/POST parameters *)
+  -> [> `Error of [> `Http of int * string ] 
+     |  `Ok of string ]
