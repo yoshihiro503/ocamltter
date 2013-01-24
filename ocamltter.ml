@@ -166,7 +166,7 @@ let get_timeline ?(c=20) ?since_id verbose =
         if verbose then
           (print_string (!%"searching with '%s'... " word); flush stdout);
         let  ts = from_result [] 
-          & Search.tweets ~count:c ?since_id word o >>| fun x -> x#statuses in
+          & Search.tweets o ~count:c ?since_id word >>| fun x -> x#statuses in
         if verbose then
           (print_endline (!%"%d" (List.length ts)); flush stdout);
         ts
@@ -227,11 +227,11 @@ let kwsk id =
     
 let u text =
   let o = get_oauth () in
-  Tweets.update text o |> from_Ok |> fun x -> x#id
+  Tweets.update o text |> from_Ok |> fun x -> x#id
 
 let re status_id text =
   let o = get_oauth () in
-  Tweets.update ~in_reply_to_status_id:status_id text o |> from_Ok |> fun x -> x#id
+  Tweets.update o ~in_reply_to_status_id:status_id text |> from_Ok |> fun x -> x#id
 
 let rt status_id =
   let o = get_oauth () in
@@ -267,8 +267,8 @@ let unfollow sname = Friendships.destroy ~screen_name:sname (get_oauth ()) |> fr
 
 let favs screen_name = Favorites.list ~screen_name (get_oauth ()) |> from_Ok
 
-let fav id = Favorites.create id (get_oauth ()) |> from_Ok |> fun x -> x#id
-let unfav id = Favorites.destroy id (get_oauth ()) |> from_Ok |> fun x -> x#id
+let fav id = Favorites.create (get_oauth ()) id |> from_Ok |> fun x -> x#id
+let unfav id = Favorites.destroy (get_oauth ()) id |> from_Ok |> fun x -> x#id
 let frt id = ignore & fav id; rt id
 
 (*
@@ -278,7 +278,7 @@ let report_spam sname =
 
 let s word = 
   let o = get_oauth () in
-  Search.tweets ~count:100 word o 
+  Search.tweets o ~count:100 word  
   |> from_Ok
   |> fun x -> x#statuses
 

@@ -60,16 +60,18 @@ let api post meth fmt =
 module Arg = struct
 
   let (>>|) v f = Option.map ~f v
-  
+
+  (** { 7 to_string functions of option values *)
+
   let of_bool  x = x >>| string_of_bool
   let of_int64 x = x >>| Int64.to_string
   let of_int   x = x >>| string_of_int
   let of_float x = x >>| string_of_float
   let of_string (x : string option) = x
 
-  (** Common optional arguments *)
+  (** { 7 Argument generators and consumers } *)
 
-  let gen k opts addition = k (addition @ opts)
+  let optional_args k opts addition = k (addition @ opts)
   (** optional argument function accumulation *)
 
   let run optf consumer = optf consumer []
@@ -80,6 +82,8 @@ module Arg = struct
   let get post pathfmt optf  = run optf & api post GET  pathfmt
   let post post pathfmt optf = run optf & api post POST pathfmt
 
+  (** { 7 General optional argument generators } *)
+
   (* Here, we define the set of optional argument generators 
      in quite a "functional" way. 
      Those generators can be composed with functional composition 
@@ -88,7 +92,7 @@ module Arg = struct
      If you want to add new optional args, you do not really understand 
      what they do, just use the following format:
 
-     let <name> k opts ?<new_opt_arg1> ... ?<new_opt_argn> = gen k opts
+     let <name> k opts ?<new_opt_arg1> ... ?<new_opt_argn> = optional_args k opts
        [ "<new_opt_arg1_name>", of_<type> <new_opt_arg1>
        ; ...
        ; "<new_opt_argn_name>", of_<type> <new_opt_argn>
@@ -101,34 +105,34 @@ module Arg = struct
     They are to add new arguments just after [params].
   *)
 
-  let count k opts ?count = gen k opts 
+  let count k opts ?count = optional_args k opts 
     ["count" , of_int count]
 
-  let since_max_ids k opts ?since_id ?max_id = gen k opts
+  let since_max_ids k opts ?since_id ?max_id = optional_args k opts
     [ "since_id" , of_int64 since_id
     ; "max_id"   , of_int64 max_id
     ]
 
-  let since_id k opts ?since_id = gen k opts
+  let since_id k opts ?since_id = optional_args k opts
     [ "since_id" , of_int64 since_id
     ]
 
-  let trim_user k opts ?trim_user = gen k opts
+  let trim_user k opts ?trim_user = optional_args k opts
     ["trim_user" , of_bool  trim_user]
 
-  let contributer_details k opts ?contributer_details = gen k opts
+  let contributer_details k opts ?contributer_details = optional_args k opts
     ["contributer_details", of_bool contributer_details]
 
-  let include_entities k opts ?include_entities = gen k opts
+  let include_entities k opts ?include_entities = optional_args k opts
     ["include_entities" , of_bool  include_entities]
 
-  let include_my_tweet k opts ?include_my_tweet = gen k opts
+  let include_my_tweet k opts ?include_my_tweet = optional_args k opts
     ["include_my_tweet" , of_bool  include_my_tweet]
 
-  let include_user_entities k opts ?include_user_entities = gen k opts
+  let include_user_entities k opts ?include_user_entities = optional_args k opts
     ["include_user_entities" , of_bool  include_user_entities]
 
-  let user_id_screen_name k opts ?user_id ?screen_name = gen k opts
+  let user_id_screen_name k opts ?user_id ?screen_name = optional_args k opts
     [ "screen_name" , of_string screen_name
     ; "user_id"     , of_int64 user_id ]
 
@@ -136,44 +140,64 @@ module Arg = struct
     match user_id, screen_name with
     | None, None -> failwithf "Neither user_id nor screen_name is set"
     | _ -> 
-        gen k opts
+        optional_args k opts
           [ "screen_name" , of_string screen_name
           ; "user_id"     , of_int64 user_id ]
 
-  let include_rts k opts ?include_rts = gen k opts
+  let include_rts k opts ?include_rts = optional_args k opts
     ["include_rts" , of_bool  include_rts]
 
-  let exclude_replies k opts ?exclude_replies = gen k opts
+  let exclude_replies k opts ?exclude_replies = optional_args k opts
     ["exclude_replies" , of_bool exclude_replies]
 
-  let skip_status k opts ?skip_status = gen k opts
+  let skip_status k opts ?skip_status = optional_args k opts
     ["skip_status" , of_bool skip_status]
 
-  let in_reply_to_status_id k opts ?in_reply_to_status_id = gen k opts
+  let in_reply_to_status_id k opts ?in_reply_to_status_id = optional_args k opts
     ["in_reply_to_status_id" , of_int64 in_reply_to_status_id]
 
-  let geo k opts ?lat ?long ?place_id ?display_coordinates = gen k opts
+  let geo k opts ?lat ?long ?place_id ?display_coordinates = optional_args k opts
     [ "lat"                   , of_float  lat
     ; "long"                  , of_float  long
     ; "place_id"              , of_string place_id
     ; "display_coordinates"   , of_bool   display_coordinates]
 
-  let required_status k opts status = gen k opts
-    [ "status", of_string (Some status) ]
-
-  let required_q k opts q = gen k opts [ "q", Some q ]
-
-  let required_id k opts id = gen k opts [ "id", Some (Int64.to_string id) ]
-
-  let cursor k opts ?cursor = gen k opts
+  let cursor k opts ?cursor = optional_args k opts
     ["cursor" , of_string cursor]
 
-  let resources k opts ?resources = gen k opts
+  let resources k opts ?resources = optional_args k opts
     [ "resources" , resources >>| String.concat ","
     ]
 
-  let follow k opts ?follow = gen k opts
+  let follow k opts ?follow = optional_args k opts
     [ "follow", of_bool follow ]
+
+  (** { 7 Required argument generators } *)
+
+  (*
+    val <name> : (params -> Oauth.t -> 'a)  ->  (params -> Oauth.t -> t -> 'a)
+
+    They are to add new required arguments just after [Oauth.t].
+
+    This must go at the end of argument generator compositions.
+  *)
+
+  let required_args f (params : params) (oauth : Oauth.t) addition = 
+    f (addition @ params) oauth
+
+  let required_arg make_addition = fun f (params : params) (oauth : Oauth.t) x -> 
+    f (make_addition x @  params) oauth
+
+  let required_status = fun x -> x |> 
+      required_arg (fun status -> [ "status", of_string (Some status) ])
+      
+  let required_q = fun x -> x |>
+      required_arg (fun q -> [ "q", Some q ])
+
+  let required_id = fun x -> x |>
+      required_arg (fun id -> [ "id", Some (Int64.to_string id) ])
+
+  (** { 7 Format argument generators } *)
 
   (** Introduce format string arguments. They must appear at the end of
       function compositions, just before the call of api.
