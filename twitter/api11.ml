@@ -24,8 +24,8 @@ let (~?) l = List.filter_map (function
 
 (* Api 1.1 seems to requir https *)
 let twitter oauth ?(host="api.twitter.com") meth cmd params =
-  prerr_endline cmd;
-  List.iter (fun (k,v) -> Format.eprintf "%s=%s@." k v) params;
+  (* prerr_endline cmd; *)
+  (* List.iter (fun (k,v) -> Format.eprintf "%s=%s@." k v) params; *)
   Auth.access_https oauth meth host cmd params
   >>| Json.parse
 
@@ -161,8 +161,9 @@ module Arg = struct
   let required_status k opts status = gen k opts
     [ "status", of_string (Some status) ]
 
-  let required_q k opts q = gen k opts 
-    [ "q", Some q ]
+  let required_q k opts q = gen k opts [ "q", Some q ]
+
+  let required_id k opts id = gen k opts [ "id", Some (Int64.to_string id) ]
 
   let cursor k opts ?cursor = gen k opts
     ["cursor" , of_string cursor]
@@ -170,6 +171,9 @@ module Arg = struct
   let resources k opts ?resources = gen k opts
     [ "resources" , resources >>| String.concat ","
     ]
+
+  let follow k opts ?follow = gen k opts
+    [ "follow", of_bool follow ]
 
   (** Introduce format string arguments. They must appear at the end of
       function compositions, just before the call of api.
@@ -182,6 +186,7 @@ end
 
 open Arg
 
+(** { 6 Cursor based API } *)
 
 
 module Cursor : sig
@@ -262,6 +267,8 @@ end
 
 *)
 
+(** { 6 The API endpoints } *)
+
 module Timelines = struct (* CR jfuruse: or Statuses ? *)
   (* Careful. The returned JSON may have different type based on the options *)
 
@@ -305,7 +312,7 @@ module Tweets = struct (* CR jfuruse: or Statuses ? *)
     ** trim_user
     ** format1
 
-  let show = get Tweet.ts_of_json "statuses/show/%Ld.json" 
+  let show = get Tweet.t_of_json "statuses/show/%Ld.json" 
     &  trim_user
     ** include_my_tweet
     ** include_entities
@@ -315,13 +322,13 @@ module Tweets = struct (* CR jfuruse: or Statuses ? *)
     &  trim_user 
     ** format1
 
-  let update = post (fun x -> `Ok x) "statuses/update.json"
+  let update = post Tweet.t_of_json "statuses/update.json"
     &  in_reply_to_status_id
     ** geo
     ** trim_user
     ** required_status (* Required argument should come at the last *)
 
-  let retweet = post (fun x -> `Ok x) "statuses/retweet/%Ld.json"
+  let retweet = post Tweet.t_of_json "statuses/retweet/%Ld.json"
     &  trim_user 
     ** format1
 
@@ -437,6 +444,16 @@ module Friendships = struct
   let outgoing_stream = gen_io "outgoing" id
   let outgoing        = gen_io "outgoing" Stream.to_list
 
+  let create = post User.t_of_json "friendships/create.json"
+    &  required_either_user_id_or_screen_name
+    ** follow
+    
+  let follow = create
+
+  let destroy = post User.t_of_json "friendships/destroy.json"
+    &  required_either_user_id_or_screen_name
+
+  let unfollow = destroy
 end
 
 module Users = struct
@@ -493,6 +510,21 @@ module SuggestedUsers = struct
 end
 
 module Favorites = struct
+
+  let list = get Tweet.ts_of_json "favorites/list.json"
+    &  user_id_screen_name
+    ** count
+    ** since_max_ids
+    ** include_entities
+
+  let create = get Tweet.t_of_json "favorites/create.json"
+    &  include_entities
+    ** required_id
+
+  let destroy = get Tweet.t_of_json "favorites/destroy.json"
+    &  include_entities
+    ** required_id
+
 end
 
 module Lists = struct

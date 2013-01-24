@@ -3,14 +3,13 @@ open Spotlib.Spot
 
 open Twitter
 open Util
-open Api1
 module TTS = GoogleTTS
-
-type tweet = Api1.tweet
 
 module Consumer = Auth.Consumer
 
 module Auth : sig
+
+  (** Full auth information *)    
   type t = { username : string; oauth : Oauth.t; } with conv(ocaml)
 
   val authorize : Consumer.t -> Auth.VerifiedToken.t -> t
@@ -19,6 +18,7 @@ module Auth : sig
   val load : string -> t list
   val save : string -> t list -> unit
 
+  (** Simple implementation for one app + one account *)
   module Single : sig
     val save : string -> t -> unit
     val load : string -> Consumer.t -> Oauth.t
@@ -27,7 +27,6 @@ module Auth : sig
 
 end = struct
 
-  (** Full auth information *)    
   type t = { username : string; oauth : Oauth.t } with conv(ocaml)
 
   let authorize app (_, verif as verified_token) = 
@@ -45,7 +44,6 @@ end = struct
     print_endline ("Grant Success! Hello, @"^t.username^" !");
     t
   
-  (** Simple implementation for one app + one account *)
   module Single = struct
     (** It forgets username and consumer *)
     let save path t = 
@@ -87,22 +85,6 @@ end = struct
 
 end
 
-module Cache = struct
-  let max_size = 10000
-  type t = tweet Queue.t
-  let init () : t = Queue.create ()
-  let qfilter f q =
-    let q2 = Queue.create () in
-    Queue.iter (fun x -> if f x then Queue.push x q2) q;
-    q2
-  let _qfind f q = try Some (Queue.pop @@ qfilter f q) with _ -> None
-  let is_new (cache: t) (tw: tweet) =
-    Queue.is_empty (qfilter (fun t -> status_id t = status_id tw) cache)
-  let add cache (tw: tweet) =
-    if Queue.length cache > max_size then ignore @@ Queue.pop cache;
-    Queue.push tw cache
-end
-
 let application_name = "ocamltter"
 let config_file = ref "Assign a conf filename."
 
@@ -122,24 +104,80 @@ let setup () =
   prerr_endline "oauth done";
   o
 
-let tw_sort = List.sort Api1.tw_compare
+open Api_intf
+open Api11
+
+open Meta_conv.Result.Open
+
+type tweet = Api_intf.Tweet.t
+
+module Cache : sig
+  type t (** Carries "known tweets" to the system *)
+  val init : unit -> t
+  val is_new : t -> tweet -> bool
+  val add : t -> tweet -> unit
+(* CR jfuruse: not used 
+  val qfilter : (tweet -> bool) -> t -> t 
+  val qfind   : (tweet -> bool) -> t -> tweet option
+*)
+end = struct
+  let max_size = 10000
+  type t = tweet Queue.t
+  let init () : t = Queue.create ()
+  let qfilter f q =
+    let q2 = Queue.create () in
+    Queue.iter (fun x -> if f x then Queue.push x q2) q;
+    q2
+  let _qfind f q = try Some (Queue.pop @@ qfilter f q) with _ -> None
+  let is_new (cache: t) (tw: tweet) =
+    Queue.is_empty (qfilter (fun t -> t#id = tw#id) cache)
+  let add cache (tw: tweet) =
+    if Queue.length cache > max_size then ignore @@ Queue.pop cache;
+    Queue.push tw cache
+end
+
+exception Error of [`Http of int * string
+                   | `Json of Json.t Meta_conv.Error.t ]
+
+(* CR jfuruse: should be moved to Meta_conv *)      
+(* CR jfuruse: should print the warning *)
+let from_result def = function
+  | `Ok v -> v
+  | `Error _e -> def
+
+let from_Ok = function
+  | `Ok v -> v
+  | `Error e -> raise (Error e)
+
+let from_Some = function
+  | Some v -> v
+  | _ -> assert false
+
+let tw_compare (t1 : Tweet.t) t2 = 
+  Time.compare t1#created_at t2#created_at
+
+let tw_sort = List.sort tw_compare
 
 let get_timeline ?(c=20) ?since_id verbose =
+  let o = get_oauth () in
   try
     let tl1 =
       let search word =
-	if verbose then
+        if verbose then
           (print_string (!%"searching with '%s'... " word); flush stdout);
-	let ts = value_or [] @@ maybe (Api1.search ~rpp:c ?since_id) word in
-	if verbose then
+        let  ts = from_result [] 
+          & Search.tweets ~count:c ?since_id word o >>| fun x -> x#statuses in
+        if verbose then
           (print_endline (!%"%d" (List.length ts)); flush stdout);
-	ts
+        ts
       in
       list_concatmap search OConfig.watching_words
     in
     let tl2 =
       if verbose then (print_endline "loading..."; flush stdout);
-      List.filter OConfig.filter @@ Api1.home_timeline ~count:c (get_oauth ())
+      List.filter (fun _ -> true) (* OConfig.filter  *) (* CR jfuruse: need fix *)
+      & from_result [] 
+      & Timelines.home_timeline ~count:c (get_oauth ())
     in
     tw_sort (tl1 @ tl2)
   with
@@ -147,79 +185,107 @@ let get_timeline ?(c=20) ?since_id verbose =
       prerr_endline "Ocamltter.get_timeline ERR:";
       raise e
 
-let print_timeline tw =
-  List.iter print_endline @@ List.map show_tweet tw
+(* formatter for REPL *)
 
-let reload () =
-  get_timeline true
+let format_tweet ppf t = 
+  Format.fprintf ppf "{ @[<v>user=%S; id=%LdL;@ text=\"%s\"@] }"
+    (from_Some t#user#details)#screen_name 
+    t#id 
+    t#text
 
-let l ?(c=20) ?u ?page () : Api1.tweet list =
+let print_timeline tws =
+  List.iter (Format.printf "%a@." format_tweet) tws
+
+let reload () = get_timeline true
+
+let l ?(c=20) ?u (* ?page *) () : tweet list =
   print_endline "loading..."; flush stdout;
-  match u with
-  | None -> tw_sort @@ Api1.home_timeline ~count:c ?page (get_oauth ())
-  | Some user -> tw_sort @@ Api1.user_timeline ?page (get_oauth ()) user
+  let o = get_oauth () in
+  tw_sort & from_result [] & match u with
+  | None -> Timelines.home_timeline ~count:c o
+  | Some screen_name -> Timelines.user_timeline ~count:c ~screen_name o
 
-let lc ?page count = l ~c:count ?page ()
-let lu ?page user  = l ~u:user  ?page ()
+let lc (* ?page *) count = l ~c:count (* ?page *) ()
+let lu (* ?page *) user  = l ~u:user  (* ?page *) ()
 
-let m ?(c=20) () : Api1.tweet list =
+let m ?(c=20) () : tweet list =
+  let o = get_oauth () in
   print_endline "loading..."; flush stdout;
-  tw_sort @@ Api1.mentions (get_oauth ()) c
+  tw_sort & from_result [] & Timelines.mentions_timeline ~count:c o
 
 let kwsk id =
+  let o = get_oauth () in
   let rec iter store id =
-    match show id with
-    | RE(_, re_id) as t -> iter (t :: store) re_id
-    | t -> t :: store
+    match Tweets.show id o with
+    | `Error _ -> store
+    | `Ok tw -> 
+        match tw#in_reply_to_status_id with
+        | Some id -> iter (tw :: store) id
+        | None -> tw :: store
   in
   iter [] id
     
 let u text =
-  Api1.update (get_oauth ()) text |> Api1.status_id
+  let o = get_oauth () in
+  Tweets.update text o |> from_Ok |> fun x -> x#id
 
 let re status_id text =
-  Api1.update ~in_reply_to_status_id:(Int64.to_string status_id) (get_oauth ()) text
-  |> Api1.status_id
-    
+  let o = get_oauth () in
+  Tweets.update ~in_reply_to_status_id:status_id text o |> from_Ok |> fun x -> x#id
 
 let rt status_id =
-  Api1.retweet (get_oauth ()) (Int64.to_string status_id) |> ignore
+  let o = get_oauth () in
+  Tweets.retweet status_id o |> from_Ok |> fun x -> x#id
 
-let del id =
-  ignore @@ Api1.destroy (get_oauth ()) id
+let del id = 
+  let o = get_oauth () in
+  Tweets.destroy id o |> from_Ok |> ignore
 
 let qt st_id comment =
-  let tw = get_tweet st_id in
-  u (!%"%s QT @%s: %s" comment (sname tw) (text tw))
+  let o = get_oauth () in
+  Tweets.show st_id o 
+  |> from_Ok 
+  |> fun tw -> u (!%"%s QT @%s: %s" comment (from_Some tw#user#details)#screen_name tw#text)
 
 let link id =
-  let t = show id in
-  !%"http://twitter.com/%s/status/%Ld" (sname t) id
+  let o = get_oauth () in
+  Tweets.show id o |> from_Ok
+  |> fun tw -> !%"http://twitter.com/%s/status/%Ld" (from_Some tw#user#details)#screen_name id
   
 let qtlink id s =
-  u @@ s ^ " QT " ^ link id;;
+  link id 
+  |> fun url -> u @@ s ^ " QT " ^ url;;
 
 let reqt st_id comment =
-  let tw = get_tweet st_id in
-  re st_id (!%"%s QT @%s: %s" comment (sname tw) (text tw))
+  let o = get_oauth () in
+  Tweets.show st_id o |> from_Ok |> fun tw -> 
+    re st_id & !%"%s QT @%s: %s" comment (from_Some tw#user#details)#screen_name tw#text
 
-let follow sname =
-  ignore @@ Api1.friendship_create (get_oauth ()) sname
+let follow sname = Friendships.create ~screen_name:sname (get_oauth ()) |> from_Ok
 
-let unfollow sname =
-  ignore @@ Api1.friendship_destroy (get_oauth ()) sname
+let unfollow sname = Friendships.destroy ~screen_name:sname (get_oauth ()) |> from_Ok
 
-let fav id =
-  ignore @@ Api1.favorites_create (get_oauth ()) id
+let favs screen_name = Favorites.list ~screen_name (get_oauth ()) |> from_Ok
 
-let frt id = fav id; rt id
+let fav id = Favorites.create id (get_oauth ()) |> from_Ok |> fun x -> x#id
+let unfav id = Favorites.destroy id (get_oauth ()) |> from_Ok |> fun x -> x#id
+let frt id = ignore & fav id; rt id
 
+(*
 let report_spam sname =
   ignore @@ Api1.report_spam (get_oauth ()) sname
+*)
 
-let s word = List.sort tw_compare @@ Api1.search ~rpp:100 word
+let s word = 
+  let o = get_oauth () in
+  Search.tweets ~count:100 word o 
+  |> from_Ok
+  |> fun x -> x#statuses
 
+(*
 let limit_status () = Api1.rate_limit_status ()
+*)
+
 
 let help =
 "commands:
@@ -261,26 +327,30 @@ let start_polling () =
   let rec loop ?last_id verbose c =
     if !is_polling_on = true then begin
       let get () =
-	let tl =
-	  List.filter (Cache.is_new cache)
-            (get_timeline ~c:c ?since_id:last_id verbose)
-	in
-	List.iter begin fun t ->
+        let tl =
+          List.filter (Cache.is_new cache)
+          & get_timeline ~c ?since_id:last_id verbose
+        in
+        List.iter begin fun t ->
           Cache.add cache t;
         end tl;
         tl
       in
-      let last_id = match maybe get () with
-      | Inl tl when List.length tl > 0 ->
-          List.iter begin fun t ->
-	    print_endline (Api1.show_tweet t);
-            if !OConfig.talk then TTS.say_ja (!%"%s, %s" (sname t) (text t));
-          end tl;
-          print_endline "";
-          Some (list_last tl |> Api1.status_id)
-      | Inl _ -> print_string "."; flush stdout; last_id
-      | Inr e -> print_endline (Printexc.to_string e);
-          last_id
+      let last_id = 
+        match get () with
+        | [] -> print_string "."; flush stdout; last_id
+        | tl ->
+            List.iter (fun t ->
+              print_endline & 
+                !%"%s, %s" (from_Some t#user#details)#screen_name t#text; (* CR jfuruse: better printing *)
+              if !OConfig.talk then TTS.say_ja (!%"%s, %s" (from_Some t#user#details)#screen_name t#text)) tl;
+            print_endline "";
+            Some (list_last tl)#id
+        (* Error should be printed by get *)                
+        (* | Inr e ->  
+               print_endline (Printexc.to_string e);
+               last_id
+        *)
       in
       Thread.delay !OConfig.coffee_break;
       loop false 20 ?last_id (* verbose is only true at first time *)
@@ -290,3 +360,5 @@ let start_polling () =
   t ()
 
 (* see .ocamlinit *)
+
+

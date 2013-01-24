@@ -1,18 +1,14 @@
 open Twitter;;
 open Util;;
 open Http;;
-open Api;;
+open Api11;;
 open Ocamltter;;
 
 (* Surpress String escaping of OCaml toplevel printer to see UTF-8 string in console *)
 let print_string_literal p s = Format.print_string ("\"" ^ s ^ "\"");;
 
-let print_tweet p (tw:Api.tweet) =
-  Format.print_string (Api.show_tweet tw);;
-
 #install_printer print_string_literal;;
-#install_printer print_tweet;;
-#install_printer Api_intf.Tweet.format;; 
+#install_printer format_tweet;;
 #install_printer Api_intf.Rate_limit_status.format;;
 #install_printer Api_intf.User.format;;
 

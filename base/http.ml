@@ -101,10 +101,10 @@ let () = Curl.global_init Curl.CURLINIT_GLOBALALL
 
 let https hostname meth ?(headers=[]) path ?(rawdata="") ps =
   let h = new Curl.handle in
-  h#set_verbose true;
+  (* h#set_verbose true; *)
   let url = !% "https://%s%s" hostname path in
   let headers = ("Host", hostname) :: headers in
-  List.iter (fun (k,v) -> Printf.eprintf "%s: %s\n%!" k v) headers;
+  (* List.iter (fun (k,v) -> Printf.eprintf "%s: %s\n%!" k v) headers; *)
   begin match meth with
     | GET ->
       let url = if ps<>[] then url ^ "?" ^ params2string ps else url in

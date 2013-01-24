@@ -5,7 +5,7 @@ open Tiny_json
 open Meta_conv
 open Api_intf
 
-type tweet = Api1.tweet
+type tweet = Api_intf.Tweet.t
 
 module Auth : sig
   type t = { username : string; oauth : Oauth.t; } with conv(ocaml)
@@ -40,31 +40,42 @@ val get_timeline : ?c:int -> ?since_id:status_id -> bool ->
 val print_timeline : tweet list -> unit
 val reload : unit -> tweet list
 
-val l : ?c:int -> ?u:string -> ?page:int -> unit -> tweet list
-val lc : ?page:int -> int -> tweet list
-val lu : ?page:int -> string -> tweet list
+val format_tweet : Format.formatter -> tweet -> unit
+
+val l : ?c:int -> ?u:string -> (* ?page:int -> *)unit -> tweet list
+val lc : (* ?page:int -> *)int -> tweet list
+val lu : (* ?page:int -> *)string -> tweet list
 val m : ?c:int -> unit -> tweet list
 val kwsk : status_id -> tweet list
 
 val u : string -> status_id
-val rt : status_id -> unit
+val rt : status_id -> status_id
 val re : status_id -> string -> status_id
 val qt : status_id -> string -> status_id
 val link : status_id -> string
 val qtlink : status_id -> string -> status_id
 val reqt : status_id -> string -> status_id
+
 val del : status_id -> unit
 
-val follow : string -> unit
-val unfollow : string -> unit
+val follow :   string -> User.t
+val unfollow : string -> User.t
 
-val fav : status_id -> unit
-val frt : status_id -> unit
+val favs : string -> tweet list
 
+val fav   : status_id -> status_id
+val unfav : status_id -> status_id
+val frt   : status_id -> status_id
+
+(*
 val report_spam : string -> unit
+*)
 
 val s : string -> tweet list
+
+(*
 val limit_status : unit -> Json.t
+*)
 val help : string
 
 val stop_polling : unit -> unit

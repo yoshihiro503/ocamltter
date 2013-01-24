@@ -132,7 +132,7 @@ let sign
       ~oauth_timestamp ~oauth_nonce ~oauth_version
       ?params
       () in
-prerr_endline ("SIGBASE: " ^ signature_base_string);
+  (* prerr_endline ("SIGBASE: " ^ signature_base_string); *)
   match oauth_signature_method with
     | `Plaintext -> rfc3986_encode key
     | `Hmac_sha1 -> hmac_sha1_hash signature_base_string key

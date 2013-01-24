@@ -25,6 +25,7 @@ val text : tweet -> string
 val json : tweet -> Json.t
 
 val show_tweet : tweet -> string
+
 val tw_compare : tweet -> tweet -> int
 (** Date comparision of tweets *)
 

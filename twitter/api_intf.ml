@@ -22,6 +22,8 @@ type status_id = int64 with conv(json, ocaml)
 
 module Time : sig
   type t with conv(json, ocaml)
+  include Mtypes.Comparable with type t := t  
+
   val from_unix : float -> t
   val to_unix : t -> float
   val from_string : string -> t
@@ -57,6 +59,9 @@ end = struct
     printable : string lazy_t;
     tick      : float lazy_t 
   } with conv(ocaml)
+
+  let compare t1 t2 = compare (Lazy.force t1.tick) (Lazy.force t2.tick)
+  let equal t1 t2 = Lazy.force t1.tick = Lazy.force t2.tick
 
   let from_unix f = 
     { printable = Lazy.from_val (Printf.sprintf "@%.0f" f);
@@ -251,8 +256,9 @@ module Tweet = struct
 
   type ts = t list with conv(json, ocaml)
 
-  let format =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
+  let format    = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
   let format_ts = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_ts
+
 end
 
 module Search_tweets = struct
