@@ -147,7 +147,7 @@ let default def = Meta_conv.Result.result (function
       def
   | `Json e ->
       Format.eprintf "@[JSON error:@ %a@]@."
-        (Meta_conv.Error.format Json.format) e;
+        (Meta_conv.Error.format Json_conv.format) e;
       def)
   id
 
