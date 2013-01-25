@@ -24,10 +24,10 @@ module Time : sig
   type t with conv(json, ocaml)
   include Mtypes.Comparable with type t := t  
 
-  val from_unix : float -> t
-  val to_unix : t -> float
+  val from_unix   : float -> t
+  val to_unix     : t -> float
   val from_string : string -> t
-  val to_string : t -> string
+  val to_string   : t -> string
 end = struct
 
   open Util.Date
@@ -128,49 +128,48 @@ module User = struct
   (* Lots of optional fields! *)
 
   type details = <
-      is_translator : bool;
-      (* profile_background_color : string; *)
-      (* notifications : bool option; *)
-      profile_image_url_https : string;
-      url : string option;
+      is_translator                         : bool;
+      (* profile_background_color           : string; *)
+      (* notifications                      : bool option; *)
+      profile_image_url_https               : string;
+      url                                   : string option;
       (* profile_background_image_url_https : string *)
-      created_at : Time.t;
-      (* profile_background_image_url : string; *)
-      (* utc_offset : float *)
-      (* id_str : string *)
-      (* profile_link_color : string *)
-      name : string;
-      default_profile : bool;
-      screen_name : string;
-      lang : string;
-      protected : bool;
-      statuses_count : int64;
-      location : string option;
-      (* profile_use_background_image : bool; *)
-      (* profile_text_color : string; *)
-      (* contributors_enabled : bool; *) 
-      listed_count : int64;
-      time_zone : string option;
-      description : string;
-      profile_image_url : string;
-      (* profile_sidebar_border_color : string *)
-      following : bool option;
-      geo_enabled : bool;
-      (* profile_background_tile : bool *)
-      followers_count : int64;
-      (* profile_sidebar_fill_color : string; *)
-      verified : bool;
-      (* status : Twitter.Json.Object ... *)
-      (* default_profile_image : bool *)
-      follow_request_sent : bool option;
-      friends_count : int64;
-      favourites_count : int64 
+      created_at                            : Time.t;
+      (* profile_background_image_url       : string; *)
+      (* utc_offset                         : float *)
+      (* profile_link_color                 : string *)
+      name                                  : string;
+      default_profile                       : bool;
+      screen_name                           : string;
+      lang                                  : string;
+      protected                             : bool;
+      statuses_count                        : int64;
+      location                              : string option;
+      (* profile_use_background_image       : bool; *)
+      (* profile_text_color                 : string; *)
+      (* contributors_enabled               : bool; *) 
+      listed_count                          : int64;
+      time_zone                             : string option;
+      description                           : string;
+      profile_image_url                     : string;
+      (* profile_sidebar_border_color       : string *)
+      following                             : bool option;
+      geo_enabled                           : bool;
+      (* profile_background_tile            : bool *)
+      followers_count                       : int64;
+      (* profile_sidebar_fill_color         : string; *)
+      verified                              : bool;
+      (* status                             : Twitter.Json.Object ... *)
+      (* default_profile_image              : bool *)
+      follow_request_sent                   : bool option;
+      friends_count                         : int64;
+      favourites_count                      : int64 
   > with conv(json, ocaml)
 
   type t = <
     unknowns : Json.t mc_leftovers;
-    id : int64;
-    details: details mc_option_embeded;
+    id       : int64;
+    details  : details mc_option_embeded;
   > with conv(json, ocaml)
 
   type ts = t list with conv(json, ocaml)
@@ -187,7 +186,7 @@ end
 
 module URL = struct
   type t = <
-    unknown : Json.t mc_leftovers;
+    unknown      : Json.t mc_leftovers;
 
     url          : string;
     expanded_url : string;
@@ -197,22 +196,22 @@ end
  
 module UserMention = struct
   type t = <
-      unknown : Json.t mc_leftovers;
+      unknown     : Json.t mc_leftovers;
 
       screen_name : string;
-      name : string;
-      id : int64;
-      indices : int * int;
+      name        : string;
+      id          : int64;
+      indices     : int * int;
   > with conv(json, ocaml)
       
 end
 
 module Entities = struct
   type t = <
-      unknown : Json.t mc_leftovers;
+      unknown       : Json.t mc_leftovers;
 
-      hashtags : Hashtag.t list; 
-      urls     : URL.t list;
+      hashtags      : Hashtag.t list; 
+      urls          : URL.t list;
       user_mentions : UserMention.t list;
   > with conv(json, ocaml)
 end
@@ -225,10 +224,9 @@ module Tweet = struct
   type t = <
     unknowns : Json.t mc_leftovers;
 
-    id : int64;
-    user : User.t;
-
-    text : Text.t;
+    id        : int64;
+    user      : User.t;
+    text      : Text.t;
     truncated : bool;
 
     in_reply_to_status_id   : int64 option; (* RE or RT *)
@@ -239,17 +237,19 @@ module Tweet = struct
     created_at : Time.t;
 
     source : Client.t; (* html piece *)
-    geo : Json.t option;
+
+    geo         : Json.t option;
     coordinates : Json.t option;
-    place : Json.t option;
+    place       : Json.t option;
 
     contributors : Json.t option; (* something can be trimed... *)
 
     retweet_count : int;
-    favorited : bool;
-    retweeted : bool;
+    favorited     : bool;
+    retweeted     : bool;
 
     possibly_sensitive : bool mc_option;
+
     entities : Entities.t mc_option;
 
   > with conv(json, ocaml)
@@ -265,17 +265,15 @@ module Search_tweets = struct
 
   module Search_metadata = struct
     type t = <
-      unknowns : Json.t mc_leftovers;
+      unknowns     : Json.t mc_leftovers;
 
       completed_in : float;
-      max_id : int64;
-      (* max_id_str : string; *)
+      max_id       : int64;
       next_results : string;
-      query : string;
-      refresh_url : string;
-      count : int;
-      since_id : int64;
-      (* since_id_str : string; *)
+      query        : string;
+      refresh_url  : string;
+      count        : int;
+      since_id     : int64;
     > with conv(json, ocaml)
   end
 
@@ -293,102 +291,102 @@ end
 module Rate_limit_status = struct
 
   type limit = <
-      limit : float;
+      limit     : float;
       remaining : float;
-      reset : float
+      reset     : float
     > with conv(json,ocaml)
 
   type t = <
     rate_limit_context : < access_token : string >;
     resources : < 
       lists : <
-          subscribers      as "/lists/subscribers"      : limit;
-          list             as "/lists/list"             : limit;
-          memberships      as "/lists/memberships"      : limit;
-          subscriptions    as "/lists/subscriptions"    : limit;
-          members          as "/lists/members"          : limit;
-          subscribers_show as "/lists/subscribers/show" : limit;
-          statuses         as "/lists/statuses"         : limit;
-          show             as "/lists/show"             : limit;
-          members_show     as "/lists/members/show"     : limit;
+          subscribers         as "/lists/subscribers"                 : limit;
+          list                as "/lists/list"                        : limit;
+          memberships         as "/lists/memberships"                 : limit;
+          subscriptions       as "/lists/subscriptions"               : limit;
+          members             as "/lists/members"                     : limit;
+          subscribers_show    as "/lists/subscribers/show"            : limit;
+          statuses            as "/lists/statuses"                    : limit;
+          show                as "/lists/show"                        : limit;
+          members_show        as "/lists/members/show"                : limit;
         >;
       application : <
-          rate_limit_status as "/application/rate_limit_status" : limit;
+          rate_limit_status   as "/application/rate_limit_status"     : limit;
         >;
       friendships : <
-	  incoming as "/friendships/incoming" : limit;
-	  lookup as "/friendships/lookup" : limit;
-	  outgoing as "/friendships/outgoing" : limit;
-	  show as "/friendships/show" : limit;
+	  incoming            as "/friendships/incoming"              : limit;
+	  lookup              as "/friendships/lookup"                : limit;
+	  outgoing            as "/friendships/outgoing"              : limit;
+	  show                as "/friendships/show"                  : limit;
         >;
 
       blocks : <
-	  ids as "/blocks/ids" : limit;
-          list as "/blocks/list" : limit;
+	  ids                 as "/blocks/ids"                        : limit;
+          list                as "/blocks/list"                       : limit;
         >;
       geo : <
-	  similar_places as "/geo/similar_places" : limit;
-          search as "/geo/search" : limit;
-	  reverse_geocode as "/geo/reverse_geocode" : limit;
-	  place_id as "/geo/id/:place_id" : limit;
+	  similar_places      as "/geo/similar_places"                : limit;
+          search              as "/geo/search"                        : limit;
+	  reverse_geocode     as "/geo/reverse_geocode"               : limit;
+	  place_id            as "/geo/id/:place_id"                  : limit;
         >;
       users : <
-	  profile_banner as "/users/profile_banner" : limit;
-          suggestions_members as "/users/suggestions/:slug/members" : limit;
-	  show as "/users/show/:id" : limit;
-	  suggestions as "/users/suggestions" : limit;
-	  lookup as "/users/lookup" : limit;
-	  search as "/users/search" : limit;
-	  contributors as "/users/contributors" : limit;
-	  contributees as "/users/contributees" : limit;
-	  suggestions_slug as "/users/suggestions/:slug" : limit;
+	  profile_banner      as "/users/profile_banner"              : limit;
+          suggestions_members as "/users/suggestions/:slug/members"   : limit;
+	  show                as "/users/show/:id"                    : limit;
+	  suggestions         as "/users/suggestions"                 : limit;
+	  lookup              as "/users/lookup"                      : limit;
+	  search              as "/users/search"                      : limit;
+	  contributors        as "/users/contributors"                : limit;
+	  contributees        as "/users/contributees"                : limit;
+	  suggestions_slug    as "/users/suggestions/:slug"           : limit;
         >;
       followers : <
-	  ids as "/followers/ids" : limit;
+	  ids                 as "/followers/ids"                     : limit;
         >;
       statuses : <
-	  mentions_timeline as "/statuses/mentions_timeline" : limit;
-          show as "/statuses/show/:id" : limit;
-	  oembed as "/statuses/oembed" : limit;
-	  home_timeline as "/statuses/home_timeline" : limit;
-	  user_timeline as "/statuses/user_timeline" : limit;
-	  retweets_of_me as "/statuses/retweets_of_me" : limit;
-	  retweets as "/statuses/retweets/:id" : limit;
+	  mentions_timeline   as "/statuses/mentions_timeline"        : limit;
+          show                as "/statuses/show/:id"                 : limit;
+	  oembed              as "/statuses/oembed"                   : limit;
+	  home_timeline       as "/statuses/home_timeline"            : limit;
+	  user_timeline       as "/statuses/user_timeline"            : limit;
+	  retweets_of_me      as "/statuses/retweets_of_me"           : limit;
+	  retweets            as "/statuses/retweets/:id"             : limit;
         >;
       help : <
-	  privacy as "/help/privacy" : limit;
-          tos as "/help/tos" : limit;
-	  configuration as "/help/configuration" : limit;
-	  languages as "/help/languages" : limit;
+	  privacy             as "/help/privacy"                      : limit;
+          tos                 as "/help/tos"                          : limit;
+	  configuration       as "/help/configuration"                : limit;
+	  languages           as "/help/languages"                    : limit;
         >;
       friends : <
-	  ids as "/friends/ids" : limit;
+	  ids                 as "/friends/ids"                       : limit;
         >;
       direct_messages : <
-	  show as "/direct_messages/show" : limit;
-          sent_and_received as "/direct_messages/sent_and_received" : limit;
-	  sent as "/direct_messages/sent" : limit;
-	  direct_messages as "/direct_messages" : limit;
+	  show                as "/direct_messages/show"              : limit;
+          sent_and_received   as "/direct_messages/sent_and_received" : limit;
+	  sent                as "/direct_messages/sent"              : limit;
+	  direct_messages     as "/direct_messages"                   : limit;
         >;
       account : <
-	  verify_credentials as "/account/verify_credentials" : limit;
-          settings as "/account/settings" : limit;
+	  verify_credentials  as "/account/verify_credentials"        : limit;
+          settings            as "/account/settings"                  : limit;
         >;
       favorites : <
-	  list as "/favorites/list" : limit;
+	  list                as "/favorites/list"                    : limit;
         >;
       saved_searches : <
-	  destroy as "/saved_searches/destroy/:id" : limit;
-          list as "/saved_searches/list" : limit;
-	  show as "/saved_searches/show/:id" : limit;
+	  destroy             as "/saved_searches/destroy/:id"        : limit;
+          list                as "/saved_searches/list"               : limit;
+	  show                as "/saved_searches/show/:id"           : limit;
         >;
       search : <
-	  tweets as "/search/tweets" : limit;
+	  tweets              as "/search/tweets"                     : limit;
         >;
       trends : <
-	  available as "/trends/available" : limit;
-          place as "/trends/place" : limit;
-	  closest as "/trends/closest" : limit;
+	  available           as "/trends/available"                  : limit;
+          place               as "/trends/place"                      : limit;
+	  closest             as "/trends/closest"                    : limit;
         >;
      >
   > with conv(json, ocaml)
