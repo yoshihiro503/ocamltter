@@ -139,9 +139,13 @@ end
 exception Error of [`Http of int * string
                    | `Json of Json.t Meta_conv.Error.t ]
 
-let from_Ok x = x |> Meta_conv.Result.result (fun e -> raise (Error e)) id
+let meta_conv_result_result errf okf = function
+  | `Ok v -> okf v
+  | `Error e -> errf e
 
-let default def = Meta_conv.Result.result (function
+let from_Ok x = x |> meta_conv_result_result (fun e -> raise (Error e)) id
+
+let default def = meta_conv_result_result (function
   | `Http (code, mes) ->
       Format.eprintf "HTTP error %d: %s@." code mes;
       def
