@@ -40,12 +40,15 @@ let read_header in_ch =
   let _lines = iter [] in
   {code=""; fields=Hashtbl.create 30}
 
+(* CR jfuruse: unused 
+val read_all_and_count : in_channel -> string * int
 let read_all_and_count ic =
   let rec loop store count =
     try loop (input_char ic :: store) (succ count) with
     | End_of_file -> (slist "" string1 (List.rev store), count)
   in
   loop [] 0
+*)
 
 let conn ?(port=80) hostname meth ?headers  path ps ?(rawdata="") f =
   let host_entry = Unix.gethostbyname hostname in

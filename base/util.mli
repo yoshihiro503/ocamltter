@@ -49,19 +49,18 @@ val read_file : string -> string
 val just : 'a -> 'a option -> 'a
 val random_int : int -> int
 val to_hex : int -> string
-module Date :
-  sig
-    type t = float
-    val make : int -> int -> int -> int -> int -> int -> float
-    val make_from_gmt : int -> int -> int -> int -> int -> int -> float
-    val now : unit -> t
-    val year : float -> int
-    val mon : float -> int
-    val day : float -> int
-    val hour : float -> int
-    val min : float -> int
-    val sec : float -> int
-    val lt : t -> t -> bool
-    val to_string : t -> string
-    val pmonth : string -> int
-  end
+module Date : sig
+  type t = float
+  val make : int -> int -> int -> int -> int -> int -> float
+  val make_from_gmt : int -> int -> int -> int -> int -> int -> float
+  val now : unit -> t
+  val year : float -> int
+  val mon : float -> int
+  val day : float -> int
+  val hour : float -> int
+  val min : float -> int
+  val sec : float -> int
+  val lt : t -> t -> bool
+  val to_string : t -> string
+  val pmonth : string -> int
+end

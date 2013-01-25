@@ -1,4 +1,3 @@
-
 val fetch_request_token :
   ?http_method:Http.meth ->
   host:string ->
@@ -41,10 +40,12 @@ type t = {
   verif : string;
 } with conv(ocaml)
 
+(* Access via http *)
 val access :
   t -> Http.meth -> string -> string -> (string * string) list ->
     (Http.header -> in_channel -> 'a) -> 'a
 
+(* Access via https *)
 val access_https : 
   t 
   -> Http.meth 
