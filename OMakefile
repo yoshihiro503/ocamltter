@@ -33,7 +33,6 @@ LIBFILES[] =
     base/util
     twitter/auth
     twitter/api_intf
-    twitter/api1
     twitter/api11
 
 MyOCamlPackage(twitter, $(LIBFILES), $(EMPTY), $(EMPTY))

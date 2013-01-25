@@ -564,6 +564,10 @@ module Trends = struct
 end
 
 module SpamReporting = struct
+
+  let report_spam = post User.t_of_json "users/report_spam.json"
+    &  required_either_user_id_or_screen_name
+
 end 
 
 module OAuth = struct

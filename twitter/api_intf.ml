@@ -292,25 +292,104 @@ end
 
 module Rate_limit_status = struct
 
+  type limit = <
+      limit : float;
+      remaining : float;
+      reset : float
+    > with conv(json,ocaml)
+
   type t = <
     rate_limit_context : < access_token : string >;
     resources : < 
-      lists           : Json.t;
-      application     : Json.t;
-      friendships     : Json.t;
-      blocks          : Json.t;
-      geo             : Json.t;
-      users           : Json.t;
-      followers       : Json.t;
-      statuses        : Json.t;
-      help            : Json.t;
-      friends         : Json.t;
-      direct_messages : Json.t;
-      account         : Json.t;
-      favorites       : Json.t;
-      saved_searches  : Json.t;
-      search          : Json.t;
-      trends          : Json.t;
+      lists : <
+          subscribers      as "/lists/subscribers"      : limit;
+          list             as "/lists/list"             : limit;
+          memberships      as "/lists/memberships"      : limit;
+          subscriptions    as "/lists/subscriptions"    : limit;
+          members          as "/lists/members"          : limit;
+          subscribers_show as "/lists/subscribers/show" : limit;
+          statuses         as "/lists/statuses"         : limit;
+          show             as "/lists/show"             : limit;
+          members_show     as "/lists/members/show"     : limit;
+        >;
+      application : <
+          rate_limit_status as "/application/rate_limit_status" : limit;
+        >;
+      friendships : <
+	  incoming as "/friendships/incoming" : limit;
+	  lookup as "/friendships/lookup" : limit;
+	  outgoing as "/friendships/outgoing" : limit;
+	  show as "/friendships/show" : limit;
+        >;
+
+      blocks : <
+	  ids as "/blocks/ids" : limit;
+          list as "/blocks/list" : limit;
+        >;
+      geo : <
+	  similar_places as "/geo/similar_places" : limit;
+          search as "/geo/search" : limit;
+	  reverse_geocode as "/geo/reverse_geocode" : limit;
+	  place_id as "/geo/id/:place_id" : limit;
+        >;
+      users : <
+	  profile_banner as "/users/profile_banner" : limit;
+          suggestions_members as "/users/suggestions/:slug/members" : limit;
+	  show as "/users/show/:id" : limit;
+	  suggestions as "/users/suggestions" : limit;
+	  lookup as "/users/lookup" : limit;
+	  search as "/users/search" : limit;
+	  contributors as "/users/contributors" : limit;
+	  contributees as "/users/contributees" : limit;
+	  suggestions_slug as "/users/suggestions/:slug" : limit;
+        >;
+      followers : <
+	  ids as "/followers/ids" : limit;
+        >;
+      statuses : <
+	  mentions_timeline as "/statuses/mentions_timeline" : limit;
+          show as "/statuses/show/:id" : limit;
+	  oembed as "/statuses/oembed" : limit;
+	  home_timeline as "/statuses/home_timeline" : limit;
+	  user_timeline as "/statuses/user_timeline" : limit;
+	  retweets_of_me as "/statuses/retweets_of_me" : limit;
+	  retweets as "/statuses/retweets/:id" : limit;
+        >;
+      help : <
+	  privacy as "/help/privacy" : limit;
+          tos as "/help/tos" : limit;
+	  configuration as "/help/configuration" : limit;
+	  languages as "/help/languages" : limit;
+        >;
+      friends : <
+	  ids as "/friends/ids" : limit;
+        >;
+      direct_messages : <
+	  show as "/direct_messages/show" : limit;
+          sent_and_received as "/direct_messages/sent_and_received" : limit;
+	  sent as "/direct_messages/sent" : limit;
+	  direct_messages as "/direct_messages" : limit;
+        >;
+      account : <
+	  verify_credentials as "/account/verify_credentials" : limit;
+          settings as "/account/settings" : limit;
+        >;
+      favorites : <
+	  list as "/favorites/list" : limit;
+        >;
+      saved_searches : <
+	  destroy as "/saved_searches/destroy/:id" : limit;
+          list as "/saved_searches/list" : limit;
+	  show as "/saved_searches/show/:id" : limit;
+        >;
+      search : <
+	  tweets as "/search/tweets" : limit;
+        >;
+      trends : <
+	  available as "/trends/available" : limit;
+          place as "/trends/place" : limit;
+	  closest as "/trends/closest" : limit;
+        >;
      >
   > with conv(json, ocaml)
 

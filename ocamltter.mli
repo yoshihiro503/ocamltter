@@ -67,15 +67,12 @@ val fav   : status_id -> status_id
 val unfav : status_id -> status_id
 val frt   : status_id -> status_id
 
-(*
-val report_spam : string -> unit
-*)
+val report_spam : string -> User.t
 
 val s : string -> tweet list
 
-(*
-val limit_status : unit -> Json.t
-*)
+val limit_status : unit -> Rate_limit_status.t
+
 val help : string
 
 val stop_polling : unit -> unit

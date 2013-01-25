@@ -139,15 +139,17 @@ end
 exception Error of [`Http of int * string
                    | `Json of Json.t Meta_conv.Error.t ]
 
-(* CR jfuruse: should be moved to Meta_conv *)      
-(* CR jfuruse: should print the warning *)
-let from_result def = function
-  | `Ok v -> v
-  | `Error _e -> def
+let from_Ok x = x |> Meta_conv.Result.result (fun e -> raise (Error e)) id
 
-let from_Ok = function
-  | `Ok v -> v
-  | `Error e -> raise (Error e)
+let default def = Meta_conv.Result.result (function
+  | `Http (code, mes) ->
+      Format.eprintf "HTTP error %d: %s@." code mes;
+      def
+  | `Json e ->
+      Format.eprintf "@[JSON error:@ %a@]@."
+        (Meta_conv.Error.format Json.format) e;
+      def)
+  id
 
 let from_Some = function
   | Some v -> v
@@ -165,7 +167,7 @@ let get_timeline ?(c=20) ?since_id verbose =
       let search word =
         if verbose then
           (print_string (!%"searching with '%s'... " word); flush stdout);
-        let  ts = from_result [] 
+        let  ts = default []
           & Search.tweets o ~count:c ?since_id word >>| fun x -> x#statuses in
         if verbose then
           (print_endline (!%"%d" (List.length ts)); flush stdout);
@@ -176,7 +178,7 @@ let get_timeline ?(c=20) ?since_id verbose =
     let tl2 =
       if verbose then (print_endline "loading..."; flush stdout);
       List.filter (fun _ -> true) (* OConfig.filter  *) (* CR jfuruse: need fix *)
-      & from_result [] 
+      & default []
       & Timelines.home_timeline ~count:c (get_oauth ())
     in
     tw_sort (tl1 @ tl2)
@@ -201,7 +203,7 @@ let reload () = get_timeline true
 let l ?(c=20) ?u (* ?page *) () : tweet list =
   print_endline "loading..."; flush stdout;
   let o = get_oauth () in
-  tw_sort & from_result [] & match u with
+  tw_sort & default [] & match u with
   | None -> Timelines.home_timeline ~count:c o
   | Some screen_name -> Timelines.user_timeline ~count:c ~screen_name o
 
@@ -211,7 +213,7 @@ let lu (* ?page *) user  = l ~u:user  (* ?page *) ()
 let m ?(c=20) () : tweet list =
   let o = get_oauth () in
   print_endline "loading..."; flush stdout;
-  tw_sort & from_result [] & Timelines.mentions_timeline ~count:c o
+  tw_sort & default [] & Timelines.mentions_timeline ~count:c o
 
 let kwsk id =
   let o = get_oauth () in
@@ -227,15 +229,17 @@ let kwsk id =
     
 let u text =
   let o = get_oauth () in
-  Tweets.update o text |> from_Ok |> fun x -> x#id
+  from_Ok & Tweets.update o text >>| fun x -> x#id
 
 let re status_id text =
   let o = get_oauth () in
-  Tweets.update o ~in_reply_to_status_id:status_id text |> from_Ok |> fun x -> x#id
+  Tweets.update o ~in_reply_to_status_id:status_id text 
+  |> from_Ok |> fun x -> x#id
 
 let rt status_id =
   let o = get_oauth () in
-  Tweets.retweet status_id o |> from_Ok |> fun x -> x#id
+  from_Ok
+  & Tweets.retweet status_id o >>| fun x -> x#id
 
 let del id = 
   let o = get_oauth () in
@@ -244,25 +248,25 @@ let del id =
 let qt st_id comment =
   let o = get_oauth () in
   Tweets.show st_id o 
-  |> from_Ok 
-  |> fun tw -> u (!%"%s QT @%s: %s" comment (from_Some tw#user#details)#screen_name tw#text)
+  |> from_Ok |> fun tw -> 
+    u (!%"%s QT @%s: %s" comment (from_Some tw#user#details)#screen_name tw#text)
 
 let link id =
   let o = get_oauth () in
-  Tweets.show id o |> from_Ok
-  |> fun tw -> !%"http://twitter.com/%s/status/%Ld" (from_Some tw#user#details)#screen_name id
+  Tweets.show id o 
+  |> from_Ok |> fun tw -> 
+    !%"http://twitter.com/%s/status/%Ld" (from_Some tw#user#details)#screen_name id
   
 let qtlink id s =
-  link id 
-  |> fun url -> u @@ s ^ " QT " ^ url;;
+  link id |> fun url -> u @@ s ^ " QT " ^ url;;
 
 let reqt st_id comment =
   let o = get_oauth () in
-  Tweets.show st_id o |> from_Ok |> fun tw -> 
+  Tweets.show st_id o 
+  |> from_Ok |> fun tw -> 
     re st_id & !%"%s QT @%s: %s" comment (from_Some tw#user#details)#screen_name tw#text
 
 let follow sname = Friendships.create ~screen_name:sname (get_oauth ()) |> from_Ok
-
 let unfollow sname = Friendships.destroy ~screen_name:sname (get_oauth ()) |> from_Ok
 
 let favs screen_name = Favorites.list ~screen_name (get_oauth ()) |> from_Ok
@@ -271,20 +275,15 @@ let fav id = Favorites.create (get_oauth ()) id |> from_Ok |> fun x -> x#id
 let unfav id = Favorites.destroy (get_oauth ()) id |> from_Ok |> fun x -> x#id
 let frt id = ignore & fav id; rt id
 
-(*
-let report_spam sname =
-  ignore @@ Api1.report_spam (get_oauth ()) sname
-*)
+let report_spam sname = 
+  SpamReporting.report_spam (get_oauth ()) ~screen_name: sname |> from_Ok
 
 let s word = 
   let o = get_oauth () in
   Search.tweets o ~count:100 word  
-  |> from_Ok
-  |> fun x -> x#statuses
+  |> from_Ok |> fun x -> x#statuses
 
-(*
-let limit_status () = Api1.rate_limit_status ()
-*)
+let limit_status () = Help.rate_limit_status (get_oauth ()) |> from_Ok
 
 
 let help =
