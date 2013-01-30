@@ -9,9 +9,23 @@ do
   with_pkgs="$with_pkgs -I `ocamlfind query $pkg`"
 done
 
-incl="$with_pkgs -I +threads -I base -I twitter"
+if [ -f ocamltter.ml ]; then
+  # We are at the source dir
+  incl="$with_pkgs -I +threads -I base -I twitter"
+  initfile='./ocamlinit.ml'
+else
+  # We are not at the source dir. omake install has been done.
+  for pkg in twitter ocamltter
+  do
+    with_pkgs="$with_pkgs -I `ocamlfind query $pkg`"
+  done
+  incl="$with_pkgs"
+  initfile=`ocamlfind query ocamltter`/ocamlinit.ml
+fi
+
+# override initfile if we have $1
 if [ $# -ne 1 ]; then
-    initfile='.ocamlinit'
+    : 
 else
     initfile=$1
 fi

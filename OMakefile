@@ -53,3 +53,16 @@ MyOCamlTop(ocamltter_top, $(FILES))
 
 .DEFAULT: ocamltter_top
 
+install::
+	install ocamltter $(PREFIX)/bin
+
+uninstall::
+	rm -f $(PREFIX)/bin/ocamltter
+
+
+install::
+	ocamlfind remove ocamltter
+	ocamlfind install ocamltter ocamlinit.ml app/META ocamltter.cmi
+
+uninstall::
+	ocamlfind remove ocamltter
