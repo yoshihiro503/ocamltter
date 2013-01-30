@@ -15,3 +15,6 @@ ocamltter_top*
 .hg
 .hgignore
 *.orig
+.omakedb*
+OMakeroot
+setup.data
