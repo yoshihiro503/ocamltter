@@ -84,7 +84,7 @@ setenv(OCAMLRUNPARAM, b)
 
 # Common phonies
 # ==================================================================
-.PHONY: all install uninstall clean
+.PHONY: all install uninstall clean veryclean
 
 # Directories
 # =====================================================================
@@ -615,3 +615,15 @@ mkdir_if_not_exists(dir) =
   if $(not $(test -e $(dir))):
     mkdir $(dir) 
   return
+
+# Very clean
+# ======================================================================
+
+#| OCaml object files which are not real targets of OMake are not be
+# auto-cleaned away by ``omake clean``. This is not good in some situations
+# at linking.
+WithOCamlVeryClean() =
+    veryclean: 
+        rm -f *.cm* *.annot *.o *.a *.sp[io]t *.so *.exe *.byt *.opt *.run
+
+
