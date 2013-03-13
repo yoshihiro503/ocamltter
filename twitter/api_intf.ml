@@ -1,18 +1,18 @@
 open Spotlib.Spot
-open Tiny_json
-
 open Meta_conv.Open
 open Json_conv
 open Ocaml_conv
 
+(* We cannot [open Tiny_json] since Tiny_json.Util and our Util would corride *)
+
 module Json = struct
-  include Json
+  include Tiny_json.Json
   let json_of_t x = x
   let t_of_json ?trace:_ x = `Ok x
 
-  let ocaml_of_t t = Ocaml.String (Json.show t)
-  let t_of_ocaml = Meta_conv.Internal.prim_decode (function
-    | Ocaml.String s -> Json.parse s
+  let ocaml_of_t t = Ocaml.String (show t)
+  let t_of_ocaml = Ocaml_conv.Helper.of_deconstr (function
+    | Ocaml.String s -> parse s
     | _ -> failwith "Ocaml.String expected")
 end
 
@@ -80,7 +80,7 @@ end = struct
   open Json
 
   let json_of_t t = String (to_string t)
-  let t_of_json = Meta_conv.Internal.prim_decode (function
+  let t_of_json = Json_conv.Helper.of_deconstr (function
     | String s -> from_string s
     | _ -> failwith "Time.t_of_json: String expected")
   let t_of_json_exn = Json_conv.exn t_of_json
@@ -94,7 +94,7 @@ end = struct
 
   open Json
 
-  let t_of_json = Meta_conv.Internal.prim_decode (function
+  let t_of_json = Json_conv.Helper.of_deconstr (function
     | String s -> Http.html_decode s
     | _ -> failwith "Text.t_of_json: String expected")
 
@@ -111,7 +111,7 @@ end = struct
   open Meta_conv
   open Json
 
-  let t_of_json = Meta_conv.Internal.prim_decode & function
+  let t_of_json = Json_conv.Helper.of_deconstr & function
     | String s -> s, Result.catch_exn & fun () -> Xml.parse_string s
     | _ -> failwith "Client.t_of_json: String expected"
 
