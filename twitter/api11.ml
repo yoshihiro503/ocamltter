@@ -541,11 +541,11 @@ module Favorites = struct
     ** since_max_ids
     ** include_entities
 
-  let create = get Tweet.t_of_json "favorites/create.json"
+  let create = post Tweet.t_of_json "favorites/create.json"
     &  include_entities
     ** required_id
 
-  let destroy = get Tweet.t_of_json "favorites/destroy.json"
+  let destroy = post Tweet.t_of_json "favorites/destroy.json"
     &  include_entities
     ** required_id
 
