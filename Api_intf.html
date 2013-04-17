@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Api11.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Ocamltter" rel="Chapter" href="Ocamltter.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="GoogleTTS" rel="Chapter" href="GoogleTTS.html">
+<link title="Http" rel="Chapter" href="Http.html">
+<link title="Llist" rel="Chapter" href="Llist.html">
+<link title="Oauth" rel="Chapter" href="Oauth.html">
+<link title="ParserMonad" rel="Chapter" href="ParserMonad.html">
+<link title="Utf16" rel="Chapter" href="Utf16.html">
+<link title="Util" rel="Chapter" href="Util.html">
+<link title="Xml" rel="Chapter" href="Xml.html">
+<link title="Api1" rel="Chapter" href="Api1.html">
+<link title="Auth" rel="Chapter" href="Auth.html">
+<link title="Api11" rel="Chapter" href="Api11.html">
+<link title="Api_intf" rel="Chapter" href="Api_intf.html"><title>Api_intf</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Api11.html" title="Api11">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Api_intf.html">Api_intf</a></h1>
+<pre><span class="keyword">module</span> Api_intf: <code class="code">sig</code> <a href="Api_intf.html">..</a> <code class="code">end</code></pre><div class="info">
+location in the tweet string<br>
+</div>
+<hr width="100%">
+<pre><span class="keyword">module</span> <a href="Api_intf.Json.html">Json</a>: <code class="code">sig</code> <a href="Api_intf.Json.html">..</a> <code class="code">end</code></pre><pre><span id="TYPEmc_leftovers"><span class="keyword">type</span> <code class="type">'json</code> mc_leftovers</span> = <code class="type">(string * 'json) list</code> </pre>
+
+<pre><span id="VALocaml_of_mc_leftovers"><span class="keyword">val</span> ocaml_of_mc_leftovers</span> : <code class="type">'json.<br>         ('json -> Ocaml_conv.target) -><br>         'json <a href="Api_intf.html#TYPEmc_leftovers">mc_leftovers</a> -> Ocaml_conv.target</code></pre><pre><span id="VALmc_leftovers_of_ocaml"><span class="keyword">val</span> mc_leftovers_of_ocaml</span> : <code class="type">'json.<br>         ('json, Ocaml_conv.target) Meta_conv.Types.Decoder.t -><br>         ('json <a href="Api_intf.html#TYPEmc_leftovers">mc_leftovers</a>, Ocaml_conv.target) Meta_conv.Types.Decoder.t</code></pre><pre><span id="VALmc_leftovers_of_ocaml_exn"><span class="keyword">val</span> mc_leftovers_of_ocaml_exn</span> : <code class="type">'json.<br>         ('json, Ocaml_conv.target) Meta_conv.Types.Decoder.t -><br>         ('json <a href="Api_intf.html#TYPEmc_leftovers">mc_leftovers</a>, Ocaml_conv.target)<br>         Meta_conv.Types.Decoder.t_exn</code></pre><pre><span id="TYPEstatus_id"><span class="keyword">type</span> <code class="type"></code>status_id</span> = <code class="type">int64</code> </pre>
+
+<pre><span id="VALjson_of_status_id"><span class="keyword">val</span> json_of_status_id</span> : <code class="type"><a href="Api_intf.html#TYPEstatus_id">status_id</a> -> Json.t</code></pre><pre><span id="VALstatus_id_of_json"><span class="keyword">val</span> status_id_of_json</span> : <code class="type">(<a href="Api_intf.html#TYPEstatus_id">status_id</a>, Json.t) Meta_conv.Types.Decoder.t</code></pre><pre><span id="VALstatus_id_of_json_exn"><span class="keyword">val</span> status_id_of_json_exn</span> : <code class="type">(<a href="Api_intf.html#TYPEstatus_id">status_id</a>, Json.t) Meta_conv.Types.Decoder.t_exn</code></pre><pre><span id="VALocaml_of_status_id"><span class="keyword">val</span> ocaml_of_status_id</span> : <code class="type"><a href="Api_intf.html#TYPEstatus_id">status_id</a> -> Ocaml.t</code></pre><pre><span id="VALstatus_id_of_ocaml"><span class="keyword">val</span> status_id_of_ocaml</span> : <code class="type">(<a href="Api_intf.html#TYPEstatus_id">status_id</a>, Ocaml.t) Meta_conv.Types.Decoder.t</code></pre><pre><span id="VALstatus_id_of_ocaml_exn"><span class="keyword">val</span> status_id_of_ocaml_exn</span> : <code class="type">(<a href="Api_intf.html#TYPEstatus_id">status_id</a>, Ocaml.t) Meta_conv.Types.Decoder.t_exn</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.Time.html">Time</a>: <code class="code">sig</code> <a href="Api_intf.Time.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.Text.html">Text</a>: <code class="code">sig</code> <a href="Api_intf.Text.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.Client.html">Client</a>: <code class="code">sig</code> <a href="Api_intf.Client.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.User.html">User</a>: <code class="code">sig</code> <a href="Api_intf.User.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.Hashtag.html">Hashtag</a>: <code class="code">sig</code> <a href="Api_intf.Hashtag.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.URL.html">URL</a>: <code class="code">sig</code> <a href="Api_intf.URL.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.UserMention.html">UserMention</a>: <code class="code">sig</code> <a href="Api_intf.UserMention.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.Entities.html">Entities</a>: <code class="code">sig</code> <a href="Api_intf.Entities.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.Tweet.html">Tweet</a>: <code class="code">sig</code> <a href="Api_intf.Tweet.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.Search_tweets.html">Search_tweets</a>: <code class="code">sig</code> <a href="Api_intf.Search_tweets.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Api_intf.Rate_limit_status.html">Rate_limit_status</a>: <code class="code">sig</code> <a href="Api_intf.Rate_limit_status.html">..</a> <code class="code">end</code></pre></body></html>

@@ -1,0 +1,137 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Ocamltter" rel="Chapter" href="Ocamltter.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="GoogleTTS" rel="Chapter" href="GoogleTTS.html">
+<link title="Http" rel="Chapter" href="Http.html">
+<link title="Llist" rel="Chapter" href="Llist.html">
+<link title="Oauth" rel="Chapter" href="Oauth.html">
+<link title="ParserMonad" rel="Chapter" href="ParserMonad.html">
+<link title="Utf16" rel="Chapter" href="Utf16.html">
+<link title="Util" rel="Chapter" href="Util.html">
+<link title="Xml" rel="Chapter" href="Xml.html">
+<link title="Api1" rel="Chapter" href="Api1.html">
+<link title="Auth" rel="Chapter" href="Auth.html">
+<link title="Api11" rel="Chapter" href="Api11.html">
+<link title="Api_intf" rel="Chapter" href="Api_intf.html"><title>Api1</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;(&nbsp;<span class="keywordsign">~?</span>&nbsp;)&nbsp;:&nbsp;(<span class="keywordsign">'</span>a&nbsp;*&nbsp;<span class="keywordsign">'</span>b&nbsp;option)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>a&nbsp;*&nbsp;<span class="keywordsign">'</span>b)&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">exception</span>&nbsp;<span class="constructor">TwErr</span>&nbsp;<span class="keyword">of</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;tweet&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">U</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Api1</span>.tweet_base<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">RT</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Api1</span>.tweet_base&nbsp;*&nbsp;<span class="constructor">Api1</span>.tweet_base<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">RE</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Api1</span>.tweet_base&nbsp;*&nbsp;<span class="constructor">Api_intf</span>.status_id<br>
+&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;tweet_base&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;date&nbsp;:&nbsp;<span class="constructor">Util</span>.<span class="constructor">Date</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sname&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;id&nbsp;:&nbsp;<span class="constructor">Api_intf</span>.status_id;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;client&nbsp;:&nbsp;<span class="constructor">Xml</span>.xml;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;text&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;json&nbsp;:&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;date&nbsp;:&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Util</span>.<span class="constructor">Date</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;sname&nbsp;:&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;status_id&nbsp;:&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.status_id<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;client&nbsp;:&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;text&nbsp;:&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;json&nbsp;:&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;show_tweet&nbsp;:&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;tw_compare&nbsp;:&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;twitter&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?host:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Http</span>.meth&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(string&nbsp;*&nbsp;string)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;twitter_without_auth&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?host:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Http</span>.meth&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(string&nbsp;*&nbsp;string)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;twitter_low&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?host:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Http</span>.meth&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(string&nbsp;*&nbsp;string)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Cursor</span>&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gets&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((string&nbsp;*&nbsp;string)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(string&nbsp;*&nbsp;string)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="constructor">Spotlib</span>.<span class="constructor">Stream</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;home_timeline&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?since_id:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?page:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;home_timeline'&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?since_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?count:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?page:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Api_intf</span>.<span class="constructor">Tweet</span>.t&nbsp;list,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Result</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;print_home_timeline&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;user_timeline&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?since_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?count:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?page:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?max_id:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;user_timeline'&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?since_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?count:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?page:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?max_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Api_intf</span>.<span class="constructor">Tweet</span>.t&nbsp;list,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Result</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;show&nbsp;:&nbsp;<span class="constructor">Api_intf</span>.status_id&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api1</span>.tweet<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;show'&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Api_intf</span>.status_id&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Api_intf</span>.<span class="constructor">Tweet</span>.t&nbsp;list,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Result</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;show_low&nbsp;:&nbsp;<span class="constructor">Api_intf</span>.status_id&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_tweet&nbsp;:&nbsp;<span class="constructor">Api_intf</span>.status_id&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api1</span>.tweet<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_tweet'&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Api_intf</span>.status_id&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Api_intf</span>.<span class="constructor">Tweet</span>.t&nbsp;list,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Result</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mentions&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mentions'&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Api_intf</span>.<span class="constructor">Tweet</span>.t&nbsp;list,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Result</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;update&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?in_reply_to_status_id:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api1</span>.tweet<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;update'&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?in_reply_to_status_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Api_intf</span>.<span class="constructor">Tweet</span>.t&nbsp;list,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Result</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;destroy&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.status_id&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;retweet&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;users_lookup_uids&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int64&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">User</span>.t&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;user_lookup_uid&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int64&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">User</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;users_lookup_uids_raw&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int64&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;users_search&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;users_lookup_names&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">User</span>.ts<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;user_lookup_name&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">User</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;friendship_create&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;friendship_destroy&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;friendship_create_id&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;int64&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Api_intf</span>.<span class="constructor">User</span>.t,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t)&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Result</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;ids&nbsp;=&nbsp;int64&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;friends&nbsp;:&nbsp;?sname:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int64&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;followers&nbsp;:&nbsp;?sname:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int64&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;rate_limit_status&nbsp;:&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;favorites&nbsp;:&nbsp;?sname:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;favorites_create&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.status_id&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;favorites_destroy&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.status_id&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;report_spam&nbsp;:&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;help_test&nbsp;:&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;search&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?rpp:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?since_id:<span class="constructor">Api_intf</span>.status_id&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api1</span>.tweet&nbsp;list<br>
+<span class="keyword">end</span></code></body></html>

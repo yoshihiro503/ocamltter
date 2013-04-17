@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Api_intf.Text.html">
+<link rel="next" href="Api_intf.User.html">
+<link rel="Up" href="Api_intf.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Ocamltter" rel="Chapter" href="Ocamltter.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="GoogleTTS" rel="Chapter" href="GoogleTTS.html">
+<link title="Http" rel="Chapter" href="Http.html">
+<link title="Llist" rel="Chapter" href="Llist.html">
+<link title="Oauth" rel="Chapter" href="Oauth.html">
+<link title="ParserMonad" rel="Chapter" href="ParserMonad.html">
+<link title="Utf16" rel="Chapter" href="Utf16.html">
+<link title="Util" rel="Chapter" href="Util.html">
+<link title="Xml" rel="Chapter" href="Xml.html">
+<link title="Api1" rel="Chapter" href="Api1.html">
+<link title="Auth" rel="Chapter" href="Auth.html">
+<link title="Api11" rel="Chapter" href="Api11.html">
+<link title="Api_intf" rel="Chapter" href="Api_intf.html"><title>Api_intf.Client</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Api_intf.Text.html" title="Api_intf.Text">Previous</a>
+&nbsp;<a class="up" href="Api_intf.html" title="Api_intf">Up</a>
+&nbsp;<a class="post" href="Api_intf.User.html" title="Api_intf.User">Next</a>
+</div>
+<h1>Module <a href="type_Api_intf.Client.html">Api_intf.Client</a></h1>
+<pre><span class="keyword">module</span> Client: <code class="code">sig</code> <a href="Api_intf.Client.html">..</a> <code class="code">end</code></pre><hr width="100%">
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type">string * [ `Error of exn | `Ok of <a href="Xml.html#TYPExml">Xml.xml</a> ]</code> </pre>
+
+<pre><span id="VALt_of_json"><span class="keyword">val</span> t_of_json</span> : <code class="type">(string * [> (<a href="Xml.html#TYPExml">Xml.xml</a>, exn) Meta_conv.Result.t ]) Json_conv.decoder</code></pre><pre><span id="VALt_of_json_exn"><span class="keyword">val</span> t_of_json_exn</span> : <code class="type">(string * [> (<a href="Xml.html#TYPExml">Xml.xml</a>, exn) Meta_conv.Result.t ]) Json_conv.decoder_exn</code></pre><pre><span id="VALjson_of_t"><span class="keyword">val</span> json_of_t</span> : <code class="type">string * 'a -> Api_intf.Json.t</code></pre><pre><span id="VALt_of_ocaml"><span class="keyword">val</span> t_of_ocaml</span> : <code class="type">?trace:'a -> 'b -> 'c</code></pre><pre><span id="VALt_of_ocaml_exn"><span class="keyword">val</span> t_of_ocaml_exn</span> : <code class="type">?trace:'a -> 'b -> 'c</code></pre><pre><span id="VALocaml_of_t"><span class="keyword">val</span> ocaml_of_t</span> : <code class="type">string * 'a -> Ocaml.t</code></pre></body></html>

@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="GoogleTTS.html">
+<link rel="next" href="Llist.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Ocamltter" rel="Chapter" href="Ocamltter.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="GoogleTTS" rel="Chapter" href="GoogleTTS.html">
+<link title="Http" rel="Chapter" href="Http.html">
+<link title="Llist" rel="Chapter" href="Llist.html">
+<link title="Oauth" rel="Chapter" href="Oauth.html">
+<link title="ParserMonad" rel="Chapter" href="ParserMonad.html">
+<link title="Utf16" rel="Chapter" href="Utf16.html">
+<link title="Util" rel="Chapter" href="Util.html">
+<link title="Xml" rel="Chapter" href="Xml.html">
+<link title="Api1" rel="Chapter" href="Api1.html">
+<link title="Auth" rel="Chapter" href="Auth.html">
+<link title="Api11" rel="Chapter" href="Api11.html">
+<link title="Api_intf" rel="Chapter" href="Api_intf.html"><title>Http</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="GoogleTTS.html" title="GoogleTTS">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Llist.html" title="Llist">Next</a>
+</div>
+<h1>Module <a href="type_Http.html">Http</a></h1>
+<pre><span class="keyword">module</span> Http: <code class="code">sig</code> <a href="Http.html">..</a> <code class="code">end</code></pre><div class="info">
+http access<br>
+</div>
+<hr width="100%">
+<pre><span id="EXCEPTIONHttp_error"><span class="keyword">exception</span> Http_error</span> <span class="keyword">of</span> <code class="type">string</code></pre>
+<pre><span id="VALurl_encode"><span class="keyword">val</span> url_encode</span> : <code class="type">string -> string</code></pre><pre><span id="VALhtml_decode"><span class="keyword">val</span> html_decode</span> : <code class="type">string -> string</code></pre><pre><code><span id="TYPEheader"><span class="keyword">type</span> <code class="type"></code>header</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTheader.code">code</span>&nbsp;:<code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTheader.fields">fields</span>&nbsp;:<code class="type">(string, string) Hashtbl.t</code>;</code></td>
+
+</tr></table>
+}
+
+
+<pre><span id="TYPEparams"><span class="keyword">type</span> <code class="type"></code>params</span> = <code class="type">(string * string) list</code> </pre>
+
+<pre><code><span id="TYPEmeth"><span class="keyword">type</span> <code class="type"></code>meth</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTmeth.GET"><span class="constructor">GET</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTmeth.POST"><span class="constructor">POST</span></span></code></td>
+
+</tr></table>
+
+
+<pre><span id="VALconn"><span class="keyword">val</span> conn</span> : <code class="type">?port:int -><br>       string -><br>       <a href="Http.html#TYPEmeth">meth</a> -><br>       ?headers:<a href="Http.html#TYPEparams">params</a> -><br>       string -><br>       <a href="Http.html#TYPEparams">params</a> -><br>       ?rawdata:string -> (<a href="Http.html#TYPEheader">header</a> -> Pervasives.in_channel -> 'a) -> 'a</code></pre><div class="info">
+http access<br>
+</div>
+<pre><span id="VALhttps"><span class="keyword">val</span> https</span> : <code class="type">string -><br>       <a href="Http.html#TYPEmeth">meth</a> -><br>       ?headers:<a href="Http.html#TYPEparams">params</a> -><br>       string -><br>       ?rawdata:string -><br>       <a href="Http.html#TYPEparams">params</a> -> [> `Error of [> `Http of int * string ] | `Ok of string ]</code></pre><div class="info">
+https access via cURL<br>
+</div>
+</body></html>
