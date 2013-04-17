@@ -233,15 +233,15 @@ module Tweet = struct
   type t = <
     unknowns : Json.t mc_leftovers;
 
-    id        : int64;
+    id_str    : string;
     user      : User.t;
     text      : Text.t;
     truncated : bool;
 
-    in_reply_to_status_id   : int64 option; (* RE or RT *)
-    in_reply_to_user_id     : int64 option;
-    in_reply_to_screen_name : string option;
-    retweeted_status        : t mc_option; (* RT *)
+    in_reply_to_status_id_str : string option; (* RE or RT *)
+    in_reply_to_user_id       : int64 option;
+    in_reply_to_screen_name   : string option;
+    retweeted_status          : t mc_option; (* RT *)
 
     created_at : Time.t;
 
@@ -268,6 +268,9 @@ module Tweet = struct
   let format    = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
   let format_ts = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_ts
 
+  let id (t:t) = Int64.of_string t#id_str
+  let in_reply_to_status_id (t:t) =
+    Util.Option.map Int64.of_string t#in_reply_to_status_id_str
 end
 
 module Search_tweets = struct
