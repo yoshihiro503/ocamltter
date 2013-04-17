@@ -1,7 +1,0 @@
-name="twitter"
-version="2.0.0"
-description="Twitter API library of OCamltter"
-requires="cryptokit,str,meta_conv,tiny_json_conv,spotlib,curl,ocaml_conv"
-archive(byte)="twitter.cmo"
-archive(native)="twitter.cmx"
-linkopts = ""

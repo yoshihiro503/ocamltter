@@ -1,5 +1,0 @@
-name="ocamltter"
-version="@version@"
-description="OCamltter Twitter client"
-requires="cryptokit,str,meta_conv,tiny_json_conv,spotlib,curl,ocaml_conv,twitter"
-
