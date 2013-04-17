@@ -105,6 +105,7 @@ end
 
 module Client : sig
   type t = string * [`Ok of Xml.xml | `Error of exn] with conv(json, ocaml)
+  val name : t -> string
 end = struct
   type t = string * [`Ok of Xml.xml | `Error of exn]
 
@@ -122,6 +123,14 @@ end = struct
   let t_of_ocaml ?trace:_ _ = assert false
   let t_of_ocaml_exn ?trace:_ _ = assert false
   let ocaml_of_t (s, _) = Ocaml.String s   
+
+  let name = function
+    | (_, `Ok (Xml.PCData client_name))
+    | (_, `Ok (Xml.Tag ("a", _, [Xml.PCData client_name]))) ->
+        client_name
+    | (s, `Ok _) -> s
+    | (s, `Error _) -> s
+
 end
 
 module User = struct
