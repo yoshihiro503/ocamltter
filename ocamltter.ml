@@ -324,6 +324,15 @@ let is_polling_on = ref false
 
 let stop_polling ()  = is_polling_on := false
 
+let print_tweet (t:Tweet.t) =
+  let time =
+    let tm = Time.to_unix t#created_at in
+    !%"[%02d/%02d %02d:%02d]" (Date.mon tm) (Date.day tm) (Date.hour tm) (Date.min tm)
+  in
+  let name = (from_Some t#user#details)#screen_name in
+  print_endline &
+    !%"%s %s : %s %LdL %s" time name t#text t#id (Client.name t#source)
+
 let start_polling () =
   is_polling_on := true;
   let cache = Cache.init () in
@@ -344,8 +353,9 @@ let start_polling () =
         | [] -> print_string "."; flush stdout; last_id
         | tl ->
             List.iter (fun t ->
-              print_endline & 
-                !%"%s, %s" (from_Some t#user#details)#screen_name t#text; (* CR jfuruse: better printing *)
+              (* CR jfuruse: need fix *)
+              (* yoshihiro503: fix it *)
+              print_tweet t;
               if !OConfig.talk then TTS.say_ja (!%"%s, %s" (from_Some t#user#details)#screen_name t#text)) tl;
             print_endline "";
             Some (list_last tl)#id
