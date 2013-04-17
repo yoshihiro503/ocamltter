@@ -5,6 +5,9 @@ open Tiny_json
 open Meta_conv
 open Api_intf
 
+exception Error of [`Http of int * string
+                   | `Json of Json.t Meta_conv.Error.t ]
+
 type tweet = Api_intf.Tweet.t
 
 module Auth : sig
