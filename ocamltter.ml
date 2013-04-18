@@ -181,7 +181,7 @@ let get_timeline ?(c=20) ?since_id verbose =
     in
     let tl2 =
       if verbose then (print_endline "loading..."; flush stdout);
-      List.filter (fun _ -> true) (* OConfig.filter  *) (* CR jfuruse: need fix *)
+      List.filter OConfig.filter (* CR jfuruse: need fix *) (* yoshihiro503: fixed *)
       & default []
       & Timelines.home_timeline ~count:c (get_oauth ())
     in
