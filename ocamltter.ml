@@ -235,9 +235,20 @@ let u text =
   let o = get_oauth () in
   from_Ok & Tweets.update o text >>| Tweet.id
 
+let show id =
+  let o = get_oauth () in
+  Tweets.show id o |> from_Ok
+
+let get_screen_name id =
+  show id
+  |> fun t -> t#user#details
+  |> from_Some
+  |> fun u -> u#screen_name
+
 let re status_id text =
   let o = get_oauth () in
-  Tweets.update o ~in_reply_to_status_id:status_id text 
+  let name = get_screen_name status_id in
+  Tweets.update o ~in_reply_to_status_id:status_id ("@" ^ name ^ " " ^ text)
   |> from_Ok |> Tweet.id
 
 let rt status_id =
