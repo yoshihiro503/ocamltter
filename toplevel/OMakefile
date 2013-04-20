@@ -1,0 +1,23 @@
+OCAMLFLAGS = -g -thread -w A-31 -warn-error A-31
+
+OCAMLINCLUDES += .
+
+OCAML_LIBS= ../lib/twitter
+OCamlRequire(../lib/twitter.cmo)
+
+FILES[] = 
+    oConfig
+    ocamltter
+
+MyOCamlTop(ocamltter_top, $(FILES))
+
+install::
+    # to bin
+    install ocamltter $(PREFIX)/bin
+    # to library directory
+    ocamlfind remove ocamltter
+    ocamlfind install ocamltter ocamlinit.ml META
+
+uninstall::
+    rm -f $(PREFIX)/bin/ocamltter
+    ocamlfind remove ocamltter

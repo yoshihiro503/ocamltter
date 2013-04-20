@@ -18,3 +18,4 @@ ocamltter_top*
 .omakedb*
 OMakeroot
 setup.data
+setup.ml.ba*

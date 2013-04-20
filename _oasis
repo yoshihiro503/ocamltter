@@ -1,0 +1,14 @@
+OASISFormat: 0.2
+Name:        ocamltter
+Version:     2.1.0
+Synopsis:    The OCAMLTTER twitter client
+Authors:     Jun FURUSE
+License:     LGPL-2.0 with OCaml linking exception
+Plugins:      StdFiles (0.2)
+BuildType:    Custom (0.2)
+InstallType:    Custom (0.2)
+XCustomBuild: yes no | omake --install; PREFIX=$prefix omake
+XCustomInstall: PREFIX=$prefix omake install
+XCustomUninstall: PREFIX=$prefix omake uninstall
+XCustomBuildClean: PREFIX=$prefix omake clean
+BuildTools: omake

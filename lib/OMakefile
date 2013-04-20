@@ -1,0 +1,19 @@
+OCAMLINCLUDES = $(dir base twitter)
+
+LIBFILES[] = 
+    base/base64
+    base/parserMonad
+    base/xml
+    base/googleTTS
+    base/llist
+    base/utf16
+    base/http
+    base/oauth
+    base/util
+    twitter/auth
+    twitter/api_intf
+    twitter/api11
+
+MyOCamlPackage(twitter, $(LIBFILES), $(EMPTY), $(EMPTY))
+
+Subdirs()
