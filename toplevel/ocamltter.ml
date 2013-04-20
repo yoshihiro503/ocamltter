@@ -130,7 +130,7 @@ end = struct
     q2
   let _qfind f q = try Some (Queue.pop @@ qfilter f q) with _ -> None
   let is_new (cache: t) (tw: tweet) =
-    Queue.is_empty (qfilter (fun t -> Tweet.id t = Tweet.id tw) cache)
+    Queue.is_empty (qfilter (fun t -> t#id = tw#id) cache)
   let add cache (tw: tweet) =
     if Queue.length cache > max_size then ignore @@ Queue.pop cache;
     Queue.push tw cache
@@ -181,7 +181,7 @@ let get_timeline ?(c=20) ?since_id verbose =
     in
     let tl2 =
       if verbose then (print_endline "loading..."; flush stdout);
-      List.filter OConfig.filter (* CR jfuruse: need fix *) (* yoshihiro503: fixed *)
+      List.filter OConfig.filter
       & default []
       & Timelines.home_timeline ~count:c (get_oauth ())
     in
@@ -196,7 +196,7 @@ let get_timeline ?(c=20) ?since_id verbose =
 let format_tweet ppf t = 
   Format.fprintf ppf "{ @[<v>user=%S; id=%LdL;@ text=\"%s\"@] }"
     (from_Some t#user#details)#screen_name 
-    (Tweet.id t)
+    t#id
     t#text
 
 let print_timeline tws =
@@ -225,7 +225,7 @@ let kwsk id =
     match Tweets.show id o with
     | `Error _ -> store
     | `Ok tw -> 
-        match Tweet.in_reply_to_status_id tw with
+        match tw#in_reply_to_status_id with
         | Some id -> iter (tw :: store) id
         | None -> tw :: store
   in
@@ -233,7 +233,7 @@ let kwsk id =
     
 let u text =
   let o = get_oauth () in
-  from_Ok & Tweets.update o text >>| Tweet.id
+  from_Ok & Tweets.update o text >>| fun x -> x#id
 
 let show id =
   let o = get_oauth () in
@@ -249,12 +249,12 @@ let re status_id text =
   let o = get_oauth () in
   let name = get_screen_name status_id in
   Tweets.update o ~in_reply_to_status_id:status_id ("@" ^ name ^ " " ^ text)
-  |> from_Ok |> Tweet.id
+  |> from_Ok |> fun x -> x#id
 
 let rt status_id =
   let o = get_oauth () in
   from_Ok
-  & Tweets.retweet status_id o >>| Tweet.id
+  & Tweets.retweet status_id o >>| fun x -> x#id
 
 let del id = 
   let o = get_oauth () in
@@ -286,8 +286,8 @@ let unfollow sname = Friendships.destroy ~screen_name:sname (get_oauth ()) |> fr
 
 let favs screen_name = Favorites.list ~screen_name (get_oauth ()) |> from_Ok
 
-let fav id = Favorites.create (get_oauth ()) id |> from_Ok |> Tweet.id
-let unfav id = Favorites.destroy (get_oauth ()) id |> from_Ok |> Tweet.id
+let fav id = Favorites.create (get_oauth ()) id |> from_Ok |> fun x -> x#id
+let unfav id = Favorites.destroy (get_oauth ()) id |> from_Ok |> fun x -> x#id
 let frt id = ignore & fav id; rt id
 
 let report_spam sname = 
@@ -342,7 +342,7 @@ let print_tweet (t:Tweet.t) =
   in
   let name = (from_Some t#user#details)#screen_name in
   print_endline &
-    !%"%s %s : %s %LdL %s" time name t#text (Tweet.id t) (Client.name t#source)
+    !%"%s %s : %s %LdL %s" time name t#text t#id (Client.name t#source)
 
 let start_polling () =
   is_polling_on := true;
@@ -364,12 +364,10 @@ let start_polling () =
         | [] -> print_string "."; flush stdout; last_id
         | tl ->
             List.iter (fun t ->
-              (* CR jfuruse: need fix *)
-              (* yoshihiro503: fix it *)
               print_tweet t;
               if !OConfig.talk then TTS.say_ja (!%"%s, %s" (from_Some t#user#details)#screen_name t#text)) tl;
             print_endline "";
-            Some (Tweet.id (list_last tl))
+            Some (list_last tl)#id
         (* Error should be printed by get *)                
         (* | Inr e ->  
                print_endline (Printexc.to_string e);
