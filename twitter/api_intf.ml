@@ -109,6 +109,7 @@ end
 
 module Client : sig
   type t = string * [`Ok of Xml.xml | `Error of exn] with conv(json, ocaml)
+  val name : t -> string
 end = struct
   type t = string * [`Ok of Xml.xml | `Error of exn]
 
@@ -126,6 +127,14 @@ end = struct
   let t_of_ocaml ?trace:_ _ = assert false
   let t_of_ocaml_exn ?trace:_ _ = assert false
   let ocaml_of_t (s, _) = Ocaml.String s   
+
+  let name = function
+    | (_, `Ok (Xml.PCData client_name))
+    | (_, `Ok (Xml.Tag ("a", _, [Xml.PCData client_name]))) ->
+        client_name
+    | (s, `Ok _) -> s
+    | (s, `Error _) -> s
+
 end
 
 module User = struct
@@ -228,15 +237,15 @@ module Tweet = struct
   type t = <
     unknowns : Json.t mc_leftovers;
 
-    id        : int64;
+    id_str    : string;
     user      : User.t;
     text      : Text.t;
     truncated : bool;
 
-    in_reply_to_status_id   : int64 option; (* RE or RT *)
-    in_reply_to_user_id     : int64 option;
-    in_reply_to_screen_name : string option;
-    retweeted_status        : t mc_option; (* RT *)
+    in_reply_to_status_id_str : string option; (* RE or RT *)
+    in_reply_to_user_id       : int64 option;
+    in_reply_to_screen_name   : string option;
+    retweeted_status          : t mc_option; (* RT *)
 
     created_at : Time.t;
 
@@ -263,6 +272,9 @@ module Tweet = struct
   let format    = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
   let format_ts = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_ts
 
+  let id (t:t) = Int64.of_string t#id_str
+  let in_reply_to_status_id (t:t) =
+    Util.Option.map Int64.of_string t#in_reply_to_status_id_str
 end
 
 module Search_tweets = struct
