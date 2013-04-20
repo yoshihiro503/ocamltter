@@ -32,7 +32,7 @@ NATIVE_SHARED_ENABLED = $(OCAMLOPT_EXISTS)
 BYTE_ENABLED = true
 
 #|The default warning and errors. If you want to use different warning and error switches, use redefine the variable.
-OCAMLFLAGS = -w A-4-9 -warn-error A-4-9
+OCAMLFLAGS = -g -w A-4-9 -warn-error A-4-9
 
 #|Global variable to be defined as empty
 OCAMLPACKAGEFLAGS=
@@ -50,7 +50,7 @@ OCAMLPACKAGEFLAGS=
 #   Subdirs()
 #
 # It includes "findlib" by default. If you want to build findlib in OMy framework, you have to remove it from the list.
-OCAML_PREINSTALLED_PACKS[]= bigarray camlp4 dbm dynlink graphics num num-top stdlib str threads unix findlib compiler-libs compiler-libs.common
+OCAML_PREINSTALLED_PACKS[]= bigarray camlp4 dbm dynlink graphics num num-top stdlib str threads unix findlib compiler-libs compiler-libs.common compiler-libs.bytecomp compiler-libs.optcomp compiler-libs.toplevel
 
 #|Redefinition of compiler commands
 public.OCamlC() =
@@ -73,10 +73,10 @@ if $(and $(not $(NATIVE_ENABLED)) $(not $(BYTE_ENABLED)))
 %.annot %.cmt: %.ml %.cmi
 	$(OCamlC) -c -annot -bin-annot $<
 
-%.spit %.cmti: %.mli 
+%.cmti: %.mli 
 	$(OCamlC) -c -bin-annot $<
 
-#|Define OCAML_ANNOT so that ocamlc/ocamlopt automatically create spot/spit/annot/cmt/cmti files, even without -annot/-bin-annot option. This requires a special compiler patch 
+#|Define OCAML_ANNOT so that ocamlc/ocamlopt automatically create annot/cmt/cmti files, even without -annot/-bin-annot option. This requires a special compiler patch 
 setenv(OCAML_ANNOT, 1)
 
 #|Enable the backtrace
@@ -136,13 +136,24 @@ public.CAMLP4PACKS[]=
 
 #|Returns packages managed by OMy framework
 OMyManagedPackages(packages) =
-   return $(set-diff $(packages), $(OCAML_PREINSTALLED_PACKS))
+   # need to rename camlimages.jpeg => camlimages
+   packages_prefix=
+   foreach(x, $(packages))
+       match $(x)
+       case $"^\([^.]+\).*"
+          packages_prefix += $1
+          export
+       default
+          packages_prefix += $(x)
+          export
+       export
+   return $(set-diff $(packages_prefix), $(OCAML_PREINSTALLED_PACKS))
 
 #|Add dependencies of OCaml compiled files (cmx, cmo, etc.) over $(files).
 #
 # .. note:: These functions introduce implicit rules: *you may need to export it, if you use this function in a local context.*
 OCamlRequire(files) =
-    %.cmx %.cmo %.cmi %.cma %.cmxa %.annot %.spot %.spit %.cmt %.cmti: $(files)
+    %.cmx %.cmo %.cmi %.cma %.cmxa %.annot %.cmt %.cmti: $(files)
     export
 
 #|Add dependencies of OCaml compiled files (cmx, cmo, etc.) over $(packages).
@@ -154,7 +165,7 @@ OCamlRequire(files) =
 OCamlRequirePackages(packages) =
     required_packs = $(OMyManagedPackages $(packages))
     if $(defined INSTALLED)
-      %.cmx %.cmo %.cmi %.cma %.cmxa %.annot %.spot %.spit %.cmt %.cmti: $(Installed $(required_packs))
+      %.cmx %.cmo %.cmi %.cma %.cmxa %.annot %.cmt %.cmti: $(Installed $(required_packs))
       export
     export
 
@@ -169,7 +180,7 @@ OCamlRequireCamlP4Packages(packages) =
     required_packs = $(OMyManagedPackages $(packages))
     if $(defined INSTALLED)
       .SCANNER: scan-ocaml-%: $(Installed $(required_packs))
-      %.cmx %.cmo %.cmi %.cma %.cmxa %.annot %.spot %.spit : $(Installed $(required_packs))
+      %.cmx %.cmo %.cmi %.cma %.cmxa %.annot : $(Installed $(required_packs))
       export 
     export
 
@@ -180,7 +191,6 @@ OCamlRequireCamlP4Packages(packages) =
 # Build rules
 # ==========================================================
 
-# Extend the bundled OCamlPackage with .spot creation
 public.OCamlLibrary(name, files) =
    # XXX: JYH: these variables should be marked private in 0.9.9
    protected.name = $(file $(name))
@@ -214,7 +224,8 @@ public.OCamlLibrary(name, files) =
                   $(if $(NATIVE_SHARED_ENABLED), $(NATIVESHAREDLIB)), \
                   $(if $(BYTE_ENABLED), $(BYTELIB)))
 
-# Extend the bundled OCamlPackage with .spot creation
+public.OCAML_BYTE_LINK_FLAGS =
+
 public.OCamlPackage(name, files) =
    # XXX: JYH: these variables should be marked private in 0.9.9
    protected.OFILES   = $(addsuffix $(EXT_OBJ), $(files))
@@ -363,7 +374,7 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
   ## clean
   AutoClean()
   clean:
-	rm -f $(library_name).spot $(library_name).cmt
+	rm -f $(library_name).cmt
 
   ## install
 
@@ -624,6 +635,32 @@ mkdir_if_not_exists(dir) =
 # at linking.
 WithOCamlVeryClean() =
     veryclean: 
-        rm -f *.cm* *.annot *.o *.a *.sp[io]t *.so *.exe *.byt *.opt *.run
+        rm -f *.cm* *.annot *.o *.a *.so *.exe *.byt *.opt *.run
 
+# Pa_ounit test
+# =======================================================================
 
+#| Test with Pa_ounit. Pretty version dependent.
+# Thinking from the implementation Pa_ounit_lib.Runtime, it should be
+# pretty unstable in future releases of Pa_ounit. Sigh.
+
+MyOCamlOUnitTest(LIB) =
+    name=ounittest_$(LIB)
+    $(name).ml:
+        section:
+            chan=$(fopen $@, w)
+            fprintln($(chan), module M = $(capitalize $(LIB)))
+            fprintln($(chan), let \(\) = Pa_ounit_lib.Runtime.summarize \(\))
+            close($(chan))
+
+    section:
+        OCAML_LIBS=$(LIB)
+        MyOCamlTestProgram($(name), $(name))
+
+    inline_tests.log: $(name)
+        println(Check inline_tests.log for test results)
+        ./$(name) inline-test-runner $(capitalize $(LIB)) -verbose -log -strict
+
+    .PHONY:test
+
+    test: inline_tests.log
