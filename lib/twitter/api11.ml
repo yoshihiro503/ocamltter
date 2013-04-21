@@ -268,6 +268,32 @@ end = struct
       
 end
 
+(** { 6 since_id + max_id based API } *)
+
+module SinceMaxID = struct
+  
+  open Stream
+
+  (* count: max number possible *)
+  let create_stream f ~count ?since_id ?max_id o = 
+    let (!!) = Lazy.force in
+    let rec loop ~since_id ~max_id = lazy (
+      if Spotlib.Option.liftM2 (>) since_id max_id = Some true then !!null
+      else begin
+        match f ?count:(Some count) ?since_id ?max_id (o : Oauth.t) with
+        | `Error e -> !!(Stream.singleton (`Error e))
+        | `Ok [] ->  !!Stream.null
+        | `Ok xs ->
+            let last_id = (List.last xs)#id in
+            let since_id = Some (Int64.( last_id  + 1L )) in
+            let xs = Stream.of_list (List.map (fun x -> `Ok x) xs) in
+            !! (Stream.append xs (loop ?since_id ?max_id))
+      end )
+    in
+    loop ~since_id ~max_id
+
+end
+
 (* Basic API function can be implemented by the following simple rule,
    even if you do not understand the funcitonal tricks I used here.
 
@@ -306,6 +332,12 @@ module Timelines = struct (* CR jfuruse: or Statuses ? *)
     ** contributer_details
     ** include_entities
 
+  let mentions_timeline_stream  
+    ?trim_user ?contributer_details ?include_entities =
+    SinceMaxID.create_stream ~count:200
+    & mentions_timeline
+      ?trim_user ?contributer_details ?include_entities
+
   let user_timeline = get Tweet.ts_of_json "statuses/user_timeline.json"
     &  count
     ** since_max_ids
@@ -314,7 +346,13 @@ module Timelines = struct (* CR jfuruse: or Statuses ? *)
     ** exclude_replies
     ** contributer_details
     ** include_rts
-
+      
+  let user_timeline_stream
+      ?user_id ?screen_name ?trim_user ?exclude_replies ?contributer_details ?include_rts =
+    SinceMaxID.create_stream ~count:200
+    & user_timeline
+      ?user_id ?screen_name ?trim_user ?exclude_replies ?contributer_details ?include_rts
+      
   let home_timeline = get Tweet.ts_of_json "statuses/home_timeline.json" 
     &  count
     ** since_max_ids
@@ -323,6 +361,12 @@ module Timelines = struct (* CR jfuruse: or Statuses ? *)
     ** contributer_details
     ** include_entities
 
+  let home_timeline_stream
+      ?trim_user ?exclude_replies ?contributer_details ?include_entities =
+      SinceMaxID.create_stream ~count:200
+      & home_timeline
+        ?trim_user ?exclude_replies ?contributer_details ?include_entities
+      
   let retweets_of_me = get Tweet.ts_of_json "statuses/retweets_of_me.json" 
     &  count
     ** since_max_ids
@@ -330,21 +374,30 @@ module Timelines = struct (* CR jfuruse: or Statuses ? *)
     ** include_entities
     ** include_user_entities
 
+  let retweets_of_me 
+      ?trim_user ?include_entities ?include_user_entities =
+    SinceMaxID.create_stream ~count:100
+    & retweets_of_me
+      ?trim_user ?include_entities ?include_user_entities
+
 end
 
 module Tweets = struct (* CR jfuruse: or Statuses ? *)
 
+  (* CR jfuruse: id comes before the o *)    
   let retweets = get Tweet.ts_of_json "statuses/retweets/%Ld.json"
     &  count
     ** trim_user
     ** format1
 
+  (* CR jfuruse: id comes before the o *)    
   let show = get Tweet.t_of_json "statuses/show/%Ld.json" 
     &  trim_user
     ** include_my_tweet
     ** include_entities
     ** format1
 
+  (* CR jfuruse: id comes before the o *)    
   let destroy = post (fun x -> `Ok x) "statuses/destroy/%Ld.json"
     &  trim_user 
     ** format1
@@ -355,6 +408,7 @@ module Tweets = struct (* CR jfuruse: or Statuses ? *)
     ** trim_user
     ** required_status (* Required argument should come at the last *)
 
+  (* CR jfuruse: id comes before the o *)    
   let retweet = post Tweet.t_of_json "statuses/retweet/%Ld.json"
     &  trim_user 
     ** format1
@@ -544,6 +598,16 @@ module Favorites = struct
     ** since_max_ids
     ** include_entities
 
+  let stream 
+    ?user_id
+    ?screen_name
+    ?include_entities =
+    SinceMaxID.create_stream ~count:200
+    & list
+      ?user_id 
+      ?screen_name 
+      ?include_entities
+
   let create = post Tweet.t_of_json "favorites/create.json"
     &  include_entities
     ** required_id
@@ -586,4 +650,22 @@ module Help = struct
   let rate_limit_status = get Rate_limit_status.t_of_json "application/rate_limit_status.json"
     &  resources
       
+end
+
+(** This is not API but handle errors from API *)
+ module Error = struct
+  type t = [ `Http of int * string
+           | `Json of Api_intf.Json.t Meta_conv.Error.t
+           | `Json_parse of exn * string ]
+
+  let format_error ppf = function
+    | `Http (code, mes) ->
+        Format.fprintf ppf "HTTP error %d: %s" code mes
+    | `Json e ->
+        Format.fprintf ppf "@[<2>JSON error:@ %a@]"
+          (Meta_conv.Error.format Json_conv.format) e
+    | `Json_parse (exn, s) ->
+        Format.fprintf ppf "@[<2>JSON error: %s@ %s@]@."
+          (Printexc.to_string exn)
+          s
 end
