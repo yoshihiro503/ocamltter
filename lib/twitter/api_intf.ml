@@ -3,7 +3,8 @@ open Meta_conv.Open
 open Json_conv
 open Ocaml_conv
 
-(* We cannot [open Tiny_json] since Tiny_json.Util and our Util would corride *)
+(* Do not [open Tiny_json], since [Twitter] and [Tiny_json] both have [Util] *)
+
 
 module Json = struct
   include Tiny_json.Json
@@ -242,10 +243,10 @@ module Tweet = struct
     text      : Text.t;
     truncated : bool;
 
-    in_reply_to_status_id     : int64 option; (* RE or RT *)
-    in_reply_to_user_id       : int64 option;
-    in_reply_to_screen_name   : string option;
-    retweeted_status          : t mc_option; (* RT *)
+    in_reply_to_status_id   : int64 option; (* RE or RT *)
+    in_reply_to_user_id     : int64 option;
+    in_reply_to_screen_name : string option;
+    retweeted_status        : t mc_option; (* RT *)
 
     created_at : Time.t;
 
@@ -280,13 +281,13 @@ module Search_tweets = struct
     type t = <
       unknowns     : Json.t mc_leftovers;
 
-      completed_in : float;
-      max_id       : int64;
-      next_results : string mc_option; (** url GET piece for next search *)
-      query        : string; (** url GET piece for refresh *)
-      refresh_url  : string;
+      query        : string;
+      next_results : string mc_option; (* url GET piece for next search *)
+      refresh_url  : string; (* url GET piece for refresh *)
       count        : int;
+      max_id       : int64;
       since_id     : int64;
+      completed_in : float;
     > with conv(json, ocaml)
   end
 
@@ -294,7 +295,7 @@ module Search_tweets = struct
     unknowns : Json.t mc_leftovers;
 
     statuses : Tweet.t list;
-(*     search_metadata : Search_metadata.t;*)
+    search_metadata : Search_metadata.t;
   > with conv(json, ocaml)
 
   let format = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
