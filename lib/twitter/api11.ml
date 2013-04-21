@@ -249,18 +249,20 @@ end = struct
 
   let get_stream optf dec acc apicall k =
     optf (fun params oauth ->
-      let rec loop cursor = 
+      let (!!) = Lazy.force in
+      let rec loop cursor = lazy (
         let params = ("cursor", of_string cursor) :: params in
         match apicall params (oauth : Oauth.t) with
-        | `Error e -> Stream.singleton (`Error e)
+        | `Error e -> !! (Stream.singleton (`Error e))
         | `Ok json ->
             match t_of_json dec json with
-            | `Error e -> Stream.singleton (`Error (`Json e))
+            | `Error e -> !! (Stream.singleton (`Error (`Json e)))
             | `Ok t -> 
                 let xs = Stream.of_list (List.map (fun x -> `Ok x) (acc t.contents)) in
                 match t.next_cursor_str with
-                | "0" -> xs
-                | next -> Stream.append xs (loop (Some next))
+                | "0" -> !!xs
+                | next -> !!(Stream.append xs (loop (Some next)))
+      )
       in
       k & loop None) []
       
