@@ -9,20 +9,23 @@ type meth = GET | POST
 
 (** http access *)
 val conn :
-  ?port:int ->
-  string ->
-  meth ->
-  ?headers: params ->
-  string -> params ->
-  ?rawdata:string ->
-  (header -> in_channel -> 'a) -> 'a
+  ?port:int 
+  -> string          (** hostname *)
+  -> meth            (** GET/POST *)
+  -> ?headers: params 
+  -> string          (** path *)
+  -> params          (** posts *)
+  -> ?rawpost:string (** raw additional post *)
+  -> (header -> in_channel -> 'a) 
+  -> 'a
 
-(** https access via cURL *)
-val https : 
-  string  (** hostname *)
-  -> meth  (** GET/POST *)
-  -> ?headers: params
-  -> string (** path *)
-  -> ?rawdata:string (** raw additional post *)
-  -> params (** posts *)
+(* CR jfuruse: no way to specify the port *)
+(** http access via cURL *)
+val by_curl : 
+  meth                 (** GET/POST *)
+  -> [`HTTP | `HTTPS ] (** protocol *)
+  -> string            (** hostname *)
+  -> string            (** path *)
+  -> params: params    (** get/post parameters *)
+  -> headers: params
   -> [> `Error of [> `Http of int * string ] | `Ok of string ]
