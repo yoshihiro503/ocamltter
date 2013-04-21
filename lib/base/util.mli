@@ -1,3 +1,5 @@
+(* Created ocamlc -i *)
+
 val ( @@ ) : ('a -> 'b) -> 'a -> 'b
 val ( $ ) : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 val id : 'a -> 'a
@@ -29,19 +31,19 @@ val list_filter_map : ('a -> 'b option) -> 'a list -> 'b list
 val maybe : ('a -> 'b) -> 'a -> ('b, exn) either
 val value : ('a, exn) either -> 'a
 val value_or : 'a -> ('a, exn) either -> 'a
-module Option :
-    sig
-      type 'a t = 'a option
-      val some : 'a -> 'a t
-      val none : 'a t
-      val map : ('a -> 'b) -> 'a t -> 'b t
-      val sopt : ('a -> string) -> 'a t -> string
-      val opt_min : 'a t -> 'a t -> 'a t
-      val maybe : ('a -> 'b) -> 'a -> 'b t
-      val get_or_else : 'a -> 'a t -> 'a
-      val cat_options : 'a option list -> 'a list
-    end
-val open_with : ('a -> 'b) * ('b -> 'c) -> 'a -> ('b -> 'd) -> 'd
+
+module Option : sig
+  type 'a t = 'a option
+  val some : 'a -> 'a t
+  val none : 'a t
+  val map : ('a -> 'b) -> 'a t -> 'b t
+  val sopt : ('a -> string) -> 'a t -> string
+  val opt_min : 'a t -> 'a t -> 'a t
+  val maybe : ('a -> 'b) -> 'a -> 'b t
+  val get_or_else : 'a -> 'a t -> 'a
+  val cat_options : 'a option list -> 'a list
+end
+
 val open_in_with : string -> (in_channel -> 'a) -> 'a
 val open_out_with : string -> (out_channel -> 'a) -> 'a
 val read_all : in_channel -> string list
@@ -49,6 +51,7 @@ val read_file : string -> string
 val just : 'a -> 'a option -> 'a
 val random_int : int -> int
 val to_hex : int -> string
+
 module Date : sig
   type t = float
   val make : int -> int -> int -> int -> int -> int -> float
