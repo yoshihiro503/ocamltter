@@ -11,7 +11,7 @@ done
 
 if [ -f ocamltter.ml ]; then
   # We are at the source dir
-  incl="$with_pkgs -I +threads -I base -I twitter"
+  incl="$with_pkgs -I +threads -I ../lib"
   initfile='./ocamlinit.ml'
 else
   # We are not at the source dir. omake install has been done.
