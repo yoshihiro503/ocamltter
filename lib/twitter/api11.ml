@@ -1,9 +1,9 @@
 open Meta_conv.Open
-open Meta_conv.Result.Open
 open Ocaml_conv
 open Json_conv
 
 open Spotlib.Spot
+open Spotlib.Result.Open (* Monads are Result *)
 
 open Http
 open Api_intf
@@ -26,8 +26,9 @@ let (~?) l = List.filter_map (function
 let twitter oauth ?(host="api.twitter.com") meth cmd params =
   (* prerr_endline cmd; *)
   (* List.iter (fun (k,v) -> Format.eprintf "%s=%s@." k v) params; *)
-  Auth.access_https oauth meth host cmd params
-  >>| Json.parse
+  Auth.access `HTTPS oauth meth host cmd params >>= fun s -> 
+  Result.catch (fun ~fail -> try Json.parse s with e -> fail (`Json_parse (e,s)))
+      
 
 (* CR jfuruse: Should we use `JSON instead of `Json? *)
 (** To live with other errors like `HTTP, Json decoding erros are
