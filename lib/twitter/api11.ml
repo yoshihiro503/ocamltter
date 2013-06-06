@@ -55,13 +55,13 @@ let api post meth fmt =
     |> json_error_wrap post
   ) fmt
 
-(** { 6 Argment handling } *)
+(** {6 Argment handling } *)
 
 module Arg = struct
 
   let (>>|) v f = Option.map ~f v
 
-  (** { 7 to_string functions of option values *)
+  (** {7 to_string functions of option values} *)
 
   let of_bool  x = x >>| string_of_bool
   let of_int64 x = x >>| Int64.to_string
@@ -69,7 +69,7 @@ module Arg = struct
   let of_float x = x >>| string_of_float
   let of_string (x : string option) = x
 
-  (** { 7 Argument generators and consumers } *)
+  (** {7 Argument generators and consumers } *)
 
   let optional_args k opts addition = k (addition @ opts)
   (** optional argument function accumulation *)
@@ -82,7 +82,7 @@ module Arg = struct
   let get post pathfmt optf  = run optf & api post GET  pathfmt
   let post post pathfmt optf = run optf & api post POST pathfmt
 
-  (** { 7 General optional argument generators } *)
+  (** {7 General optional argument generators } *)
 
   (* Here, we define the set of optional argument generators 
      in quite a "functional" way. 
@@ -172,7 +172,7 @@ module Arg = struct
   let follow k opts ?follow = optional_args k opts
     [ "follow", of_bool follow ]
 
-  (** { 7 Required argument generators } *)
+  (** {7 Required argument generators } *)
 
   (*
     val <name> : (params -> Oauth.t -> 'a)  ->  (params -> Oauth.t -> t -> 'a)
@@ -197,7 +197,7 @@ module Arg = struct
   let required_id = fun x -> x |>
       required_arg (fun id -> [ "id", Some (Int64.to_string id) ])
 
-  (** { 7 Format argument generators } *)
+  (** {7 Format argument generators } *)
 
   (** Introduce format string arguments. They must appear at the end of
       function compositions, just before the call of api.
@@ -210,7 +210,7 @@ end
 
 open Arg
 
-(** { 6 Cursor based API } *)
+(** {6 Cursor based API } *)
 
 
 module Cursor : sig
@@ -291,7 +291,7 @@ end
 
 *)
 
-(** { 6 The API endpoints } *)
+(** {6 The API endpoints } *)
 
 module Timelines = struct (* CR jfuruse: or Statuses ? *)
   (* Careful. The returned JSON may have different type based on the options *)
