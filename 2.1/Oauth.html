@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Http.html">
+<link rel="next" href="GoogleTTS.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Util" rel="Chapter" href="Util.html">
+<link title="Llist" rel="Chapter" href="Llist.html">
+<link title="Utf16" rel="Chapter" href="Utf16.html">
+<link title="ParserMonad" rel="Chapter" href="ParserMonad.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="Xml" rel="Chapter" href="Xml.html">
+<link title="Http" rel="Chapter" href="Http.html">
+<link title="Oauth" rel="Chapter" href="Oauth.html">
+<link title="GoogleTTS" rel="Chapter" href="GoogleTTS.html">
+<link title="Auth" rel="Chapter" href="Auth.html">
+<link title="Api_intf" rel="Chapter" href="Api_intf.html">
+<link title="Api11" rel="Chapter" href="Api11.html">
+<link title="OConfig" rel="Chapter" href="OConfig.html">
+<link title="Ocamltter" rel="Chapter" href="Ocamltter.html">
+<link title="Ocamlinit" rel="Chapter" href="Ocamlinit.html"><title>Oauth</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Http.html" title="Http">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="GoogleTTS.html" title="GoogleTTS">Next</a>
+</div>
+<h1>Module <a href="type_Oauth.html">Oauth</a></h1>
+<pre><span class="keyword">module</span> Oauth: <code class="code">sig</code> <a href="Oauth.html">..</a> <code class="code">end</code></pre><hr width="100%">
+<pre><span id="VALfetch_request_token"><span class="keyword">val</span> fetch_request_token</span> : <code class="type">?http_method:<a href="Http.html#TYPEmeth">Http.meth</a> -><br>       host:string -><br>       path:string -><br>       ?oauth_version:string -><br>       ?oauth_signature_method:[< `Hmac_sha1<br>                                | `Plaintext<br>                                | `Rsa_sha1 of 'a & 'b & Cryptokit.RSA.key<br>                                > `Hmac_sha1 ] -><br>       oauth_consumer_key:string -><br>       oauth_consumer_secret:string -><br>       ?oauth_timestamp:float -><br>       ?oauth_nonce:string -><br>       ?params:(string * string) list -><br>       unit -> ?rawdata:string -> (<a href="Http.html#TYPEheader">Http.header</a> -> Pervasives.in_channel -> 'c) -> 'c</code></pre><pre><span id="VALfetch_access_token"><span class="keyword">val</span> fetch_access_token</span> : <code class="type">?http_method:<a href="Http.html#TYPEmeth">Http.meth</a> -><br>       host:string -><br>       path:string -><br>       ?oauth_version:string -><br>       ?oauth_signature_method:[< `Hmac_sha1<br>                                | `Plaintext<br>                                | `Rsa_sha1 of 'a & 'b & Cryptokit.RSA.key<br>                                > `Hmac_sha1 ] -><br>       oauth_consumer_key:string -><br>       oauth_consumer_secret:string -><br>       oauth_token:string -><br>       oauth_token_secret:string -><br>       verif:string -><br>       ?oauth_timestamp:float -><br>       ?oauth_nonce:string -><br>       unit -> ?rawdata:string -> (<a href="Http.html#TYPEheader">Http.header</a> -> Pervasives.in_channel -> 'c) -> 'c</code></pre><pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.consumer_key">consumer_key</span>&nbsp;:<code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.consumer_secret">consumer_secret</span>&nbsp;:<code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.access_token">access_token</span>&nbsp;:<code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.access_token_secret">access_token_secret</span>&nbsp;:<code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.verif">verif</span>&nbsp;:<code class="type">string</code>;</code></td>
+
+</tr></table>
+}
+
+
+<pre><span id="VALocaml_of_t"><span class="keyword">val</span> ocaml_of_t</span> : <code class="type"><a href="Oauth.html#TYPEt">t</a> -> Ocaml.t</code></pre><pre><span id="VALt_of_ocaml"><span class="keyword">val</span> t_of_ocaml</span> : <code class="type">(<a href="Oauth.html#TYPEt">t</a>, Ocaml.t) Meta_conv.Types.Decoder.t</code></pre><pre><span id="VALt_of_ocaml_exn"><span class="keyword">val</span> t_of_ocaml_exn</span> : <code class="type">(<a href="Oauth.html#TYPEt">t</a>, Ocaml.t) Meta_conv.Types.Decoder.t_exn</code></pre><pre><span id="VALaccess"><span class="keyword">val</span> access</span> : <code class="type"><a href="Oauth.html#TYPEt">t</a> -><br>       <a href="Http.html#TYPEmeth">Http.meth</a> -><br>       string -><br>       string -><br>       (string * string) list -> (<a href="Http.html#TYPEheader">Http.header</a> -> Pervasives.in_channel -> 'a) -> 'a</code></pre><pre><span id="VALaccess_https"><span class="keyword">val</span> access_https</span> : <code class="type"><a href="Oauth.html#TYPEt">t</a> -><br>       <a href="Http.html#TYPEmeth">Http.meth</a> -><br>       string -><br>       string -><br>       (string * string) list -><br>       [> `Error of [> `Http of int * string ] | `Ok of string ]</code></pre></body></html>

@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="OConfig.html">
+<link rel="next" href="Ocamlinit.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Util" rel="Chapter" href="Util.html">
+<link title="Llist" rel="Chapter" href="Llist.html">
+<link title="Utf16" rel="Chapter" href="Utf16.html">
+<link title="ParserMonad" rel="Chapter" href="ParserMonad.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="Xml" rel="Chapter" href="Xml.html">
+<link title="Http" rel="Chapter" href="Http.html">
+<link title="Oauth" rel="Chapter" href="Oauth.html">
+<link title="GoogleTTS" rel="Chapter" href="GoogleTTS.html">
+<link title="Auth" rel="Chapter" href="Auth.html">
+<link title="Api_intf" rel="Chapter" href="Api_intf.html">
+<link title="Api11" rel="Chapter" href="Api11.html">
+<link title="OConfig" rel="Chapter" href="OConfig.html">
+<link title="Ocamltter" rel="Chapter" href="Ocamltter.html">
+<link title="Ocamlinit" rel="Chapter" href="Ocamlinit.html"><title>Ocamltter</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="OConfig.html" title="OConfig">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Ocamlinit.html" title="Ocamlinit">Next</a>
+</div>
+<h1>Module <a href="type_Ocamltter.html">Ocamltter</a></h1>
+<pre><span class="keyword">module</span> Ocamltter: <code class="code">sig</code> <a href="Ocamltter.html">..</a> <code class="code">end</code></pre><div class="info">
+appname<br>
+</div>
+<hr width="100%">
+<pre><span id="EXCEPTIONError"><span class="keyword">exception</span> Error</span> <span class="keyword">of</span> <code class="type">[ `Http of int * string | `Json of Twitter.Api_intf.Json.t Meta_conv.Error.t ]</code></pre>
+<pre><span id="TYPEtweet"><span class="keyword">type</span> <code class="type"></code>tweet</span> = <code class="type">Twitter.Api_intf.Tweet.t</code> </pre>
+
+<pre><span class="keyword">module</span> <a href="Ocamltter.Auth.html">Auth</a>: <code class="code">sig</code> <a href="Ocamltter.Auth.html">..</a> <code class="code">end</code></pre><pre><span class="keyword">module</span> <a href="Ocamltter.Cache.html">Cache</a>: <code class="code">sig</code> <a href="Ocamltter.Cache.html">..</a> <code class="code">end</code></pre><pre><span id="VALconfig_file"><span class="keyword">val</span> config_file</span> : <code class="type">string Pervasives.ref</code></pre><pre><span id="VALget_oauth"><span class="keyword">val</span> get_oauth</span> : <code class="type">unit -> Twitter.Oauth.t</code></pre><pre><span id="VALsetup"><span class="keyword">val</span> setup</span> : <code class="type">unit -> Twitter.Oauth.t</code></pre><pre><span id="VALtw_sort"><span class="keyword">val</span> tw_sort</span> : <code class="type"><a href="Ocamltter.html#TYPEtweet">tweet</a> list -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALget_timeline"><span class="keyword">val</span> get_timeline</span> : <code class="type">?c:int -><br>       ?since_id:Twitter.Api_intf.status_id -> bool -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALprint_timeline"><span class="keyword">val</span> print_timeline</span> : <code class="type"><a href="Ocamltter.html#TYPEtweet">tweet</a> list -> unit</code></pre><pre><span id="VALreload"><span class="keyword">val</span> reload</span> : <code class="type">unit -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALformat_tweet"><span class="keyword">val</span> format_tweet</span> : <code class="type">Format.formatter -> <a href="Ocamltter.html#TYPEtweet">tweet</a> -> unit</code></pre><pre><span id="VALl"><span class="keyword">val</span> l</span> : <code class="type">?c:int -> ?u:string -> unit -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALlc"><span class="keyword">val</span> lc</span> : <code class="type">int -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALlu"><span class="keyword">val</span> lu</span> : <code class="type">string -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALm"><span class="keyword">val</span> m</span> : <code class="type">?c:int -> unit -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALkwsk"><span class="keyword">val</span> kwsk</span> : <code class="type">Twitter.Api_intf.status_id -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALu"><span class="keyword">val</span> u</span> : <code class="type">string -> Twitter.Api_intf.status_id</code></pre><pre><span id="VALrt"><span class="keyword">val</span> rt</span> : <code class="type">Twitter.Api_intf.status_id -> Twitter.Api_intf.status_id</code></pre><pre><span id="VALre"><span class="keyword">val</span> re</span> : <code class="type">Twitter.Api_intf.status_id -> string -> Twitter.Api_intf.status_id</code></pre><pre><span id="VALqt"><span class="keyword">val</span> qt</span> : <code class="type">Twitter.Api_intf.status_id -> string -> Twitter.Api_intf.status_id</code></pre><pre><span id="VALlink"><span class="keyword">val</span> link</span> : <code class="type">Twitter.Api_intf.status_id -> string</code></pre><pre><span id="VALqtlink"><span class="keyword">val</span> qtlink</span> : <code class="type">Twitter.Api_intf.status_id -> string -> Twitter.Api_intf.status_id</code></pre><pre><span id="VALreqt"><span class="keyword">val</span> reqt</span> : <code class="type">Twitter.Api_intf.status_id -> string -> Twitter.Api_intf.status_id</code></pre><pre><span id="VALdel"><span class="keyword">val</span> del</span> : <code class="type">Twitter.Api_intf.status_id -> unit</code></pre><pre><span id="VALfollow"><span class="keyword">val</span> follow</span> : <code class="type">string -> Twitter.Api_intf.User.t</code></pre><pre><span id="VALunfollow"><span class="keyword">val</span> unfollow</span> : <code class="type">string -> Twitter.Api_intf.User.t</code></pre><pre><span id="VALfavs"><span class="keyword">val</span> favs</span> : <code class="type">string -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALfav"><span class="keyword">val</span> fav</span> : <code class="type">Twitter.Api_intf.status_id -> Twitter.Api_intf.status_id</code></pre><pre><span id="VALunfav"><span class="keyword">val</span> unfav</span> : <code class="type">Twitter.Api_intf.status_id -> Twitter.Api_intf.status_id</code></pre><pre><span id="VALfrt"><span class="keyword">val</span> frt</span> : <code class="type">Twitter.Api_intf.status_id -> Twitter.Api_intf.status_id</code></pre><pre><span id="VALreport_spam"><span class="keyword">val</span> report_spam</span> : <code class="type">string -> Twitter.Api_intf.User.t</code></pre><pre><span id="VALs"><span class="keyword">val</span> s</span> : <code class="type">string -> <a href="Ocamltter.html#TYPEtweet">tweet</a> list</code></pre><pre><span id="VALlimit_status"><span class="keyword">val</span> limit_status</span> : <code class="type">unit -> Twitter.Api_intf.Rate_limit_status.t</code></pre><pre><span id="VALhelp"><span class="keyword">val</span> help</span> : <code class="type">string</code></pre><pre><span id="VALstop_polling"><span class="keyword">val</span> stop_polling</span> : <code class="type">unit -> unit</code></pre><pre><span id="VALstart_polling"><span class="keyword">val</span> start_polling</span> : <code class="type">unit -> Thread.t</code></pre></body></html>

@@ -1,0 +1,82 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Util" rel="Chapter" href="Util.html">
+<link title="Llist" rel="Chapter" href="Llist.html">
+<link title="Utf16" rel="Chapter" href="Utf16.html">
+<link title="ParserMonad" rel="Chapter" href="ParserMonad.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="Xml" rel="Chapter" href="Xml.html">
+<link title="Http" rel="Chapter" href="Http.html">
+<link title="Oauth" rel="Chapter" href="Oauth.html">
+<link title="GoogleTTS" rel="Chapter" href="GoogleTTS.html">
+<link title="Auth" rel="Chapter" href="Auth.html">
+<link title="Api_intf" rel="Chapter" href="Api_intf.html">
+<link title="Api11" rel="Chapter" href="Api11.html">
+<link title="OConfig" rel="Chapter" href="OConfig.html">
+<link title="Ocamltter" rel="Chapter" href="Ocamltter.html">
+<link title="Ocamlinit" rel="Chapter" href="Ocamlinit.html"><title>Api11.Friends</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;ids&nbsp;=&nbsp;{&nbsp;ids&nbsp;:&nbsp;int64&nbsp;list;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;json_of_ids&nbsp;:&nbsp;ids&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;ids_of_json&nbsp;:&nbsp;(ids,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t)&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Types</span>.<span class="constructor">Decoder</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;ids_of_json_exn&nbsp;:&nbsp;(ids,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t)&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Types</span>.<span class="constructor">Decoder</span>.t_exn<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;ocaml_of_ids&nbsp;:&nbsp;ids&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ocaml</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;ids_of_ocaml&nbsp;:&nbsp;(ids,&nbsp;<span class="constructor">Ocaml</span>.t)&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Types</span>.<span class="constructor">Decoder</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;ids_of_ocaml_exn&nbsp;:&nbsp;(ids,&nbsp;<span class="constructor">Ocaml</span>.t)&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Types</span>.<span class="constructor">Decoder</span>.t_exn<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;ids_stream&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?user_id:int64&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?screen_name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Error</span>&nbsp;<span class="keyword">of</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Http</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;*&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Json</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Ok</span>&nbsp;<span class="keyword">of</span>&nbsp;int64&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Spotlib</span>.<span class="constructor">Spot</span>.<span class="constructor">Stream</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;ids&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?user_id:int64&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?screen_name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Error</span>&nbsp;<span class="keyword">of</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Http</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;*&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Json</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Ok</span>&nbsp;<span class="keyword">of</span>&nbsp;int64&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;users&nbsp;=&nbsp;{&nbsp;users&nbsp;:&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">User</span>.t&nbsp;list;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;json_of_users&nbsp;:&nbsp;users&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;users_of_json&nbsp;:&nbsp;(users,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t)&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Types</span>.<span class="constructor">Decoder</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;users_of_json_exn&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(users,&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t)&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Types</span>.<span class="constructor">Decoder</span>.t_exn<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;ocaml_of_users&nbsp;:&nbsp;users&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ocaml</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;users_of_ocaml&nbsp;:&nbsp;(users,&nbsp;<span class="constructor">Ocaml</span>.t)&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Types</span>.<span class="constructor">Decoder</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;users_of_ocaml_exn&nbsp;:&nbsp;(users,&nbsp;<span class="constructor">Ocaml</span>.t)&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Types</span>.<span class="constructor">Decoder</span>.t_exn<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;list_stream&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?user_id:int64&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?screen_name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?skip_status:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?include_user_entities:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Error</span>&nbsp;<span class="keyword">of</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Http</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;*&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Json</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Ok</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">User</span>.t&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Spotlib</span>.<span class="constructor">Spot</span>.<span class="constructor">Stream</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;list&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?user_id:int64&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?screen_name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?skip_status:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?include_user_entities:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Oauth</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Error</span>&nbsp;<span class="keyword">of</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Http</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;*&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Json</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">Json</span>.t&nbsp;<span class="constructor">Meta_conv</span>.<span class="constructor">Error</span>.t&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Ok</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Api_intf</span>.<span class="constructor">User</span>.t&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;list<br>
+<span class="keyword">end</span></code></body></html>

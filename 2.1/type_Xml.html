@@ -1,0 +1,42 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Util" rel="Chapter" href="Util.html">
+<link title="Llist" rel="Chapter" href="Llist.html">
+<link title="Utf16" rel="Chapter" href="Utf16.html">
+<link title="ParserMonad" rel="Chapter" href="ParserMonad.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="Xml" rel="Chapter" href="Xml.html">
+<link title="Http" rel="Chapter" href="Http.html">
+<link title="Oauth" rel="Chapter" href="Oauth.html">
+<link title="GoogleTTS" rel="Chapter" href="GoogleTTS.html">
+<link title="Auth" rel="Chapter" href="Auth.html">
+<link title="Api_intf" rel="Chapter" href="Api_intf.html">
+<link title="Api11" rel="Chapter" href="Api11.html">
+<link title="OConfig" rel="Chapter" href="OConfig.html">
+<link title="Ocamltter" rel="Chapter" href="Ocamltter.html">
+<link title="Ocamlinit" rel="Chapter" href="Ocamlinit.html"><title>Xml</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;attr&nbsp;=&nbsp;string&nbsp;*&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;xml&nbsp;=&nbsp;<span class="constructor">Tag</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;<span class="constructor">Xml</span>.attr&nbsp;list&nbsp;*&nbsp;<span class="constructor">Xml</span>.xml&nbsp;list&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">PCData</span>&nbsp;<span class="keyword">of</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;show&nbsp;:&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;parse_ch&nbsp;:&nbsp;<span class="constructor">Pervasives</span>.in_channel&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;parse_file&nbsp;:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;parse_string&nbsp;:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;getname&nbsp;:&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;getchild&nbsp;:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;(&nbsp;%%&nbsp;)&nbsp;:&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;getchildren&nbsp;:&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;pcdata&nbsp;:&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;childpc&nbsp;:&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;(&nbsp;%%%&nbsp;)&nbsp;:&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;(&nbsp;%%&lt;&nbsp;)&nbsp;:&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;attr&nbsp;:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Xml</span>.xml&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+<span class="keyword">end</span></code></body></html>

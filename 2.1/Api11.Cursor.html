@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Api11.Arg.html">
+<link rel="next" href="Api11.Timelines.html">
+<link rel="Up" href="Api11.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Util" rel="Chapter" href="Util.html">
+<link title="Llist" rel="Chapter" href="Llist.html">
+<link title="Utf16" rel="Chapter" href="Utf16.html">
+<link title="ParserMonad" rel="Chapter" href="ParserMonad.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="Xml" rel="Chapter" href="Xml.html">
+<link title="Http" rel="Chapter" href="Http.html">
+<link title="Oauth" rel="Chapter" href="Oauth.html">
+<link title="GoogleTTS" rel="Chapter" href="GoogleTTS.html">
+<link title="Auth" rel="Chapter" href="Auth.html">
+<link title="Api_intf" rel="Chapter" href="Api_intf.html">
+<link title="Api11" rel="Chapter" href="Api11.html">
+<link title="OConfig" rel="Chapter" href="OConfig.html">
+<link title="Ocamltter" rel="Chapter" href="Ocamltter.html">
+<link title="Ocamlinit" rel="Chapter" href="Ocamlinit.html"><link title="HTTP parameters" rel="Section" href="#6_HTTPparameters">
+<link title="Base communication" rel="Section" href="#6_Basecommunication">
+<link title="Argment handling " rel="Section" href="#6_Argmenthandling">
+<link title="to_string functions of option values" rel="Subsection" href="#7_tostringfunctionsofoptionvalues">
+<link title="Argument generators and consumers " rel="Subsection" href="#7_Argumentgeneratorsandconsumers">
+<link title="General optional argument generators " rel="Subsection" href="#7_Generaloptionalargumentgenerators">
+<title>Api11.Cursor</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Api11.Arg.html" title="Api11.Arg">Previous</a>
+&nbsp;<a class="up" href="Api11.html" title="Api11">Up</a>
+&nbsp;<a class="post" href="Api11.Timelines.html" title="Api11.Timelines">Next</a>
+</div>
+<h1>Module <a href="type_Api11.Cursor.html">Api11.Cursor</a></h1>
+<pre><span class="keyword">module</span> Cursor: <code class="code">sig</code> <a href="Api11.Cursor.html">..</a> <code class="code">end</code></pre><hr width="100%">
+<br>
+<h6 id="6_HTTPparameters">HTTP parameters</h6><br>
+<br>
+We handle HTTP parameters as <code class="code">(string * string option) list</code><br>
+<br>
+Coercing to the normal HTTP header type, <code class="code">(string * string) list</code>.<br>
+<br>
+<h6 id="6_Basecommunication">Base communication</h6><br>
+<br>
+To live with other errors like `HTTP, Json decoding erros are
+    tagged with `Json.<br>
+<br>
+<code class="code">api post meth fmt ...(format args)... params oauth</code> 
+<p>
+
+  post : Parser of JSON. If you want to have the raw JSON, use <code class="code">fun x -&gt; `Ok x</code>.
+  meth : GET or POST
+  fmt  : piece of path, you can use Printf % format
+  params : the type is <code class="code">params</code>
+  oauth : OAuth value<br>
+<br>
+<h6 id="6_Argmenthandling">Argment handling </h6><br>
+<br>
+<div class="h7" id="7_tostringfunctionsofoptionvalues">to_string functions of option values</div><br>
+<br>
+<div class="h7" id="7_Argumentgeneratorsandconsumers">Argument generators and consumers </div><br>
+<br>
+optional argument function accumulation<br>
+<br>
+"runs" optional argument function <code class="code">optf</code> with the init empty
+      parameters, then give the final set of parameters to <code class="code">consumer</code><br>
+<br>
+<div class="h7" id="7_Generaloptionalargumentgenerators">General optional argument generators </div><br>
+<pre><span id="VALget_stream"><span class="keyword">val</span> get_stream</span> : <code class="type">(((string * string option) list -> <a href="Oauth.html#TYPEt">Oauth.t</a> -> 'a) -> 'b list -> 'c) -><br>       ('d, Api_intf.Json.t) Meta_conv.Types.Decoder.t -><br>       ('d Meta_conv.Open.mc_embeded -> 'e list) -><br>       ((string * string option) list -><br>        <a href="Oauth.html#TYPEt">Oauth.t</a> -><br>        [< `Error of [> `Json of Api_intf.Json.t Meta_conv.Error.t ] as 'f<br>         | `Ok of Api_intf.Json.t ]) -><br>       ([> `Error of 'f | `Ok of 'e ] Spotlib.Spot.Stream.t -> 'a) -> 'c</code></pre></body></html>
