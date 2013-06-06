@@ -15,9 +15,9 @@ Requirements
 * [Cryptokit](http://pauillac.inria.fr/~xleroy/software.html) >= 1.3
 * OCurl(known also as ocaml-curl or curl for OCaml) >= 0.5.3
 * Type_conv >= 1.0.0
-* Meta_conv = 1.0.0
-* Tiny_json_conv = 1.2.0
-* Spotlib = 2.1.1
+* Meta_conv = 1.1.1
+* Tiny_json_conv = 1.4.0
+* Spotlib >= 2.2.0
 * OMake
 
 Installation
