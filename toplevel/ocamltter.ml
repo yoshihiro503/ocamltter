@@ -262,7 +262,7 @@ let m ?(c=20) () : tweet list =
 let kwsk id =
   let o = get_oauth () in
   let rec iter store id =
-    match Tweets.show id o with
+    match Tweets.show o id with
     | `Error _ -> store
     | `Ok tw -> 
         match tw#in_reply_to_status_id with
@@ -277,7 +277,7 @@ let u text =
 
 let show id =
   let o = get_oauth () in
-  Tweets.show id o |> from_Ok
+  Tweets.show o id |> from_Ok
 
 let get_screen_name id =
   show id
@@ -294,21 +294,21 @@ let re status_id text =
 let rt status_id =
   let o = get_oauth () in
   from_Ok
-  & Tweets.retweet status_id o >>| fun x -> x#id
+  & Tweets.retweet o status_id >>| fun x -> x#id
 
 let del id = 
   let o = get_oauth () in
-  Tweets.destroy id o |> from_Ok |> ignore
+  Tweets.destroy o id |> from_Ok |> ignore
 
 let qt st_id comment =
   let o = get_oauth () in
-  Tweets.show st_id o 
+  Tweets.show o st_id
   |> from_Ok |> fun tw -> 
     u (!%"%s QT @%s: %s" comment (from_Some tw#user#details)#screen_name tw#text)
 
 let link id =
   let o = get_oauth () in
-  Tweets.show id o 
+  Tweets.show o id 
   |> from_Ok |> fun tw -> 
     !%"http://twitter.com/%s/status/%Ld" (from_Some tw#user#details)#screen_name id
   
@@ -317,7 +317,7 @@ let qtlink id s =
 
 let reqt st_id comment =
   let o = get_oauth () in
-  Tweets.show st_id o 
+  Tweets.show o st_id 
   |> from_Ok |> fun tw -> 
     re st_id & !%"%s QT @%s: %s" comment (from_Some tw#user#details)#screen_name tw#text
 

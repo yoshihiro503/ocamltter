@@ -1,37 +1,8 @@
 The OCAMLTTER twitter client
-============================
+OCAMLTTER is a Twitter client written in OCaml.
 
-License
--------
-
-        MIT License: see the MIT-LICENSE file
-
-
-Requirements
-------------
-	
-* [OCaml](http://caml.inria.fr/) >= 3.10
-* [Cryptokit](http://pauillac.inria.fr/~xleroy/software.html) >= 1.3
-* OCurl(known also as ocaml-curl or curl for OCaml) >= 0.5.3
-* Type_conv
-* Meta_conv
-* Tiny_json_conv
-* OMake
-
-Installation
-------------
-
-* Install required libraries. OPAM is an easy and highly recommended way to install them semi-automatically.
-* omake
-
-How to use
-----------
-
-#### Run
-
-           $ ./ocamltter
-
-#### You can use following commands:
+It is a CLI application, implemented as a custom OCaml toplevel (REPL). 
+Common twitter commands are accessible via simple functions like:
 
            - l();;                 list timeline
            - lc COUNT;;            list timeline (COUNT lines)
@@ -50,20 +21,3 @@ How to use
            - setup ();;            (re)authorize ocamltter
            - let CMD = ...;;       define a your own command CMD
            - help;;                print the help
-	   
-#### You may modify the config.ml
-* You can set your twitter id
-* You can set your interesting keywords
-* You can set ignored users
-
-#### Quit
-
-            #quit;;  or  ^D
-
-
-Bugs report
------------
-
-* y.imai at ocaml.jp
-* [@yoshihiro503](http://twitter.com/yoshihiro503)
-	

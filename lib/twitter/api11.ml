@@ -20,6 +20,25 @@ let (~?) l = List.filter_map (function
   | (key, Some v) -> Some (key, v)
   | (_, None) -> None) l
 
+(** {6 Error} *)
+
+module Error = struct
+  type t = [ `Http of int * string
+           | `Json of Api_intf.Json.t Meta_conv.Error.t
+           | `Json_parse of exn * string ]
+
+  let format_error ppf = function
+    | `Http (code, mes) ->
+        Format.fprintf ppf "HTTP error %d: %s" code mes
+    | `Json e ->
+        Format.fprintf ppf "@[<2>JSON error:@ %a@]"
+          (Meta_conv.Error.format Json_conv.format) e
+    | `Json_parse (exn, s) ->
+        Format.fprintf ppf "@[<2>JSON error: %s@ %s@]@."
+          (Printexc.to_string exn)
+          s
+end
+
 (** {6 Base communication} *)
 
 (* Api 1.1 seems to requir https *)
@@ -50,17 +69,16 @@ let json_error_wrap f v = match v with
   oauth : OAuth value
       
 *)
-let api post meth fmt = 
-  Printf.ksprintf (fun name params oauth -> 
+let api post meth fmt = fun params oauth -> 
+  Printf.ksprintf (fun name ->
     twitter oauth meth ~host:"api.twitter.com" (!% "/1.1/%s" name) ~?params
-    |> json_error_wrap post
-  ) fmt
+    |> json_error_wrap post) fmt
 
 (** { 6 Argment handling } *)
 
 module Arg = struct
 
-  let (>>|) v f = Option.map ~f v
+  let (>>|) v f = Option.map f v
 
   (** { 7 to_string functions of option values *)
 
@@ -80,7 +98,7 @@ module Arg = struct
       parameters, then give the final set of parameters to [consumer] *)
 
   (* Being puzzled? Yes so was I... *)
-  let get post pathfmt optf  = run optf & api post GET  pathfmt
+  let get  post pathfmt optf = run optf & api post GET  pathfmt
   let post post pathfmt optf = run optf & api post POST pathfmt
 
   (** { 7 General optional argument generators } *)
@@ -198,15 +216,6 @@ module Arg = struct
   let required_id = fun x -> x |>
       required_arg (fun id -> [ "id", Some (Int64.to_string id) ])
 
-  (** { 7 Format argument generators } *)
-
-  (** Introduce format string arguments. They must appear at the end of
-      function compositions, just before the call of api.
-  *)
-  let format1 optf = fun params x -> optf x params
-  let format2 optf = fun params x1 x2 -> optf x1 x2 params
-  let format3 optf = fun params x1 x2 x3 -> optf x1 x2 x3 params
-
 end
 
 open Arg
@@ -217,24 +226,22 @@ open Arg
 module Cursor : sig
 
   (* I know you do not understand this type. *)    
-  val get_stream : 
-    ((params -> Oauth.t -> 'final_result) -> params -> 'the_function_type)
-    (** argument accumulator *)
+  val streaming : 
+    Http.meth 
+
+    -> ( ('elem, Error.t) Result.t Stream.t -> 'final_result) 
+    (** final kontinuation *)
 
     -> 'sublist_record Json_conv.decoder 
-       (** how to decode the raw result of sublist records *)
+    (** how to decode the raw result of sublist records *)
 
     -> ('sublist_record -> 'elem list) 
-       (** how to get a sublist from a sublist record *)
+    (** how to get a sublist from a sublist record *)
 
-    -> (params 
-        -> Oauth.t 
-        -> [< `Error of [> `Json of Json.t Meta_conv.Error.t ] as 'error
-           | `Ok of Json.t ]) 
-       (** retrieval function *)
+    -> string  (** url piece. CR jfuruse: no printf interface? *)
 
-    -> ([> `Error of 'error | `Ok of 'elem ] Stream.t -> 'final_result) 
-       (** final kontinuation *)
+    -> ((params -> Oauth.t -> 'final_result) -> params -> 'the_function_type)
+    (** argument accumulator *)
 
     -> 'the_function_type
 
@@ -247,12 +254,12 @@ end = struct
     contents : 'a mc_embeded;
   } with conv(json, ocaml)
 
-  let get_stream optf dec acc apicall k =
+  let streaming meth k dec acc s optf =
     optf (fun params oauth ->
       let (!!) = Lazy.force in
       let rec loop cursor = lazy (
         let params = ("cursor", of_string cursor) :: params in
-        match apicall params (oauth : Oauth.t) with
+        match api (fun x -> `Ok x) meth "%s" params (oauth : Oauth.t) s with
         | `Error e -> !! (Stream.singleton (`Error e))
         | `Ok json ->
             match t_of_json dec json with
@@ -306,7 +313,6 @@ end
         &  trim_user
         ** include_my_tweet
         ** include_entities
-        ** format1
 
    * This is called "show".
    * The method is GET.
@@ -315,8 +321,6 @@ end
    * The URL piece is "statuses/show/%Ld.json" 
    * It has trim_user, include_my_tweet and include_entities parameters.
        They are defined in Arg module.
-   * It also takes one format argument for "%Ld", so format1 is added
-     at the end.
 
 *)
 
@@ -385,22 +389,20 @@ end
 module Tweets = struct (* CR jfuruse: or Statuses ? *)
 
   (* CR jfuruse: id comes before the o *)    
-  let retweets = get Tweet.ts_of_json "statuses/retweets/%Ld.json"
+  let retweets = 
+    get Tweet.ts_of_json "statuses/retweets/%Ld.json"
     &  count
     ** trim_user
-    ** format1
 
   (* CR jfuruse: id comes before the o *)    
   let show = get Tweet.t_of_json "statuses/show/%Ld.json" 
     &  trim_user
     ** include_my_tweet
     ** include_entities
-    ** format1
 
   (* CR jfuruse: id comes before the o *)    
   let destroy = post (fun x -> `Ok x) "statuses/destroy/%Ld.json"
     &  trim_user 
-    ** format1
 
   let update = post Tweet.t_of_json "statuses/update.json"
     &  in_reply_to_status_id
@@ -411,7 +413,6 @@ module Tweets = struct (* CR jfuruse: or Statuses ? *)
   (* CR jfuruse: id comes before the o *)    
   let retweet = post Tweet.t_of_json "statuses/retweet/%Ld.json"
     &  trim_user 
-    ** format1
 
   (* not yet: update_with_media *)
   (* not yet: oembed *)
@@ -442,14 +443,11 @@ end) = struct
 
   let ids_stream, ids = 
     let f k = 
-      (* Cursor.get ids_of_json (fun x -> x.ids) "%s/ids.json" A.dir
-         & required_either_user_id_or_screen_name *)
-      Cursor.get_stream
-        required_either_user_id_or_screen_name
+      Cursor.streaming GET k
         ids_of_json 
         (fun x -> x.ids)
-        (api (fun x -> `Ok x) GET "%s/ids.json" A.dir)
-        k
+        (!% "%s/ids.json" A.dir)
+      & required_either_user_id_or_screen_name
     in
     f id,
     f Stream.to_list
@@ -461,14 +459,14 @@ end) = struct
 
   let list_stream, list =
     let f k =
-      Cursor.get_stream
-        (required_either_user_id_or_screen_name
-         ** skip_status
-         ** include_user_entities)
+      Cursor.streaming GET k
         users_of_json
         (fun x -> x.users)
-        (api (fun x -> `Ok x) GET "%s/list.json" A.dir)
-        k
+        (!% "%s/list.json" A.dir)
+      &  required_either_user_id_or_screen_name
+      ** skip_status
+      ** include_user_entities
+
     in
     f id,
     f Stream.to_list
@@ -500,10 +498,10 @@ module Friendships = struct
   let lookup ?screen_name ?user_id oauth =
     api ts_of_json GET "friendships/lookup.json"
       [ "screen_name", 
-        Option.map ~f:(String.concat ",") screen_name
+        Option.map (String.concat ",") screen_name
 
       ; "user_id", 
-        Option.map ~f:(String.concat "," ** List.map Int64.to_string) user_id
+        Option.map (String.concat "," ** List.map Int64.to_string) user_id
       ]
       oauth
 
@@ -512,12 +510,11 @@ module Friendships = struct
   } with conv(json, ocaml)
 
   let gen_io name k = 
-    Cursor.get_stream
-      id
+    Cursor.streaming GET k
       ids_of_json 
       (fun x -> x.ids)
-      (api (fun x -> `Ok x) GET "friendships/%s.json" name)
-      k
+      (!% "friendships/%s.json" name)
+    & id
 
   let incoming_stream = gen_io "incoming" id
   let incoming        = gen_io "incoming" Stream.to_list
@@ -548,13 +545,12 @@ module Blocks = struct
 
   let list_stream, list = 
     let f k = 
-      Cursor.get_stream
-        (include_entities
-         ** skip_status)
+      Cursor.streaming GET k
         users_of_json 
         (fun x -> x.users)
-        (api (fun x -> `Ok x) GET "blocks/list.json")
-        k
+        "blocks/list.json"
+      & include_entities
+      ** skip_status
     in
     f id,
     f Stream.to_list
@@ -565,12 +561,11 @@ module Blocks = struct
 
   let ids_stream, ids = 
     let f k = 
-      Cursor.get_stream 
-        id (* omitting stringify_ids *)
+      Cursor.streaming GET k
         ids_of_json 
         (fun x -> x.ids)
-        (api (fun x -> `Ok x) GET "blocks/ids.json")
-        k
+        "blocks/ids.json"
+      & id (* omitting stringify_ids *)
     in
     f id,
     f Stream.to_list
@@ -652,20 +647,3 @@ module Help = struct
       
 end
 
-(** This is not API but handle errors from API *)
- module Error = struct
-  type t = [ `Http of int * string
-           | `Json of Api_intf.Json.t Meta_conv.Error.t
-           | `Json_parse of exn * string ]
-
-  let format_error ppf = function
-    | `Http (code, mes) ->
-        Format.fprintf ppf "HTTP error %d: %s" code mes
-    | `Json e ->
-        Format.fprintf ppf "@[<2>JSON error:@ %a@]"
-          (Meta_conv.Error.format Json_conv.format) e
-    | `Json_parse (exn, s) ->
-        Format.fprintf ppf "@[<2>JSON error: %s@ %s@]@."
-          (Printexc.to_string exn)
-          s
-end
