@@ -1,4 +1,4 @@
-OCAMLFLAGS = -thread -g -w A-31 -warn-error A-31
+OCAMLFLAGS = -thread
 
 OCAMLINCLUDES = $(dir . ../lib)
 

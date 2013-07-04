@@ -7,7 +7,7 @@ if $(file-exists OMakeroot)
    include OMyMakefile
    export
 
-OCAMLFLAGS = -g -thread -w A-4-31 -warn-error A-4-31
+OCAMLFLAGS = -thread
 
 ####################################################### 
 

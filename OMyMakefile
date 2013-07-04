@@ -32,7 +32,32 @@ NATIVE_SHARED_ENABLED = $(OCAMLOPT_EXISTS)
 BYTE_ENABLED = true
 
 #|The default warning and errors. If you want to use different warning and error switches, use redefine the variable.
-OCAMLFLAGS = -g -w A-4-9 -warn-error A-4-9
+OCAMLFLAGS = -g 
+
+#|Warnings not to be printed separted with space
+OCAMLWARNING_IGNORE[] = 4 9
+
+#|Warnings treated as non errors
+OCAMLWARNING_NON_ERROR[] = 4 9
+
+#|If it is false, warnings do not stop the compilation even if they are listed in OCAMLWARNING_NON_ERROR
+#If you are in developing something, turn it ture!
+OCAMLWARNING_STOP_AT_ERROR_WARNING=false
+
+#|The maximum warning value.
+# This is the maximum warning ID NOT of the current OCaml compiler,
+#                                BUT of the OCaml compiler used by the author.
+OCAMLWARNING_MAX= 39
+
+#|Function to build warning switches
+OCAMLWARNING_MAKE()=
+    if $(OCAMLWARNING_STOP_AT_ERROR_WARNING)
+        return -w A-$(concat -,$(OCAMLWARNING_IGNORE)) -warn-error +1..$(OCAMLWARNING_MAX)-$(concat -, $(OCAMLWARNING_NON_ERROR))
+    else
+        return -w A-$(concat -,$(OCAMLWARNING_IGNORE)) -warn-error a
+
+#|OMyMakefile assumes installation with .cmt files
+OCAMLANNOTFLAGS = -annot -bin-annot
 
 #|Global variable to be defined as empty
 OCAMLPACKAGEFLAGS=
@@ -54,12 +79,21 @@ OCAML_PREINSTALLED_PACKS[]= bigarray camlp4 dbm dynlink graphics num num-top std
 
 #|Redefinition of compiler commands
 public.OCamlC() =
-    value $(OCAMLFIND) $(OCAMLC) $(OCAMLPACKAGEFLAGS) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS)\
-              $(OCAMLCFLAGS) $(OCAMLPPFLAGS) $(PREFIXED_OCAMLINCLUDES)
+    value $(OCAMLFIND) $(OCAMLC) \
+        $(OCAMLANNOTFLAGS) \
+        $(OCAMLPACKAGEFLAGS) \
+        $(LAZY_OCAMLFINDFLAGS) \
+        $(PREFIXED_OCAMLPACKS) \
+        $(OCAMLFLAGS) \
+        $(OCAMLWARNING_MAKE) \
+        $(OCAMLCFLAGS) \
+        $(OCAMLPPFLAGS) \
+        $(PREFIXED_OCAMLINCLUDES)
 # Why we need "public." ?
 
 public.OCamlOpt() =
-    value $(OCAMLFIND) $(OCAMLOPT) $(OCAMLPACKAGEFLAGS) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS)\
+    value $(OCAMLFIND) $(OCAMLOPT) $(OCAMLANNOTFLAGS) $(OCAMLPACKAGEFLAGS) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS)\
+              $(OCAMLWARNING_MAKE) \
               $(OCAMLOPTFLAGS) $(OCAMLPPFLAGS) $(PREFIXED_OCAMLINCLUDES)
 
 if $(and $(not $(NATIVE_ENABLED)) $(not $(BYTE_ENABLED)))
@@ -71,10 +105,10 @@ if $(and $(not $(NATIVE_ENABLED)) $(not $(BYTE_ENABLED)))
 #|Additional implicit rules by file extensions
 # annot, cmt, cmti files
 %.annot %.cmt: %.ml %.cmi
-	$(OCamlC) -c -annot -bin-annot $<
+	$(OCamlC) -c -annot $(OCAMLANNOTFLAGS) $<
 
 %.cmti: %.mli 
-	$(OCamlC) -c -bin-annot $<
+	$(OCamlC) -c $(OCAMLANNOTFLAGS) $<
 
 #|Define OCAML_ANNOT so that ocamlc/ocamlopt automatically create annot/cmt/cmti files, even without -annot/-bin-annot option. This requires a special compiler patch 
 setenv(OCAML_ANNOT, 1)
@@ -282,7 +316,7 @@ public.OCamlPackage(name, files) =
              export
          $(BYTE_TARGETS): $(BYTE_DEPS)
             $(OCAMLFIND) $(OCAMLC) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) \
-                $(OCAMLCFLAGS) $(OCAML_LIB_FLAGS) -pack -bin-annot -o $(CMO) $(OCamlLinkSort $(CMOFILES))
+                $(OCAMLCFLAGS) $(OCAML_LIB_FLAGS) -pack $(OCAMLANNOTFLAGS) -o $(CMO) $(OCamlLinkSort $(CMOFILES))
 
    protected.NATIVE_DEPS = $(CMXFILES) $(OFILES)
    $(NATIVE_TARGETS): $(NATIVE_DEPS)
@@ -295,7 +329,7 @@ public.OCamlPackage(name, files) =
             export
          $(NATIVE_TARGETS): $(NATIVE_DEPS)
             $(OCAMLFIND) $(OCAMLOPTLINK) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) \
-                $(OCAMLOPTFLAGS) $(OCAML_LIB_FLAGS) -pack -bin-annot -o $(CMX) $(OCamlLinkSort $(CMXFILES))
+                $(OCAMLOPTFLAGS) $(OCAML_LIB_FLAGS) -pack $(OCAMLANNOTFLAGS) -o $(CMX) $(OCamlLinkSort $(CMXFILES))
 
    $(CMI):
       section rule
