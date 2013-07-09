@@ -26,6 +26,9 @@ OCAML_VERSION = $(shell ocamlc -version | sed -e 's/^\([0-9.]*\).*/\1/')
 USE_OCAMLFIND = true
 OCAMLFIND_DESTDIR= $(shell ocamlfind printconf destdir)
 
+OCAMLFIND_QUERY(name) = 
+    return $(shell ocamlfind query $(name))
+
 #|Set NATIVE_ENABLED false locally if a project does not requre opt compilation.
 NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
 NATIVE_SHARED_ENABLED = $(OCAMLOPT_EXISTS)
