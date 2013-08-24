@@ -368,7 +368,7 @@ let help =
   limit_status ()      rate limit status of API
   let CMD = ...        define a your own command CMD
   help                 print this help
-  #quite               quite ocamltter
+  #quit                quit ocamltter
 "
 
 let is_polling_on = ref false
