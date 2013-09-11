@@ -1,13 +1,13 @@
 # How-to-build using OMake
 #
-# yes no | omake --install # to create OMakeroot for the first time
+# cp OMakeroot.in OMakeroot # to create OMakeroot for the first time
 
 # If OMakeroot is here, include OMyMakefile
 if $(file-exists OMakeroot)
    include OMyMakefile
    export
 
-OCAMLFLAGS = -g -thread -w A-4-31 -warn-error A-4-31
+OCAMLFLAGS = -thread
 
 ####################################################### 
 
