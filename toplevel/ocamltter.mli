@@ -1,8 +1,5 @@
 open Twitter
-open Oauth
 open Auth
-open Tiny_json
-open Meta_conv
 open Api_intf
 
 exception Error of [`Http of int * string

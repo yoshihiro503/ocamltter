@@ -294,7 +294,7 @@ module SinceMaxID = struct
             let last_id = (List.last xs)#id in
             let since_id = Some (Int64.( last_id  + 1L )) in
             let xs = Stream.of_list (List.map (fun x -> `Ok x) xs) in
-            !! (Stream.append xs (loop ?since_id ?max_id))
+            !! (Stream.append xs (loop ~since_id ~max_id))
       end )
     in
     loop ~since_id ~max_id
