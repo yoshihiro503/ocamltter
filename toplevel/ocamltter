@@ -4,7 +4,7 @@ ocamltterhome=`dirname $0`
 cd $ocamltterhome
 
 with_pkgs=""
-for pkg in cryptokit tiny_json tiny_json_conv ocaml_conv meta_conv
+for pkg in cryptokit tiny_json tiny_json_conv ocaml_conv meta_conv spotlib meta_conv ocaml_conv curl
 do
   with_pkgs="$with_pkgs -I `ocamlfind query $pkg`"
 done
