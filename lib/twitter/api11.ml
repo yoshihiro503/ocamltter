@@ -139,8 +139,8 @@ module Arg = struct
   let trim_user k opts ?trim_user = optional_args k opts
     ["trim_user" , of_bool  trim_user]
 
-  let contributer_details k opts ?contributer_details = optional_args k opts
-    ["contributer_details", of_bool contributer_details]
+  let contributor_details k opts ?contributor_details = optional_args k opts
+    ["contributor_details", of_bool contributor_details]
 
   let include_entities k opts ?include_entities = optional_args k opts
     ["include_entities" , of_bool  include_entities]
@@ -333,14 +333,14 @@ module Timelines = struct (* CR jfuruse: or Statuses ? *)
     &  count 
     ** since_max_ids
     ** trim_user
-    ** contributer_details
+    ** contributor_details
     ** include_entities
 
   let mentions_timeline_stream  
-    ?trim_user ?contributer_details ?include_entities =
+    ?trim_user ?contributor_details ?include_entities =
     SinceMaxID.create_stream ~count:200
     & mentions_timeline
-      ?trim_user ?contributer_details ?include_entities
+      ?trim_user ?contributor_details ?include_entities
 
   let user_timeline = get Tweet.ts_of_json "statuses/user_timeline.json"
     &  count
@@ -348,28 +348,28 @@ module Timelines = struct (* CR jfuruse: or Statuses ? *)
     ** user_id_screen_name
     ** trim_user
     ** exclude_replies
-    ** contributer_details
+    ** contributor_details
     ** include_rts
       
   let user_timeline_stream
-      ?user_id ?screen_name ?trim_user ?exclude_replies ?contributer_details ?include_rts =
+      ?user_id ?screen_name ?trim_user ?exclude_replies ?contributor_details ?include_rts =
     SinceMaxID.create_stream ~count:200
     & user_timeline
-      ?user_id ?screen_name ?trim_user ?exclude_replies ?contributer_details ?include_rts
+      ?user_id ?screen_name ?trim_user ?exclude_replies ?contributor_details ?include_rts
       
   let home_timeline = get Tweet.ts_of_json "statuses/home_timeline.json" 
     &  count
     ** since_max_ids
     ** trim_user
     ** exclude_replies
-    ** contributer_details
+    ** contributor_details
     ** include_entities
 
   let home_timeline_stream
-      ?trim_user ?exclude_replies ?contributer_details ?include_entities =
+      ?trim_user ?exclude_replies ?contributor_details ?include_entities =
       SinceMaxID.create_stream ~count:200
       & home_timeline
-        ?trim_user ?exclude_replies ?contributer_details ?include_entities
+        ?trim_user ?exclude_replies ?contributor_details ?include_entities
       
   let retweets_of_me = get Tweet.ts_of_json "statuses/retweets_of_me.json" 
     &  count
