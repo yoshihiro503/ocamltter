@@ -378,7 +378,7 @@ module Timelines = struct (* CR jfuruse: or Statuses ? *)
     ** include_entities
     ** include_user_entities
 
-  let retweets_of_me 
+  let retweets_of_me_stream
       ?trim_user ?include_entities ?include_user_entities =
     SinceMaxID.create_stream ~count:100
     & retweets_of_me
