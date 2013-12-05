@@ -6,6 +6,7 @@ type signature_method = [ `Hmac_sha1
 val fetch_request_token : 
   ?http_method:Http.meth 
   -> host:string 
+  -> ?port:int
   -> path:string 
 
   -> ?oauth_version:string 
@@ -25,6 +26,7 @@ val fetch_access_token :
 
   -> ?http_method:Http.meth 
   -> host:string 
+  -> ?port:int
   -> path:string 
 
   -> ?oauth_version:string 

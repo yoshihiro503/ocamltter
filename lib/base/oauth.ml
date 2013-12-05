@@ -219,7 +219,7 @@ let string_of_protocol = function
 
 let gen_access
     ~protocol
-    ~http_method ~host ~path
+    ~http_method ~host ?port ~path
     ?(oauth_version = "1.0") 
     ?(oauth_signature_method = `Hmac_sha1)
     ?(oauth_timestamp = make_timestamp ()) 
@@ -246,7 +246,7 @@ let gen_access
       ?oauth_token_secret
       (oauth_other_params @ non_oauth_params)
   in
-  Http.by_curl http_method protocol host path ~headers:[header] ~params:non_oauth_params
+  Http.by_curl http_method protocol host ?port path ~headers:[header] ~params:non_oauth_params
 
 let fetch_request_token ?(http_method=POST) = 
   (* CRv2 jfuruse: HTTPS *)
