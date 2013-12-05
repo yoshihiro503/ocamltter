@@ -92,11 +92,16 @@ let conn ?(port=80) hostname meth ?headers  path ps ?(rawpost="") f =
 
 let () = Curl.global_init Curl.CURLINIT_GLOBALALL
 
-let by_curl meth proto hostname path ~params:ps ~headers =
+let by_curl meth proto hostname ?port path ~params:ps ~headers =
   let h = new Curl.handle in
   (* h#set_verbose true; *)
   let proto_string = match proto with `HTTP -> "http" | `HTTPS -> "https" in
-  let url = !% "%s://%s%s" proto_string hostname path in
+  let url = !% "%s://%s%s%s" 
+    proto_string 
+    hostname 
+    (match port with None -> "" | Some p -> !% ":%d" p) 
+    path
+  in
   let headers = ("Host", hostname) :: headers in
   (* DEBUG List.iter (fun (k,v) -> Printf.eprintf "%s: %s\n%!" k v) headers; *)
   begin match meth with

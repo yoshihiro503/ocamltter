@@ -25,6 +25,7 @@ val by_curl :
   meth                 (** GET/POST *)
   -> [`HTTP | `HTTPS ] (** protocol *)
   -> string            (** hostname *)
+  -> ?port: int        (** port *)
   -> string            (** path *)
   -> params: params    (** get/post parameters *)
   -> headers: params
