@@ -218,6 +218,7 @@ let string_of_protocol = function
   | `HTTPS -> "https"
 
 let gen_access
+    ?handle_tweak
     ~protocol
     ~http_method ~host ?port ~path
     ?(oauth_version = "1.0") 
@@ -246,7 +247,9 @@ let gen_access
       ?oauth_token_secret
       (oauth_other_params @ non_oauth_params)
   in
-  Http.by_curl http_method protocol host ?port path ~headers:[header] ~params:non_oauth_params
+  Http.by_curl 
+    ?handle_tweak
+    http_method protocol host ?port path ~headers:[header] ~params:non_oauth_params
 
 let fetch_request_token ?(http_method=POST) = 
   (* CRv2 jfuruse: HTTPS *)
