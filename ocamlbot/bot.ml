@@ -5,7 +5,7 @@ open Orakuda.Regexp.Infix
 
 module Consumer = Twitter.Auth.Consumer
 
-let auth_file = match Exn.catch ~f:Sys.getenv "HOME" with
+let auth_file = match Exn.catch Sys.getenv "HOME" with
   | `Ok home -> home ^/ ".ocamltter_auths"
   | `Error _exn -> !!% "Env var HOME is not found@."; exit 1
 

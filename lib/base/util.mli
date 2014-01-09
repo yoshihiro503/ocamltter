@@ -1,12 +1,16 @@
 (* Created ocamlc -i *)
 
 val ( @@ ) : ('a -> 'b) -> 'a -> 'b
+(* CR jfuruse: 4.01.0 has (@@) in Pervasives, so we can remove it. *)
+
 val ( $ ) : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 val id : 'a -> 'a
 val p : ('a, out_channel, unit) format -> 'a
 val pr : string -> unit
 val tee : ('a -> 'b) -> 'a -> 'a
 external (|>) : 'a -> ('a -> 'b) -> 'b = "%revapply"
+(* CR jfuruse: 4.01.0 has (@@) in Pervasives, so we can remove it. *)
+
 val const : 'a -> 'b -> 'a
 val ( !% ) : ('a, unit, string) format -> 'a
 val ( !$ ) : 'a Lazy.t -> 'a

@@ -193,7 +193,9 @@ let default def v = v |> Spot.result id (function
       def
   )
 
-let from_Ok x = x |> Spot.from_Ok (fun e -> Error e)
+let from_Ok = function
+  | `Ok v -> v
+  | `Error e -> raise (Error e)
 
 let from_Some = function
   | Some v -> v

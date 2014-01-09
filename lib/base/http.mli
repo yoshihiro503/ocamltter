@@ -29,4 +29,5 @@ val by_curl :
   -> string            (** path *)
   -> params: params    (** get/post parameters *)
   -> headers: params
-  -> [> `Error of [> `Http of int * string ] | `Ok of string ]
+  -> [> `Error of [> `Http of int * string ] 
+     |  `Ok of string ]

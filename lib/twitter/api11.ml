@@ -15,7 +15,7 @@ open Api_intf
 
 type params = (string * string option) list
 
-(** Coercing to the normal HTTP header type, [(string * string) list]. *)
+(** [ val (~?) : (string * string option) -> (string * string) list] *)
 let (~?) l = List.filter_map (function
   | (key, Some v) -> Some (key, v)
   | (_, None) -> None) l
@@ -23,9 +23,11 @@ let (~?) l = List.filter_map (function
 (** {6 Error} *)
 
 module Error = struct
-  type t = [ `Http of int * string
-           | `Json of Api_intf.Json.t Meta_conv.Error.t
-           | `Json_parse of exn * string ]
+
+  type http       = [ `Http of int * string ]
+  type json_conv  = [ `Json of Api_intf.Json.t Meta_conv.Error.t ]
+  type json_parse = [ `Json_parse of exn * string ]
+  type t = [ http | json_conv | json_parse ]
 
   let format_error ppf = function
     | `Http (code, mes) ->
@@ -38,6 +40,8 @@ module Error = struct
           (Printexc.to_string exn)
           s
 end
+
+type 'a result = ('a, Error.t) Result.t
 
 (** {6 Base communication} *)
 
@@ -59,10 +63,13 @@ let json_error_wrap f v = match v with
       | `Ok v -> `Ok v
       | `Error e -> `Error (`Json e)
 
+type 'a json_converter = Json.t -> ('a, Json.t Meta_conv.Error.t) Result.t 
+(** The type of Json to OCaml converter *)
+
 (** 
   [api post meth fmt ...(format args)... params oauth] 
 
-  post : Parser of JSON. If you want to have the raw JSON, use [fun x -> `Ok x].
+  post : Postprocess: a parser of JSON. If you want to have the raw JSON, use [fun x -> `Ok x].
   meth : GET or POST
   fmt  : piece of path, you can use Printf % format
   params : the type is [params]
@@ -73,6 +80,10 @@ let api post meth fmt = fun params oauth ->
   Printf.ksprintf (fun name ->
     twitter oauth meth ~host:"api.twitter.com" (!% "/1.1/%s" name) ~?params
     |> json_error_wrap post) fmt
+
+let api' post meth name = fun params oauth -> 
+  twitter oauth meth ~host:"api.twitter.com" (!% "/1.1/%s" name) ~?params
+      |> json_error_wrap post
 
 (** { 6 Argment handling } *)
 
@@ -123,6 +134,8 @@ module Arg = struct
 
     They are to add new arguments just after [params].
   *)
+
+  type ('a, 'b) opt = (params -> 'a) -> params -> 'b
 
   let count k opts ?count = optional_args k opts 
     ["count" , of_int count]
@@ -200,6 +213,8 @@ module Arg = struct
 
     This must go at the end of argument generator compositions.
   *)
+
+  type ('a, 'b) required_arg = (params -> Oauth.t -> 'a) -> params -> Oauth.t -> 'b -> 'a
 
   let required_args f (params : params) (oauth : Oauth.t) addition = 
     f (addition @ params) oauth
