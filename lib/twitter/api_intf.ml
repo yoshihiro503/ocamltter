@@ -317,12 +317,13 @@ module Rate_limit_status = struct
           subscribers         as "/lists/subscribers"                 : limit;
           list                as "/lists/list"                        : limit;
           memberships         as "/lists/memberships"                 : limit;
+          ownerships          as "/lists/ownerships"                  : limit;
           subscriptions       as "/lists/subscriptions"               : limit;
           members             as "/lists/members"                     : limit;
           subscribers_show    as "/lists/subscribers/show"            : limit;
           statuses            as "/lists/statuses"                    : limit;
-          show                as "/lists/show"                        : limit;
           members_show        as "/lists/members/show"                : limit;
+          show                as "/lists/show"                        : limit;
         >;
       application : <
           rate_limit_status   as "/application/rate_limit_status"     : limit;
@@ -331,6 +332,7 @@ module Rate_limit_status = struct
 	  incoming            as "/friendships/incoming"              : limit;
 	  lookup              as "/friendships/lookup"                : limit;
 	  outgoing            as "/friendships/outgoing"              : limit;
+          no_retweets_ids     as "/friendships/no_retweets/ids"       : limit;
 	  show                as "/friendships/show"                  : limit;
         >;
 
@@ -355,17 +357,25 @@ module Rate_limit_status = struct
 	  contributees        as "/users/contributees"                : limit;
 	  suggestions_slug    as "/users/suggestions/:slug"           : limit;
         >;
+(*
+      prompts : <
+	  record_event        as "/prompts/record_event"              : limit;
+	  suggest             as "/prompts/suggest"                   : limit;
+        >;
+*)
       followers : <
+	  list                as "/followers/list"                    : limit;
 	  ids                 as "/followers/ids"                     : limit;
         >;
       statuses : <
 	  mentions_timeline   as "/statuses/mentions_timeline"        : limit;
           show                as "/statuses/show/:id"                 : limit;
 	  oembed              as "/statuses/oembed"                   : limit;
+	  retweeters_ids      as "/statuses/retweeters/ids"           : limit;
 	  home_timeline       as "/statuses/home_timeline"            : limit;
 	  user_timeline       as "/statuses/user_timeline"            : limit;
-	  retweets_of_me      as "/statuses/retweets_of_me"           : limit;
 	  retweets            as "/statuses/retweets/:id"             : limit;
+	  retweets_of_me      as "/statuses/retweets_of_me"           : limit;
         >;
       help : <
 	  privacy             as "/help/privacy"                      : limit;
@@ -375,6 +385,7 @@ module Rate_limit_status = struct
         >;
       friends : <
 	  ids                 as "/friends/ids"                       : limit;
+	  list                as "/friends/list"                      : limit;
         >;
       direct_messages : <
 	  show                as "/direct_messages/show"              : limit;

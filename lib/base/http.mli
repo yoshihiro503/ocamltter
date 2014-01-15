@@ -27,7 +27,8 @@ type error =
 (* CR jfuruse: no way to specify the port *)
 (** http access via cURL *)
 val by_curl : 
-  meth                 (** GET/POST *)
+  ?handle_tweak: (Curl.handle -> unit) (** Final tweak func of Curl handler *)
+  -> meth              (** GET/POST *)
   -> [`HTTP | `HTTPS ] (** protocol *)
   -> string            (** hostname *)
   -> ?port: int        (** port *)
