@@ -92,44 +92,54 @@ let conn ?(port=80) hostname meth ?headers  path ps ?(rawpost="") f =
 
 let () = Curl.global_init Curl.CURLINIT_GLOBALALL
 
+type error = 
+  [ `Http of int * string  (** HTTP status other than 200 *)
+  | `Curl of Curl.curlCode * int * string (** libcURL error *)
+  ]
+
 let by_curl meth proto hostname ?port path ~params:ps ~headers =
-  let h = new Curl.handle in
-  (* h#set_verbose true; *)
-  let proto_string = match proto with `HTTP -> "http" | `HTTPS -> "https" in
-  let url = !% "%s://%s%s%s" 
-    proto_string 
-    hostname 
-    (match port with None -> "" | Some p -> !% ":%d" p) 
-    path
-  in
-  let headers = ("Host", hostname) :: headers in
-  (* DEBUG List.iter (fun (k,v) -> Printf.eprintf "%s: %s\n%!" k v) headers; *)
-  begin match meth with
-  | GET ->
-      let url = if ps<>[] then url ^ "?" ^ params2string ps else url in
-      h#set_url url;
-      h#set_post false;
-      h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
-  | POST ->
-      h#set_url url;
-      h#set_post true;
-      let s = params2string ps in
-      h#set_postfields s;
-        (* set_postfields of OCurl 0.5.3 has a bug. 
-           We need explicit set_postfieldsize to workaround it.
-        *)
-      h#set_postfieldsize (String.length s);
-      h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
-  end;
-  
-  let buf = Buffer.create 100 in
-  assert (h#get_cookielist = []);
-  h#set_writefunction (fun s -> Buffer.add_string buf s; String.length s);
-  h#perform;
-  let code = h#get_httpcode in
-  h#cleanup; (* Need to flush out cookies *)
-  let ok200 = function
-    | 200, v -> `Ok v
-    | n, mes -> `Error (`Http (n, mes))
-  in	
-  ok200 (code, Buffer.contents buf)
+  try
+    let h = new Curl.handle in
+    (* h#set_verbose true; *)
+    let proto_string = match proto with `HTTP -> "http" | `HTTPS -> "https" in
+    let url = !% "%s://%s%s%s" 
+      proto_string 
+      hostname 
+      (match port with None -> "" | Some p -> !% ":%d" p) 
+      path
+    in
+    let headers = ("Host", hostname) :: headers in
+    (* DEBUG List.iter (fun (k,v) -> Printf.eprintf "%s: %s\n%!" k v) headers; *)
+    begin match meth with
+    | GET ->
+        let url = if ps<>[] then url ^ "?" ^ params2string ps else url in
+        h#set_url url;
+        h#set_post false;
+        h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
+    | POST ->
+        h#set_url url;
+        h#set_post true;
+        let s = params2string ps in
+        h#set_postfields s;
+          (* set_postfields of OCurl 0.5.3 has a bug. 
+             We need explicit set_postfieldsize to workaround it.
+          *)
+        h#set_postfieldsize (String.length s);
+        h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
+    end;
+    
+    let buf = Buffer.create 100 in
+    assert (h#get_cookielist = []);
+    h#set_writefunction (fun s -> Buffer.add_string buf s; String.length s);
+    h#perform;
+    let code = h#get_httpcode in
+    h#cleanup; (* Need to flush out cookies *)
+    let ok200 = function
+      | 200, v -> `Ok v
+      | n, mes -> `Error (`Http (n, mes))
+    in	
+    ok200 (code, Buffer.contents buf)
+  with
+  | Curl.CurlException (curlCode, int, mes) ->
+      `Error (`Curl (curlCode, int, mes))
+      

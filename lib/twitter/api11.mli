@@ -10,12 +10,12 @@ type params = (string * string option) list
 
 module Error : sig
 
-  type http       = [ `Http of int * string ]
+  type http       = Http.error
   type json_conv  = [ `Json of Api_intf.Json.t Meta_conv.Error.t ]
   type json_parse = [ `Json_parse of exn * string ]
   type t = [ http | json_conv | json_parse ]
 
-  val format_error : Format.t -> t -> unit
+  val format : Format.t -> t -> unit
 
 end
 

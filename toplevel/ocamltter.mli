@@ -2,10 +2,7 @@ open Twitter
 open Auth
 open Api_intf
 
-exception Error of [`Http of int * string
-                   | `Json of Json.t Meta_conv.Error.t 
-                   | `Json_parse of exn * string
-                   ]
+exception Error of Api11.Error.t
 
 type tweet = Api_intf.Tweet.t
 

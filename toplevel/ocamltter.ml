@@ -79,8 +79,9 @@ module Auth = struct
         username, { User.token = oauth.Oauth.access_token;
                     token_secret = oauth.Oauth.access_token_secret;
                     verif = verif }
-    | `Error (`Http (st, err)) ->
-        failwithf "oauth http failed(%d): %s" st err
+    | `Error e ->
+        let s = Format.sprintf "%a" Api11.Error.format e in
+        failwithf "oauth failed: %s" s
   
   let authorize_interactive app = 
     match Auth.fetch_request_token app.App.consumer with
@@ -92,8 +93,9 @@ module Auth = struct
         let username, t = authorize app (req_resp_token, verif) in
         print_endline ("Grant Success! Hello, @"^username^" !");
         username, t
-    | `Error (`Http (st, err)) ->
-        failwithf "oauth http failed(%d): %s" st err
+    | `Error e ->
+        let s = Format.sprintf "%a" Api11.Error.format e in
+        failwithf "oauth failed: %s" s
 
   module Single = struct
     (** It forgets username and consumer *)
@@ -173,25 +175,11 @@ end = struct
     Queue.push tw cache
 end
 
-exception Error of [`Http of int * string
-                   | `Json of Json.t Meta_conv.Error.t 
-                   | `Json_parse of exn * string
-                   ]
+exception Error of Api11.Error.t
 
-let default def v = v |> Spot.result id (function
-  | `Http (code, mes) ->
-      Format.eprintf "HTTP error %d: %s@." code mes;
-      def
-  | `Json e ->
-      Format.eprintf "@[JSON error:@ %a@]@."
-        (Meta_conv.Error.format Json_conv.format) e;
-      def
-  | `Json_parse (exn, s) ->
-      Format.eprintf "@[JSON error: %s@ %s@]@."
-        (Printexc.to_string exn)
-        s;
-      def
-  )
+let default def v = v |> Spot.result id (fun e ->
+  Format.eprintf "%a@." Api11.Error.format e;
+  def)
 
 let from_Ok = function
   | `Ok v -> v

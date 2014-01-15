@@ -24,14 +24,16 @@ let (~?) l = List.filter_map (function
 
 module Error = struct
 
-  type http       = [ `Http of int * string ]
+  type http       = Http.error
   type json_conv  = [ `Json of Api_intf.Json.t Meta_conv.Error.t ]
   type json_parse = [ `Json_parse of exn * string ]
   type t = [ http | json_conv | json_parse ]
 
-  let format_error ppf = function
+  let format ppf = function
     | `Http (code, mes) ->
         Format.fprintf ppf "HTTP error %d: %s" code mes
+    | `Curl (_curlCode, code, mes) ->
+        Format.fprintf ppf "CURL error %d: %s" code mes
     | `Json e ->
         Format.fprintf ppf "@[<2>JSON error:@ %a@]"
           (Meta_conv.Error.format Json_conv.format) e
