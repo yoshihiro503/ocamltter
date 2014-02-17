@@ -12,10 +12,12 @@ let print_string_literal p s = Format.print_string ("\"" ^ s ^ "\"");;
 #install_printer Api_intf.Rate_limit_status.format;;
 #install_printer Api_intf.User.format;;
 
-config_file :=
+let () = config_file :=
   match maybe Sys.getenv "HOME" with
   | Inl home -> home ^ "/.ocamltter"
-  | Inr e -> ".ocamltter";;
+  | Inr e -> ".ocamltter"
+
+let () = Format.eprintf "Using %s@." !config_file
 
 let o = setup();;
 (* start_polling ();; *)

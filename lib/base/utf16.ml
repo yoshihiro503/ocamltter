@@ -1,10 +1,9 @@
 open Util
 
-let rec (>>) x n =
-  if n > 0 then (x >> (n-1)) / 2
-  else x
+let (>>) = (lsr)
 
-let utf16c_to_utf8c(x) =
+(* "0000" <= x <= "10ffff" *)
+let utf16c_to_utf8c (x) =
   let n = int_of_string("0x" ^ x) in
   if n < 0x80 then
     to_hex n

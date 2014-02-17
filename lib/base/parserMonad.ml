@@ -114,7 +114,7 @@ let char1 = char1_without_debug
 
 let char_when f = char1 >>= fun c ->
   if f c then return c
-  else error (!%"(char:'%c')" c)
+  else error (!%"(expected char:'%c')" c)
 
 let char c = char_when ((=) c)
 

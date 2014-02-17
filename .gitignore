@@ -1,15 +1,12 @@
-/ocamltter
-*.cmi
-*.cmo
+*.annot
+*.cm*
 *.vo
 *.v.d
 *.glob
 *~
 .ocamltter
-*.annot
 ocamltter_top*
 *.omc
-*.cm*
 *.o
 *.a
 .hg
@@ -19,3 +16,7 @@ ocamltter_top*
 OMakeroot
 setup.data
 setup.ml.ba*
+ocamlbot/ocamlbot
+ocamlbot/ocamlbot.opt
+ocamlbot/ocamlbot.run
+

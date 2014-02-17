@@ -1,5 +1,7 @@
 (**
    Twitter APIs, version 1.0
+
+   This is no longer supported by Twitter.
 *)
 open Util
 open Api_intf

@@ -1,91 +1,130 @@
 open Ocaml_conv
 open Spotlib.Spot
-
+module Spot = Spotlib.Spot
 open Twitter
 open Util
 module TTS = GoogleTTS
 
 module Consumer = Auth.Consumer
 
-module Auth : sig
+module Auth = struct
 
-  (** Full auth information *)    
-  type t = { username : string; oauth : Oauth.t; } with conv(ocaml)
-
-  val authorize : Consumer.t -> Auth.VerifiedToken.t -> t
-  val authorize_interactive : string (** appname *) -> Consumer.t -> t
-
-  val load : string -> t list
-  val save : string -> t list -> unit
-
-  (** Simple implementation for one app + one account *)
-  module Single : sig
-    val save : string -> t -> unit
-    val load : string -> Consumer.t -> Oauth.t
-    val oauth : path:string -> appname:string -> Consumer.t -> Oauth.t
+  module App = struct
+    type t = { name : string; consumer : Consumer.t } with conv(ocaml)
+  
+    let dummy = { name = "dummy app";
+                  consumer = Consumer.dummy }
+  
+    let ocamltter = 
+      { name = "ocamltter";
+        consumer = {
+          Consumer.key = "vS0nKAS6ieWL76zZaQgF4A";
+          secret = "XHa1ZiPcNRsYKw4mdIv8wHUiNulpBFxKT1ntXXuJgo";
+        }
+      }
+  end
+  
+  module User = struct
+     type t = { token        : string;
+                token_secret : string;
+                verif        : string } with conv(ocaml)
+  
+    let dummy = { token = "123456789-Base64DataHereBase64DataHereBase64DataHe";
+                  token_secret = "Base64DataHereBase64DataHereBase64DataHer";
+                  verif = "9876543 (digit given from twitter auth page)" }
   end
 
-end = struct
+  open Twitter.Auth
 
-  type t = { username : string; oauth : Oauth.t } with conv(ocaml)
+  type ('a,'b) hashtbl = ('a,'b) Hashtbl.t
 
-  let authorize app (_, verif as verified_token) = 
-    let username, token = Auth.fetch_access_token app verified_token in
-    let oauth = Auth.oauth app (token, verif) in
-    { username; oauth }
+  type t = { app: App.t; users: (string, User.t) hashtbl } with conv(ocaml)
+  type tbl = (App.t, (string, User.t) hashtbl) Hashtbl.t
+
+  let dummy = { app = App.dummy;
+                users = Hashtbl.of_list 1 [ "dummy user", User.dummy ] }
+
+  let oauth app user = 
+    { Oauth.consumer_key  = app.App.consumer.Consumer.key;
+      consumer_secret     = app.App.consumer.Consumer.secret;
+      access_token        = user.User.token;
+      access_token_secret = user.User.token_secret;
+    }
+
+  let load path = 
+    let tbl = Hashtbl.create 17 in
+    Ocaml.load_with_exn t_of_ocaml path
+    |> List.iter (fun t -> Hashtbl.add tbl t.app t.users)
+    |> fun () -> tbl
+
+  let save path tbl = 
+    Hashtbl.to_list tbl
+    |> List.map (fun (k,v) -> { app=k; users= v })
+    |> Ocaml.save_with ocaml_of_t ~perm:0o600 path
+
+  let save_dummy path =
+    if Sys.file_exists path then failwithf "%s: already exists" path;
+    save path & Hashtbl.of_list 1 [dummy.app, dummy.users]
+
+  let find (tbl:tbl) app user_name =
+    Hashtbl.find_all tbl app
+    |> Hashtbl.concat
+    |> fun users -> Hashtbl.find_all users user_name
+
+  let authorize app (_, verif as verified_token : VerifiedToken.t) = 
+    let app_consumer = app.App.consumer in
+    match Auth.fetch_access_token app_consumer verified_token with
+    | `Ok (username, token) ->
+        let oauth = Auth.oauth app_consumer (token, verif) in
+        username, { User.token = oauth.Oauth.access_token;
+                    token_secret = oauth.Oauth.access_token_secret;
+                    verif = verif }
+    | `Error e ->
+        let s = Format.sprintf "%a" Api11.Error.format e in
+        failwithf "oauth failed: %s" s
   
-  let authorize_interactive appname app = 
-    let url, req_resp_token = Auth.fetch_request_token app in
-    print_endline & "Please grant access to " ^ appname ^ " and get a PIN at :";
-    print_endline & "  " ^ url;
-    print_string "Give me a PIN: "; flush stdout;
-    let verif = read_line () in
-    let t = authorize app (req_resp_token, verif) in
-    print_endline ("Grant Success! Hello, @"^t.username^" !");
-    t
-  
+  let authorize_interactive app = 
+    match Auth.fetch_request_token app.App.consumer with
+    | `Ok (url, req_resp_token) ->
+        print_endline & "Please grant access to " ^ app.App.name ^ " and get a PIN at :";
+        print_endline & "  " ^ url;
+        print_string "Give me a PIN: "; flush stdout;
+        let verif = read_line () in
+        let username, t = authorize app (req_resp_token, verif) in
+        print_endline ("Grant Success! Hello, @"^username^" !");
+        username, t
+    | `Error e ->
+        let s = Format.sprintf "%a" Api11.Error.format e in
+        failwithf "oauth failed: %s" s
+
   module Single = struct
     (** It forgets username and consumer *)
     let save path t = 
       open_out_with path (fun ch ->
-        output_string ch & String.concat "\n" [ t.oauth.Oauth.access_token;
-                                                t.oauth.Oauth.access_token_secret;
-                                                t.oauth.Oauth.verif;
+        output_string ch & String.concat "\n" [ t.User.token;
+                                                t.User.token_secret;
+                                                t.User.verif;
                                                 "" ])
   
-    let load path app = open_in_with path (fun ch ->
+    let load path = open_in_with path & fun ch ->
       let token    = input_line ch in 
       let secret   = input_line ch in 
       let verif    = input_line ch in
-      { Oauth.consumer_key  = app.Auth.Consumer.key;
-        consumer_secret     = app.Auth.Consumer.secret;
-        access_token        = token;
-        access_token_secret = secret;
-        verif               = verif })
-
-    let oauth ~path ~appname app = try load path app with _ -> 
-      let t = authorize_interactive appname app in
-      save path t;
-      t.oauth
+      { User.token   = token;
+        token_secret = secret;
+        verif        = verif }
+  
+    let oauth path app = 
+      let user = try load path with _ -> 
+        let _username, t = authorize_interactive app in
+        save path t;
+        t
+      in
+      oauth app user
   end
-
-  let load path = 
-    with_final 
-      (open_in path)
-      (fun ic -> List.map t_of_ocaml_exn (Ocaml.Parser.from_channel ic))
-      close_in
-      
-  let save path ts = 
-    with_final
-      (open_out_gen [Open_wronly] 0o700 path)
-      (fun oc -> 
-        let ppf = Format.formatter_of_out_channel oc in
-        List.iter (fun t -> Ocaml.format_with ~no_poly:true ocaml_of_t ppf t) ts)
-      close_out
 
 end
 
-let application_name = "ocamltter"
 let config_file = ref "Assign a conf filename."
 
 let cached_oauth = ref None
@@ -93,7 +132,7 @@ let cached_oauth = ref None
 let get_oauth () = match !cached_oauth with
   | Some oauth -> oauth
   | None ->
-      let oauth = Auth.Single.oauth ~path:!config_file ~appname:application_name Consumer.ocamltter in
+      let oauth = Auth.Single.oauth !config_file Auth.App.ocamltter in
       cached_oauth := Some oauth;
       oauth
       
@@ -136,24 +175,15 @@ end = struct
     Queue.push tw cache
 end
 
-exception Error of [`Http of int * string
-                   | `Json of Json.t Meta_conv.Error.t ]
+exception Error of Api11.Error.t
 
-let meta_conv_result_result errf okf = function
-  | `Ok v -> okf v
-  | `Error e -> errf e
+let default def v = v |> Spot.result id (fun e ->
+  Format.eprintf "%a@." Api11.Error.format e;
+  def)
 
-let from_Ok x = x |> meta_conv_result_result (fun e -> raise (Error e)) id
-
-let default def = meta_conv_result_result (function
-  | `Http (code, mes) ->
-      Format.eprintf "HTTP error %d: %s@." code mes;
-      def
-  | `Json e ->
-      Format.eprintf "@[JSON error:@ %a@]@."
-        (Meta_conv.Error.format Json_conv.format) e;
-      def)
-  id
+let from_Ok = function
+  | `Ok v -> v
+  | `Error e -> raise (Error e)
 
 let from_Some = function
   | Some v -> v
@@ -222,7 +252,7 @@ let m ?(c=20) () : tweet list =
 let kwsk id =
   let o = get_oauth () in
   let rec iter store id =
-    match Tweets.show id o with
+    match Tweets.show o id with
     | `Error _ -> store
     | `Ok tw -> 
         match tw#in_reply_to_status_id with
@@ -237,7 +267,7 @@ let u text =
 
 let show id =
   let o = get_oauth () in
-  Tweets.show id o |> from_Ok
+  Tweets.show o id |> from_Ok
 
 let get_screen_name id =
   show id
@@ -254,21 +284,21 @@ let re status_id text =
 let rt status_id =
   let o = get_oauth () in
   from_Ok
-  & Tweets.retweet status_id o >>| fun x -> x#id
+  & Tweets.retweet o status_id >>| fun x -> x#id
 
 let del id = 
   let o = get_oauth () in
-  Tweets.destroy id o |> from_Ok |> ignore
+  Tweets.destroy o id |> from_Ok |> ignore
 
 let qt st_id comment =
   let o = get_oauth () in
-  Tweets.show st_id o 
+  Tweets.show o st_id
   |> from_Ok |> fun tw -> 
     u (!%"%s QT @%s: %s" comment (from_Some tw#user#details)#screen_name tw#text)
 
 let link id =
   let o = get_oauth () in
-  Tweets.show id o 
+  Tweets.show o id 
   |> from_Ok |> fun tw -> 
     !%"http://twitter.com/%s/status/%Ld" (from_Some tw#user#details)#screen_name id
   
@@ -277,7 +307,7 @@ let qtlink id s =
 
 let reqt st_id comment =
   let o = get_oauth () in
-  Tweets.show st_id o 
+  Tweets.show o st_id 
   |> from_Ok |> fun tw -> 
     re st_id & !%"%s QT @%s: %s" comment (from_Some tw#user#details)#screen_name tw#text
 
@@ -328,7 +358,7 @@ let help =
   limit_status ()      rate limit status of API
   let CMD = ...        define a your own command CMD
   help                 print this help
-  #quite               quite ocamltter
+  #quit                quit ocamltter
 "
 
 let is_polling_on = ref false

@@ -26,13 +26,41 @@ OCAML_VERSION = $(shell ocamlc -version | sed -e 's/^\([0-9.]*\).*/\1/')
 USE_OCAMLFIND = true
 OCAMLFIND_DESTDIR= $(shell ocamlfind printconf destdir)
 
+OCAMLFIND_QUERY(name) = 
+    return $(shell ocamlfind query $(name))
+
 #|Set NATIVE_ENABLED false locally if a project does not requre opt compilation.
 NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
 NATIVE_SHARED_ENABLED = $(OCAMLOPT_EXISTS)
 BYTE_ENABLED = true
 
 #|The default warning and errors. If you want to use different warning and error switches, use redefine the variable.
-OCAMLFLAGS = -g -w A-4-9 -warn-error A-4-9
+OCAMLFLAGS = -g 
+
+#|Warnings not to be printed separted with space
+OCAMLWARNING_IGNORE[] = 4 9 40 42 44 45
+
+#|Warnings treated as non errors
+OCAMLWARNING_NON_ERROR[] = 4 9 40 42 44 45
+
+#|If it is false, warnings do not stop the compilation even if they are listed in OCAMLWARNING_NON_ERROR
+#If you are in developing something, turn it to true!
+OCAMLWARNING_STOP_AT_ERROR_WARNING=false
+
+#|The maximum warning value.
+# This is the maximum warning ID NOT of the current OCaml compiler,
+#                                BUT of the OCaml compiler used by the author.
+OCAMLWARNING_MAX= 45
+
+#|Function to build warning switches
+OCAMLWARNING_MAKE()=
+    if $(OCAMLWARNING_STOP_AT_ERROR_WARNING)
+        return -w A-$(concat -,$(OCAMLWARNING_IGNORE)) -warn-error +1..$(OCAMLWARNING_MAX)-$(concat -, $(OCAMLWARNING_NON_ERROR))
+    else
+        return -w A-$(concat -,$(OCAMLWARNING_IGNORE)) -warn-error a
+
+#|OMyMakefile assumes installation with .cmt files
+OCAMLANNOTFLAGS = -annot -bin-annot
 
 #|Global variable to be defined as empty
 OCAMLPACKAGEFLAGS=
@@ -54,12 +82,21 @@ OCAML_PREINSTALLED_PACKS[]= bigarray camlp4 dbm dynlink graphics num num-top std
 
 #|Redefinition of compiler commands
 public.OCamlC() =
-    value $(OCAMLFIND) $(OCAMLC) $(OCAMLPACKAGEFLAGS) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS)\
-              $(OCAMLCFLAGS) $(OCAMLPPFLAGS) $(PREFIXED_OCAMLINCLUDES)
+    value $(OCAMLFIND) $(OCAMLC) \
+        $(OCAMLANNOTFLAGS) \
+        $(OCAMLPACKAGEFLAGS) \
+        $(LAZY_OCAMLFINDFLAGS) \
+        $(PREFIXED_OCAMLPACKS) \
+        $(OCAMLFLAGS) \
+        $(OCAMLWARNING_MAKE) \
+        $(OCAMLCFLAGS) \
+        $(OCAMLPPFLAGS) \
+        $(PREFIXED_OCAMLINCLUDES)
 # Why we need "public." ?
 
 public.OCamlOpt() =
-    value $(OCAMLFIND) $(OCAMLOPT) $(OCAMLPACKAGEFLAGS) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS)\
+    value $(OCAMLFIND) $(OCAMLOPT) $(OCAMLANNOTFLAGS) $(OCAMLPACKAGEFLAGS) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS)\
+              $(OCAMLWARNING_MAKE) \
               $(OCAMLOPTFLAGS) $(OCAMLPPFLAGS) $(PREFIXED_OCAMLINCLUDES)
 
 if $(and $(not $(NATIVE_ENABLED)) $(not $(BYTE_ENABLED)))
@@ -71,10 +108,10 @@ if $(and $(not $(NATIVE_ENABLED)) $(not $(BYTE_ENABLED)))
 #|Additional implicit rules by file extensions
 # annot, cmt, cmti files
 %.annot %.cmt: %.ml %.cmi
-	$(OCamlC) -c -annot -bin-annot $<
+	$(OCamlC) -c -annot $(OCAMLANNOTFLAGS) $<
 
 %.cmti: %.mli 
-	$(OCamlC) -c -bin-annot $<
+	$(OCamlC) -c $(OCAMLANNOTFLAGS) $<
 
 #|Define OCAML_ANNOT so that ocamlc/ocamlopt automatically create annot/cmt/cmti files, even without -annot/-bin-annot option. This requires a special compiler patch 
 setenv(OCAML_ANNOT, 1)
@@ -85,6 +122,16 @@ setenv(OCAMLRUNPARAM, b)
 # Common phonies
 # ==================================================================
 .PHONY: all install uninstall clean veryclean
+
+# Very clean
+# ======================================================================
+
+#| OCaml object files which are not real targets of OMake are not be
+# auto-cleaned away by ``omake clean``. This is not good in some situations
+# at linking.
+WithOCamlVeryClean() =
+    veryclean: 
+        rm -f *.cm* *.annot *.o *.a *.so *.exe *.byt *.opt *.run
 
 # Directories
 # =====================================================================
@@ -272,7 +319,7 @@ public.OCamlPackage(name, files) =
              export
          $(BYTE_TARGETS): $(BYTE_DEPS)
             $(OCAMLFIND) $(OCAMLC) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) \
-                $(OCAMLCFLAGS) $(OCAML_LIB_FLAGS) -pack -bin-annot -o $(CMO) $(OCamlLinkSort $(CMOFILES))
+                $(OCAMLCFLAGS) $(OCAML_LIB_FLAGS) -pack $(OCAMLANNOTFLAGS) -o $(CMO) $(OCamlLinkSort $(CMOFILES))
 
    protected.NATIVE_DEPS = $(CMXFILES) $(OFILES)
    $(NATIVE_TARGETS): $(NATIVE_DEPS)
@@ -285,7 +332,7 @@ public.OCamlPackage(name, files) =
             export
          $(NATIVE_TARGETS): $(NATIVE_DEPS)
             $(OCAMLFIND) $(OCAMLOPTLINK) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) \
-                $(OCAMLOPTFLAGS) $(OCAML_LIB_FLAGS) -pack -bin-annot -o $(CMX) $(OCamlLinkSort $(CMXFILES))
+                $(OCAMLOPTFLAGS) $(OCAML_LIB_FLAGS) -pack $(OCAMLANNOTFLAGS) -o $(CMX) $(OCamlLinkSort $(CMXFILES))
 
    $(CMI):
       section rule
@@ -331,14 +378,16 @@ AddLocalOCamlPackageDependencies() =
 #
 #  Todo: external C library
 MyOCamlPackage(library_name, files, cmodules, linkopts) =
+  WithOCamlVeryClean()
   AddLocalOCamlPackageDependencies()
   export # The above thing is local: need to be exported
 
   CSTUBS=$(addsuffix .o,$(cmodules))
-  CMOS=$(addsuffix .cmo,$(library_name))
-  CMXS=$(addsuffix .cmx,$(library_name))
+  CMO_S=$(addsuffix .cmo,$(library_name))
+  CMX_S=$(addsuffix .cmx,$(library_name))
   CMA=$(library_name).cma
   CMXA=$(library_name).cmxa
+  CMXS=$(library_name).cmxs
 
   if $(not $(defined MyOCamlPackageExtras))
       MyOCamlPackageExtras[]=
@@ -355,12 +404,14 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
   .PHONY: install-lib
   install-lib: $(library_name).cmo $(library_name).cmx $(library_name).cma $(library_name).cmxa $(MyOCamlPackageExtras)
 
-  $(CMA) $(CMXA) $(library_name).a $(CSTUBLIBRARIES) : $(CSTUBS) $(CMOS) $(CMXS)
+  $(CMA) $(CMXA) $(CMXS) $(library_name).a $(CSTUBLIBRARIES) : $(CSTUBS) $(CMO_S) $(CMX_S)
       if $(not $(equal $(cmodules), $(EMPTY)))
-          ocamlmklib -verbose -o $(library_name) $(CSTUBS) $(linkopts) $(CMOS) $(CMXS)
+          ocamlmklib -verbose -o $(library_name) $(CSTUBS) $(linkopts) $(CMO_S) $(CMX_S)
+          $(OCamlOpt) -shared -o $(CMXS) $(CMX_S) # CR jfuruse: right?
       else
-          $(OCamlC) -a -o $(CMA) $(CMOS)
-          $(OCamlOpt) -a -o $(CMXA) $(CMXS)
+          $(OCamlC) -a -o $(CMA) $(CMO_S)
+          $(OCamlOpt) -a -o $(CMXA) $(CMX_S)
+          $(OCamlOpt) -shared -o $(CMXS) $(CMX_S)
 
   ## the followings are necessary for packing
 
@@ -379,7 +430,7 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
   ## install
 
   # CR jfuruse: x.cmi is required if x.mli does not exist!
-  targets[]=META $(glob i, *.mli) $(library_name).cmi $(library_name).cmo $(library_name).cmx $(library_name).cma $(library_name).cmxa $(library_name).o $(library_name).a $(CSTUBLIBRARIES) $(MyOCamlPackageExtras)
+  targets[]=META $(glob i, *.mli) $(library_name).cmi $(library_name).cmo $(library_name).cmx $(library_name).cma $(library_name).cmxa $(library_name).cmxs $(library_name).o $(library_name).a $(CSTUBLIBRARIES) $(MyOCamlPackageExtras)
 
   targets[]+= $(library_name).cmt
 
@@ -415,10 +466,13 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
 #      files
 #          OCaml module names (without .ml)
 MyOCamlTestProgram(name, files) =
+  WithOCamlVeryClean()
   AddLocalOCamlPackageDependencies()
   export # The above thing is local: need to be exported
 
-  $(name).run $(name).opt: $(Installed $(OMyManagedPackages $(OCAMLPACKS)))
+  # We must write these two separately, or something messy happens!
+  $(name).run: $(Installed $(OMyManagedPackages $(OCAMLPACKS)))
+  $(name).opt: $(Installed $(OMyManagedPackages $(OCAMLPACKS)))
 
   # CR jfuruse: forgot to add the deps over the packages!
   .DEFAULT: $(OCamlProgram $(name), $(files))
@@ -434,6 +488,7 @@ MyOCamlTestProgram(name, files) =
 #          OCaml module names (without .ml)
 #  In addition to MyOCamlTestProgram, the binary is installed by omake install
 MyOCamlProgram(name, files) =
+  WithOCamlVeryClean()
   MyOCamlTestProgram($(name), $(files))
   export # The above thing is local: need to be exported
 
@@ -484,6 +539,7 @@ OCamlTop(name, files) =
    return $(array $(PROG), $(BYTEPROG))
 
 MyOCamlTop(name, files) =
+  WithOCamlVeryClean()
   AddLocalOCamlPackageDependencies()
   export # The above thing is local: need to be exported
 
@@ -512,6 +568,7 @@ MyOCamlTop(name, files) =
 #
 #   .. note :: Probably you should use MyOCamlPackage
 MyOCamlLibrary(library_name, files) =
+  WithOCamlVeryClean()
   AddLocalOCamlPackageDependencies()
   protected.CMIFILES = $(addsuffix .cmi, $(files))
   targets = $(OCamlLibrary $(library_name), $(files)) $(CMIFILES) $(glob i, *.mli) 
@@ -522,11 +579,13 @@ MyOCamlLibrary(library_name, files) =
 
   if $(not $(defined NO_INSTALL))
     targets[] += META 
+    cmts =  $(addsuffix .cmt,  $(removesuffix $(glob i, *.cmo)))
+    cmts += $(addsuffix .cmti, $(removesuffix $(glob i, *.mli)))
     if $(defined INSTALLED)
       $(Installed $(library_name)): $(targets)
         $(OCAMLFIND) remove $(library_name)
         section:
-              $(OCAMLFIND) install $(library_name) $(targets)
+              $(OCAMLFIND) install $(library_name) $(targets) $(cmts)
               CreateInstalled($(library_name), $(targets))
 
       install: $(Installed $(library_name))
@@ -538,7 +597,7 @@ MyOCamlLibrary(library_name, files) =
     else
       install: $(targets)
         $(OCAMLFIND) remove $(library_name)
-        $(OCAMLFIND) install $(library_name) $(targets)
+        $(OCAMLFIND) install $(library_name) $(targets) $(cmts)
 
       uninstall:
 	$(OCAMLFIND) remove $(library_name)
@@ -624,18 +683,8 @@ GET_OCAMLFIND_OBJS(pack)=
 #|ditto.
 mkdir_if_not_exists(dir) =
   if $(not $(test -e $(dir))):
-    mkdir $(dir) 
+    mkdir -p $(dir) 
   return
-
-# Very clean
-# ======================================================================
-
-#| OCaml object files which are not real targets of OMake are not be
-# auto-cleaned away by ``omake clean``. This is not good in some situations
-# at linking.
-WithOCamlVeryClean() =
-    veryclean: 
-        rm -f *.cm* *.annot *.o *.a *.so *.exe *.byt *.opt *.run
 
 # Pa_ounit test
 # =======================================================================

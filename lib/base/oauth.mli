@@ -1,55 +1,61 @@
-val fetch_request_token :
-  ?http_method:Http.meth ->
-  host:string ->
-  path:string ->
-  ?oauth_version:string ->
-  ?oauth_signature_method:[< `Hmac_sha1
-                           | `Plaintext
-                           | `Rsa_sha1 of 'a & 'b & Cryptokit.RSA.key
-                           > `Hmac_sha1 ] ->
-  oauth_consumer_key:string ->
-  oauth_consumer_secret:string ->
-  ?oauth_timestamp:float ->
-  ?oauth_nonce:string ->
-  ?params:(string * string) list ->
-  unit -> ?rawdata:string -> (Http.header -> in_channel -> 'c) -> 'c
+type signature_method = [ `Hmac_sha1
+                        | `Plaintext
+                        | `Rsa_sha1 of Cryptokit.RSA.key 
+                        ]
 
-val fetch_access_token :
-  ?http_method:Http.meth ->
-  host:string ->
-  path:string ->
-  ?oauth_version:string ->
-  ?oauth_signature_method:[< `Hmac_sha1
-                           | `Plaintext
-                           | `Rsa_sha1 of 'a & 'b & Cryptokit.RSA.key
-                           > `Hmac_sha1 ] ->
-  oauth_consumer_key:string ->
-  oauth_consumer_secret:string ->
-  oauth_token:string ->
-  oauth_token_secret:string ->
-  verif:string ->
-  ?oauth_timestamp:float ->
-  ?oauth_nonce:string -> unit -> ?rawdata:string ->
-  (Http.header -> in_channel -> 'c) -> 'c
+val fetch_request_token : 
+  ?http_method:Http.meth 
+  -> ?handle_tweak:(Curl.handle -> unit)
+  -> host:string 
+  -> ?port:int
+  -> path:string 
+
+  -> ?oauth_version:string 
+  -> ?oauth_signature_method:signature_method 
+  -> ?oauth_timestamp:float 
+  -> ?oauth_nonce:string 
+  -> oauth_consumer_key:string 
+  -> oauth_consumer_secret:string 
+
+  -> unit
+  -> [> `Error of [> Http.error ] 
+     |  `Ok of string ]
+
+val fetch_access_token : 
+  verif:string 
+  -> oauth_token:string 
+  -> oauth_token_secret:string 
+
+  -> ?http_method:Http.meth 
+  -> ?handle_tweak:(Curl.handle -> unit)
+  -> host:string 
+  -> ?port:int
+  -> path:string 
+
+  -> ?oauth_version:string 
+  -> ?oauth_signature_method:signature_method 
+  -> ?oauth_timestamp:float 
+  -> ?oauth_nonce:string 
+  -> oauth_consumer_key:string 
+  -> oauth_consumer_secret:string 
+
+  -> unit
+  -> [> `Error of [> Http.error ] 
+     |  `Ok of string ]
 
 type t = {
-  consumer_key : string;
-  consumer_secret : string;
-  access_token : string;
+  consumer_key        : string;
+  consumer_secret     : string;
+  access_token        : string;
   access_token_secret : string;
-  verif : string;
 } with conv(ocaml)
 
-(* Access via http *)
 val access :
-  t -> Http.meth -> string -> string -> (string * string) list ->
-    (Http.header -> in_channel -> 'a) -> 'a
-
-(* Access via https *)
-val access_https : 
-  t 
+  [ `HTTP | `HTTPS ]
+  -> t 
   -> Http.meth 
-  -> string 
-  -> string 
-  -> (string * string) list 
-  -> [> `Error of [> `Http of int * string ] | `Ok of string ]
+  -> string (** host *)
+  -> string (** path *) 
+  -> (string * string) list (** params *)
+  -> [> `Error of [> Http.error ] 
+     |  `Ok of string ]

@@ -1,4 +1,4 @@
-OCAMLFLAGS = -g -thread -w A-31 -warn-error A-31
+OCAMLFLAGS = -thread
 
 OCAMLINCLUDES += .
 
