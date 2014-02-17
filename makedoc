@@ -2,15 +2,23 @@
 prevdir=`pwd`
 ocamltterhome=`dirname $0`
 cd $ocamltterhome
-incl='-I +cryptokit -I +site-lib/cryptokit -I +threads -I base -I twitter'
-ocamlc -c ${incl} \
-    base/util.mli base/base64.mli base/utf16.mli base/llist.mli \
-    base/parserMonad.mli base/json.mli base/xml.mli \
-    base/http.mli base/oauth.mli \
-    twitter/oauthForTwitter.mli twitter/twitterApi.mli \
-    config.mli ocamltter.mli
 mkdir -p doc
-ocamldoc -html -d doc ${incl} \
-    twitter/auth.mli twitter/api.mli \
-    oConfig.mli ocamltter.mli
+ocamlfind ocamldoc -I lib -I lib/base -I lib/twitter -I toplevel -thread \
+    -package cryptokit,spotlib,tiny_json_conv,tiny_json,ocaml_conv \
+    -syntax camlp4o -package meta_conv.syntax -html -d doc \
+    lib/base/util.mli \
+    lib/base/llist.mli \
+    lib/base/utf16.mli \
+    lib/base/parserMonad.mli \
+    lib/base/base64.mli \
+    lib/base/xml.mli \
+    lib/base/http.mli \
+    lib/base/oauth.mli \
+    lib/base/googleTTS.mli \
+    lib/twitter/auth.mli \
+    lib/twitter/api_intf.ml \
+    lib/twitter/api11.ml \
+    toplevel/oConfig.ml \
+    toplevel/ocamltter.mli \
+    toplevel/ocamlinit.ml
 cd $prevdir

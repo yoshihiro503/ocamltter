@@ -92,7 +92,12 @@ let conn ?(port=80) hostname meth ?headers  path ps ?(rawpost="") f =
 
 let () = Curl.global_init Curl.CURLINIT_GLOBALALL
 
-let by_curl ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
+type error = 
+  [ `Http of int * string  (** HTTP status other than 200 *)
+  | `Curl of Curl.curlCode * int * string (** libcURL error *)
+  ]
+
+let by_curl' ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
   let h = new Curl.handle in
   (* h#set_verbose true; *)
   let proto_string = match proto with `HTTP -> "http" | `HTTPS -> "https" in
@@ -135,3 +140,10 @@ let by_curl ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
     | n, mes -> `Error (`Http (n, mes))
   in	
   ok200 (code, Buffer.contents buf)
+
+let by_curl ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
+  try 
+    by_curl' ?handle_tweak meth proto hostname ?port path ~params:ps ~headers 
+  with
+  | Curl.CurlException (curlCode, int, mes) ->
+      `Error (`Curl (curlCode, int, mes))

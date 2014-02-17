@@ -19,6 +19,11 @@ val conn :
   -> (header -> in_channel -> 'a) 
   -> 'a
 
+type error = 
+  [ `Http of int * string  (** HTTP status other than 200 *)
+  | `Curl of Curl.curlCode * int * string (** libcURL error *)
+  ]
+
 (* CR jfuruse: no way to specify the port *)
 (** http access via cURL *)
 val by_curl : 
@@ -30,4 +35,5 @@ val by_curl :
   -> string            (** path *)
   -> params: params    (** get/post parameters *)
   -> headers: params
-  -> [> `Error of [> `Http of int * string ] | `Ok of string ]
+  -> [> `Error of [> error ]
+     |  `Ok of string ]

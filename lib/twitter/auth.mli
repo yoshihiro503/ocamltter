@@ -15,10 +15,10 @@ end
 val oauth : Consumer.t -> VerifiedToken.t -> Oauth.t
 val fetch_request_token : Consumer.t -> 
   (string (* URL *) * Token.t, 
-   [> `Http of int * string ]) Meta_conv.Result.t
+   [> Http.error ]) Meta_conv.Result.t
 val fetch_access_token  : Consumer.t -> VerifiedToken.t -> 
   (string (* username *) * Token.t, 
-   [> `Http of int * string ]) Meta_conv.Result.t
+   [> Http.error ]) Meta_conv.Result.t
 
 val access : 
   [`HTTP | `HTTPS]
@@ -27,6 +27,6 @@ val access :
   -> string (* host name *)
   -> string (* path *) 
   -> (string * string) list (* GET/POST parameters *)
-  -> [> `Error of [> `Http of int * string ] 
+  -> [> `Error of [> Http.error ] 
      |  `Ok of string ]
 

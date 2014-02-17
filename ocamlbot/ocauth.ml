@@ -80,8 +80,9 @@ module Auth = struct
         username, { User.token = oauth.Oauth.access_token;
                     token_secret = oauth.Oauth.access_token_secret;
                     verif = verif }
-    | `Error (`Http (st, err)) ->
-        failwithf "oauth http failed(%d): %s" st err
+    | `Error e ->
+        let s = Format.sprintf "%a" Api11.Error.format e in
+        failwithf "oauth failed: %s" s
   
   let authorize_interactive app = 
     match Auth.fetch_request_token app.App.consumer with
@@ -93,8 +94,9 @@ module Auth = struct
         let username, t = authorize app (req_resp_token, verif) in
         print_endline ("Grant Success! Hello, @"^username^" !");
         username, t
-    | `Error (`Http (st, err)) ->
-        failwithf "oauth http failed(%d): %s" st err
+    | `Error e ->
+        let s = Format.sprintf "%a" Api11.Error.format e in
+        failwithf "oauth failed: %s" s
 
 end
 

@@ -10,12 +10,13 @@ License
 Requirements
 ------------
 	
-* [OCaml](http://caml.inria.fr/) >= 3.10
-* [Cryptokit](http://pauillac.inria.fr/~xleroy/software.html) >= 1.3
-* OCurl(known also as ocaml-curl or curl for OCaml) >= 0.5.3
-* Type_conv
-* Meta_conv
-* Tiny_json_conv
+* [OCaml](http://caml.inria.fr/) >= 4.01.0
+* [Cryptokit](http://pauillac.inria.fr/~xleroy/software.html) >= 1.9
+* OCurl(known also as ocaml-curl or curl for OCaml) >= 0.6.0
+* Spotlib >= 2.4.0
+* Type_conv >= 109.60.00
+* Meta_conv >= 1.1.3
+* Tiny_json_conv >= 1.4.0
 * OMake
 
 Installation

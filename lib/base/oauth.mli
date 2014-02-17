@@ -18,7 +18,8 @@ val fetch_request_token :
   -> oauth_consumer_secret:string 
 
   -> unit
-  -> [> `Error of [> `Http of int * string ] | `Ok of string ]
+  -> [> `Error of [> Http.error ] 
+     |  `Ok of string ]
 
 val fetch_access_token : 
   verif:string 
@@ -39,7 +40,8 @@ val fetch_access_token :
   -> oauth_consumer_secret:string 
 
   -> unit
-  -> [> `Error of [> `Http of int * string ] | `Ok of string ]
+  -> [> `Error of [> Http.error ] 
+     |  `Ok of string ]
 
 type t = {
   consumer_key        : string;
@@ -55,4 +57,5 @@ val access :
   -> string (** host *)
   -> string (** path *) 
   -> (string * string) list (** params *)
-  -> [> `Error of [> `Http of int * string ] | `Ok of string ]
+  -> [> `Error of [> Http.error ] 
+     |  `Ok of string ]
