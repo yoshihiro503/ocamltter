@@ -253,11 +253,11 @@ let gen_access
 
 let fetch_request_token ?(http_method=POST) = 
   (* CRv2 jfuruse: HTTPS *)
-  gen_access ~protocol: `HTTP ~http_method ?oauth_token:None ?oauth_token_secret:None ~oauth_other_params:[] ~non_oauth_params:[]
+  gen_access ~protocol: `HTTPS ~http_method ?oauth_token:None ?oauth_token_secret:None ~oauth_other_params:[] ~non_oauth_params:[]
  
 let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(http_method=POST) =
   (* CRv2 jfuruse: HTTPS *)
-  gen_access ~protocol: `HTTP ~http_method ~oauth_token ~oauth_token_secret ~oauth_other_params:[("oauth_verifier",verif)] ~non_oauth_params:[]
+  gen_access ~protocol: `HTTPS ~http_method ~oauth_token ~oauth_token_secret ~oauth_other_params:[("oauth_verifier",verif)] ~non_oauth_params:[]
 
 let access_resource ~oauth_token ~oauth_token_secret ?(http_method=GET) =
   gen_access ~http_method ~oauth_token ~oauth_token_secret
