@@ -4,12 +4,28 @@ open Util
 
 exception Http_error of string
 
-let url_encode s =
+let url_encode' s =
   let ss = string_foldr (fun c store -> match c with
     | 'a'..'z' | 'A'..'Z' | '0'..'9' | '-' | '.' | '_' | '~' as c -> String.make1 c :: store
     | c -> ("%" ^ to_hex (int_of_char c)) :: store) s []
   in
   String.concat "" (ss)
+
+let url_encode s =
+  let b = Buffer.create (String.length s * 2) in
+  String.iter (function 
+    | 'a'..'z' | 'A'..'Z' | '0'..'9' | '-' | '.' | '_' | '~' as c -> 
+        Buffer.add_char b c
+    | c -> 
+        Buffer.add_char b '%';
+        Buffer.add_string b @@ to_hex (int_of_char c)) s;
+  Buffer.contents b
+
+let url_encode s =
+  let e1 = url_encode' s in
+  let e2 = url_encode s in
+  assert (e1 = e2);
+  e2
 
 let html_decode s =
   let rec aux store = function
@@ -28,7 +44,13 @@ type header = {
   }
 
 type params = (string * string) list
+
 type meth = GET | POST
+
+let string_of_meth = function
+  | GET ->  "GET"
+  | POST -> "POST"
+
 let params2string ps =
   String.concat "&" @@ List.map (fun (k,v) -> k^"="^url_encode v) ps
 
@@ -96,6 +118,10 @@ type error =
   [ `Http of int * string  (** HTTP status other than 200 *)
   | `Curl of Curl.curlCode * int * string (** libcURL error *)
   ]
+
+let string_of_error = function
+  | `Http (n, s) -> !%"Http error %d: %s" n s
+  | `Curl (cc, n, s) -> !%"Curl (%s) %d: %s" (Curl.strerror cc) n s
 
 let by_curl' ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
   let h = new Curl.handle in

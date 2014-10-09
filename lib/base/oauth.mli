@@ -14,6 +14,7 @@ val fetch_request_token :
   -> ?oauth_signature_method:signature_method 
   -> ?oauth_timestamp:float 
   -> ?oauth_nonce:string 
+  -> ?oauth_other_params:(string * string) list  (** e.g. oauth_callback *)
   -> oauth_consumer_key:string 
   -> oauth_consumer_secret:string 
 
@@ -27,6 +28,9 @@ val fetch_access_token :
   -> oauth_token_secret:string 
 
   -> ?http_method:Http.meth 
+
+  -> ?oauth_other_params:(string * string) list
+
   -> ?handle_tweak:(Curl.handle -> unit)
   -> host:string 
   -> ?port:int

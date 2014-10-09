@@ -12,18 +12,15 @@ let rng = Cryptokit.Random.device_rng "/dev/random"
 
 let rfc3986_encode s = Http.url_encode s(*Netencoding.Url.encode s*)
 
-let string_of_http_method = function
-  | GET -> "GET"
-  | POST -> "POST"
-
-type signature_method = [ `Hmac_sha1
-                        | `Plaintext
-                        | `Rsa_sha1 of Cryptokit.RSA.key 
-                        ]
+type signature_method = 
+  [ `Hmac_sha1
+  | `Plaintext
+  | `Rsa_sha1 of Cryptokit.RSA.key 
+  ]
 
 let string_of_signature_method : signature_method -> string = function
-  | `Plaintext -> "PLAINTEXT"
-  | `Hmac_sha1 -> "HMAC-SHA1"
+  | `Plaintext  -> "PLAINTEXT"
+  | `Hmac_sha1  -> "HMAC-SHA1"
   | `Rsa_sha1 _ -> "RSA-SHA1"
 
 let normalize_url url =
@@ -110,7 +107,7 @@ let signature_base_string ~http_method ~url =
     in
     List.map 
       rfc3986_encode
-      [ string_of_http_method http_method
+      [ Http.string_of_meth http_method
       ; normalize_url url
       ; 
         params 
@@ -158,8 +155,8 @@ let pre_sign
 
 let sign = pre_sign ~k:(fun oauth_signature_method signature_base_string key ->
   match oauth_signature_method with
-  | `Plaintext -> rfc3986_encode key
-  | `Hmac_sha1 -> hmac_sha1_hash signature_base_string key
+  | `Plaintext        -> rfc3986_encode key
+  | `Hmac_sha1        -> hmac_sha1_hash signature_base_string key
   | `Rsa_sha1 rsa_key -> rsa_sha1_hash signature_base_string rsa_key)
 
 let _check_signature ~oauth_signature = pre_sign ~k:(fun oauth_signature_method signature_base_string key ->
@@ -217,6 +214,8 @@ let string_of_protocol = function
   | `HTTP -> "http"
   | `HTTPS -> "https"
 
+(* CR jfuruse: 
+   The distinction of oauth_other_params and non_oauth_params is not meaningful. *)
 let gen_access
     ?handle_tweak
     ~protocol
@@ -252,10 +251,21 @@ let gen_access
     http_method protocol host ?port path ~headers:[header] ~params:non_oauth_params
 
 let fetch_request_token ?(http_method=POST) = 
-  gen_access ~protocol: `HTTPS ~http_method ?oauth_token:None ?oauth_token_secret:None ~oauth_other_params:[] ~non_oauth_params:[]
+  gen_access 
+    ~protocol: `HTTPS 
+    ~http_method 
+    ?oauth_token:None 
+    ?oauth_token_secret:None 
+    ~non_oauth_params:[]
  
-let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(http_method=POST) =
-  gen_access ~protocol: `HTTPS ~http_method ~oauth_token ~oauth_token_secret ~oauth_other_params:[("oauth_verifier",verif)] ~non_oauth_params:[]
+let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(http_method=POST) ?(oauth_other_params=[]) =
+  gen_access 
+    ~protocol: `HTTPS 
+    ~http_method 
+    ~oauth_token 
+    ~oauth_token_secret 
+    ~oauth_other_params:(("oauth_verifier",verif) :: oauth_other_params)
+    ~non_oauth_params:[]
 
 let access_resource ~oauth_token ~oauth_token_secret ?(http_method=GET) =
   gen_access ~http_method ~oauth_token ~oauth_token_secret

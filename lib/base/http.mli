@@ -5,7 +5,9 @@ val html_decode : string -> string
 
 type header = { code : string; fields : (string, string) Hashtbl.t; }
 type params = (string * string) list
+
 type meth = GET | POST
+val string_of_meth : meth -> string
 
 (** http access *)
 val conn :
@@ -23,6 +25,8 @@ type error =
   [ `Http of int * string  (** HTTP status other than 200 *)
   | `Curl of Curl.curlCode * int * string (** libcURL error *)
   ]
+
+val string_of_error : error -> string
 
 (* CR jfuruse: no way to specify the port *)
 (** http access via cURL *)
