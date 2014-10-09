@@ -123,55 +123,6 @@ module Make(A : S) = struct
         | `Error e -> error e
         | `Ok (res, acc_token) -> res, acc_token
   
-  (*
-  
-  let auth_file = "ocaml_flickr.auth"
-  
-  let load_auth () =
-    match Ocaml.load_with_exn Xoauth.Token.t_of_ocaml auth_file with
-    | [a] -> a
-    | _ -> assert false
-  
-  let get_acc_token () =
-    try load_auth () with
-    | _ -> 
-        let acc_token = authorize_interactive () in
-        Ocaml.save_with Xoauth.Token.ocaml_of_t ~perm:0o600 auth_file [acc_token];
-        acc_token
-  
-  let get_oauth () =
-    let acc_token = get_acc_token () in
-    { Oauth.consumer_key = Apikey.t.Xoauth.Consumer.key;
-      consumer_secret = Apikey.t.Xoauth.Consumer.secret;
-      access_token = acc_token.Xoauth.Token.token;
-      access_token_secret = acc_token.Xoauth.Token.secret
-    }
-  
-  (* let () = authorize_interactive () *)
-  
-  let test () =
-    let o = get_oauth () in
-    match
-    Oauth.access `HTTPS o
-      Http.GET
-      "api.flickr.com"
-      "/services/rest"
-      [ "nojosoncallback", "1"
-      ; "format", "json"
-      ; "method", "flickr.test.login"
-      ]
-    with
-    | `Error e -> error e
-    | `Ok s -> prerr_endline s
-  
-  let () = test ()
-        
-  *)
-  
-  
-        
-  
-        
 end
 
 let access = Oauth.access

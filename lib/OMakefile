@@ -1,7 +1,6 @@
 OCAMLINCLUDES = $(dir base twitter)
 
 LIBFILES[] = 
-    base/curl
     base/base64
     base/parserMonad
     base/xml

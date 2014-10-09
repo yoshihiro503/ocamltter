@@ -51,7 +51,7 @@ type 'a result = ('a, Error.t) Result.t
 let twitter oauth ?(host="api.twitter.com") meth cmd params =
   (* prerr_endline cmd; *)
   (* List.iter (fun (k,v) -> Format.eprintf "%s=%s@." k v) params; *)
-  Auth.access `HTTPS oauth meth host cmd params >>= fun s -> 
+  Auth.access `HTTPS oauth meth host cmd ~oauth_other_params:params >>= fun s -> 
   Result.catch (fun ~fail -> try Json.parse s with e -> fail (`Json_parse (e,s)))
       
 

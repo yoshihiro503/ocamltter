@@ -84,7 +84,7 @@ let with_oauth_headers
     ~oauth_version
     ?oauth_token 
     ?oauth_signature
-    ?(params = [])
+    other_params
     ~k () =
   k 
   & [ "oauth_signature_method" , string_of_signature_method oauth_signature_method;
@@ -95,7 +95,7 @@ let with_oauth_headers
     ] 
     @ opt_param "oauth_token"     oauth_token 
     @ opt_param "oauth_signature" oauth_signature
-    @ params
+    @ other_params
 
 let signature_base_string ~http_method ~url =
   with_oauth_headers ?oauth_signature:None ~k:(fun params ->
@@ -129,7 +129,7 @@ let pre_sign
     ~oauth_consumer_key ~oauth_consumer_secret
     ?oauth_token ?oauth_token_secret
     ~oauth_timestamp ~oauth_nonce ~oauth_version
-    ?params
+    ~oauth_other_params
     ~k () =
 
   let key =
@@ -146,8 +146,8 @@ let pre_sign
       ~oauth_consumer_key 
       ?oauth_token
       ~oauth_timestamp ~oauth_nonce ~oauth_version
-      ?params
-       (* ?oauth_token_secret ~oauth_consumer_secret *)
+      oauth_other_params
+      (* ?oauth_token_secret ~oauth_consumer_secret *)
       () 
   in
 
@@ -187,15 +187,17 @@ let create_oauth_header
     ~oauth_consumer_secret
     ?oauth_token 
     ?oauth_token_secret 
-    params
+    ~oauth_other_params 
+    ~non_oauth_params
     =
   let oauth_signature =
+    (* non_oauth_params are not taken into account of the signature *)
     sign
       ~http_method ~url
       ~oauth_version ~oauth_signature_method
       ~oauth_timestamp ~oauth_nonce
       ~oauth_consumer_key 
-      ~params
+      ~oauth_other_params
 
       ~oauth_consumer_secret
       ?oauth_token ?oauth_token_secret
@@ -205,7 +207,7 @@ let create_oauth_header
     ~oauth_version ~oauth_signature_method 
     ~oauth_timestamp ~oauth_nonce
     ~oauth_consumer_key
-    ~params
+    (oauth_other_params @ non_oauth_params)
     ?oauth_token
     ~oauth_signature 
     ()
@@ -226,8 +228,8 @@ let gen_access
     ?(oauth_nonce = make_nonce ())
     ?oauth_token 
     ?oauth_token_secret
-    ?(oauth_other_params=[])
-    ?(non_oauth_params=[])
+    ~oauth_other_params
+    ~non_oauth_params
     ~oauth_consumer_key 
     ~oauth_consumer_secret 
     ()
@@ -244,31 +246,38 @@ let gen_access
       ~oauth_consumer_secret
       ?oauth_token
       ?oauth_token_secret
-      (oauth_other_params @ non_oauth_params)
+      ~oauth_other_params 
+      ~non_oauth_params
   in
   Http.by_curl 
     ?handle_tweak
-    http_method protocol host ?port path ~headers:[header] ~params:non_oauth_params
+    http_method protocol host ?port path 
+    ~headers:[header] 
+    ~params:(non_oauth_params @ oauth_other_params)
 
-let fetch_request_token ?(http_method=POST) = 
+let fetch_request_token ?(http_method=POST) ?(oauth_other_params=[]) = 
   gen_access 
     ~protocol: `HTTPS 
     ~http_method 
     ?oauth_token:None 
     ?oauth_token_secret:None 
+    ~oauth_other_params
     ~non_oauth_params:[]
  
-let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(http_method=POST) ?(oauth_other_params=[]) =
+let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(http_method=POST) =
   gen_access 
     ~protocol: `HTTPS 
     ~http_method 
     ~oauth_token 
     ~oauth_token_secret 
-    ~oauth_other_params:(("oauth_verifier",verif) :: oauth_other_params)
+    ~oauth_other_params:["oauth_verifier",verif]
     ~non_oauth_params:[]
 
+(*
 let access_resource ~oauth_token ~oauth_token_secret ?(http_method=GET) =
   gen_access ~http_method ~oauth_token ~oauth_token_secret
+*)
+let access_resource ?(http_method=GET) = gen_access ~http_method
 
 type t = {
   consumer_key:string; 
@@ -277,11 +286,12 @@ type t = {
   access_token_secret:string;
 } with conv(ocaml)
 
-let access proto oauth meth host path params =
+let access proto ?(oauth_other_params=[]) ?(non_oauth_params=[]) oauth meth host path =
   access_resource ~protocol:proto ~http_method:meth ~host:host ~path:path
     ~oauth_consumer_key:oauth.consumer_key
     ~oauth_consumer_secret:oauth.consumer_secret
     ~oauth_token:oauth.access_token
     ~oauth_token_secret:oauth.access_token_secret
-    ~non_oauth_params:params
+    ~oauth_other_params
+    ~non_oauth_params
     ()

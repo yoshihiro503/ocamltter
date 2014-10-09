@@ -1,5 +1,7 @@
 open Spotlib.Spot
 
+val error : Http.error -> 'a
+
 module Consumer : sig
   type t = { key : string; secret : string; } with conv(ocaml)
   val dummy : t
@@ -62,11 +64,12 @@ end
   
 val access 
   : [ `HTTP | `HTTPS ] 
+  -> ?oauth_other_params: Http.params 
+  -> ?non_oauth_params: Http.params
   -> Oauth.t 
   -> Http.meth 
   -> string 
   -> string 
-  -> (string * string) list 
   -> [> `Error of [> Http.error ] | `Ok of string ]
   
 

@@ -22,11 +22,12 @@ val fetch_access_token  : Consumer.t -> VerifiedToken.t ->
 
 val access : 
   [`HTTP | `HTTPS]
+  -> ?oauth_other_params: Http.params
+  -> ?non_oauth_params: Http.params
   -> Oauth.t 
   -> Http.meth 
   -> string (* host name *)
   -> string (* path *) 
-  -> (string * string) list (* GET/POST parameters *)
   -> [> `Error of [> Http.error ] 
      |  `Ok of string ]
 
