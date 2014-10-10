@@ -1,7 +1,6 @@
 open Ocaml_conv
 open Spotlib.Spot
 open Util
-open Http
 
 let opt_param name param =
   match param with
@@ -188,7 +187,7 @@ let create_oauth_header
     ?oauth_token 
     ?oauth_token_secret 
     ~oauth_other_params 
-    ~non_oauth_params
+    (* ~non_oauth_params *)
     =
   let oauth_signature =
     (* non_oauth_params are not taken into account of the signature *)
@@ -207,7 +206,7 @@ let create_oauth_header
     ~oauth_version ~oauth_signature_method 
     ~oauth_timestamp ~oauth_nonce
     ~oauth_consumer_key
-    (oauth_other_params @ non_oauth_params)
+    oauth_other_params (* (oauth_other_params @ non_oauth_params) *)
     ?oauth_token
     ~oauth_signature 
     ()
@@ -247,15 +246,16 @@ let gen_access
       ?oauth_token
       ?oauth_token_secret
       ~oauth_other_params 
-      ~non_oauth_params
+      (* ~non_oauth_params *)
   in
+  begin let k,v = header in !!% "HEADER %s : %s@." k v; end;
   Http.by_curl 
     ?handle_tweak
     http_method protocol host ?port path 
     ~headers:[header] 
     ~params:(non_oauth_params @ oauth_other_params)
 
-let fetch_request_token ?(http_method=POST) ?(oauth_other_params=[]) = 
+let fetch_request_token ?(http_method=`POST) ?(oauth_other_params=[]) = 
   gen_access 
     ~protocol: `HTTPS 
     ~http_method 
@@ -264,7 +264,7 @@ let fetch_request_token ?(http_method=POST) ?(oauth_other_params=[]) =
     ~oauth_other_params
     ~non_oauth_params:[]
  
-let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(http_method=POST) =
+let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(http_method=`POST) =
   gen_access 
     ~protocol: `HTTPS 
     ~http_method 
@@ -277,7 +277,7 @@ let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(http_method=POS
 let access_resource ~oauth_token ~oauth_token_secret ?(http_method=GET) =
   gen_access ~http_method ~oauth_token ~oauth_token_secret
 *)
-let access_resource ?(http_method=GET) = gen_access ~http_method
+let access_resource ?(http_method=`GET) = gen_access ~http_method
 
 type t = {
   consumer_key:string; 

@@ -45,12 +45,14 @@ let error = function
   | `API fail ->
       !!% "API: %a@." Flickr.Fail.format fail;
       assert false
-      
+  | `Load (name, exn) ->
+      !!% "Local file load failure: %s: %a@." name Exn.format exn;
+      assert false
 
 let () =
   match
     Xoauth.access `HTTPS o
-      Http.GET
+      `GET
       "api.flickr.com"
       "/services/rest"
       ~oauth_other_params: [ "nojosoncallback", "1"
@@ -84,10 +86,9 @@ let () =
 (*
   | `Ok j -> !!% "%a@." Tiny_json.Json.format j
 *)
+
+let () =
+  match Flickr.Upload.upload ~is_family:true "test.jpg" o with
+  | `Error e -> error e
+  | `Ok v -> !!% "%s@." v
       
-
-
-      
-
-      
-

@@ -29,7 +29,7 @@ let say lang s =
       in
       iter ())
   in
-  let () = Http.conn "translate.google.com" Http.GET
+  let () = Http.conn "translate.google.com" `GET
       ~headers:[("User-Agent", agent)]
       "/translate_tts"
     [("tl", slang lang); ("q",s)]

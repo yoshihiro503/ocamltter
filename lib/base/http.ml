@@ -45,11 +45,11 @@ type header = {
 
 type params = (string * string) list
 
-type meth = GET | POST
+type meth = [ `GET | `POST | `POST2 ]
 
 let string_of_meth = function
-  | GET ->  "GET"
-  | POST -> "POST"
+  | `GET ->  "GET"
+  | `POST | `POST2 -> "POST"
 
 let params2string ps =
   String.concat "&" @@ List.map (fun (k,v) -> k^"="^url_encode v) ps
@@ -73,14 +73,14 @@ let conn ?(port=80) hostname meth ?headers  path ps ?(rawpost="") f =
   in
   let msg =
     match meth with
-    | GET ->
+    | `GET ->
         assert (rawpost="");
 	let path = if ps<>[] then path ^ "?" ^ params2string ps else path in
 	!%"GET %s HTTP/1.0\r\n" path
 	^ hds
 	^ "Host: " ^ hostname ^ "\r\n"
 	^ "\r\n"
-    | POST ->
+    | `POST | `POST2 -> (* CR jfuruse: POST2 is not actually supported *)
 	let s = params2string ps ^ rawpost in
 	!%"POST %s HTTP/1.0\r\n" path
 	^ "Host: " ^ hostname ^ "\r\n"
@@ -136,12 +136,22 @@ let by_curl' ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
   let headers = ("Host", hostname) :: headers in
   (* DEBUG List.iter (fun (k,v) -> Printf.eprintf "%s: %s\n%!" k v) headers; *)
   begin match meth with
-  | GET ->
+  | `GET ->
       let url = if ps<>[] then url ^ "?" ^ params2string ps else url in
       h#set_url url;
       h#set_post false;
       h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
-  | POST ->
+  | `POST ->
+      h#set_url url;
+      h#set_post true;
+      let s = params2string ps in
+      h#set_postfields s;
+        (* set_postfields of OCurl 0.5.3 has a bug. 
+           We need explicit set_postfieldsize to workaround it.
+        *)
+      h#set_postfieldsize (String.length s);
+      h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
+  | `POST2 ->
       h#set_url url;
       h#set_post true;
       let s = params2string ps in
@@ -167,9 +177,9 @@ let by_curl' ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
   in	
   ok200 (code, Buffer.contents buf)
 
-let by_curl ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
+let by_curl ?handle_tweak meth proto hostname ?port path ~params ~headers =
   try 
-    by_curl' ?handle_tweak meth proto hostname ?port path ~params:ps ~headers 
+    by_curl' ?handle_tweak meth proto hostname ?port path ~params ~headers 
   with
   | Curl.CurlException (curlCode, int, mes) ->
       `Error (`Curl (curlCode, int, mes))

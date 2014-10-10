@@ -67,7 +67,7 @@ type 'a jsonFlickrApi = [ `jsonFlickrApi of 'a ] with conv(json, ocaml)
 
 let raw_api ?(post=false) o m fields = 
   Xoauth.access `HTTPS o
-    (if post then Http.POST else Http.GET)
+    (if post then `POST else `GET)
     "api.flickr.com"
     "/services/rest"
     ~oauth_other_params: ([ "method", m
@@ -337,4 +337,48 @@ module People = struct
     >>= Fail.check
     >>= lift_error GetUploadStatus.t_of_json
 
+end
+
+module Upload = struct
+
+  let raw_api fields img o = 
+    Xoauth.access `HTTPS o
+      `POST2
+      "up.flickr.com"
+      "/services/upload"
+      ~oauth_other_params: fields
+      ~non_oauth_params: ["photo", img]
+      
+  let upload 
+      ?(is_public=false)
+      ?(is_friend=false)
+      ?(is_family=false)
+      ?(hidden=true)
+      img_file o =
+    match File.to_string img_file with
+    | `Error (`Exn exn) -> `Error (`Load (img_file, exn))
+    | `Ok img ->
+        let bool k b = [k, if b then "1" else "0"] in
+  	let fields = 
+          List.concat 
+            [ bool "is_public" is_public
+  	    ; bool "is_friend" is_friend
+  	    ; bool "is_family" is_family
+  	    ; [ "hidden", if hidden then "2" else "1" ]
+            ]
+  	in
+  	raw_api fields img o
+(*
+title (optional)
+The title of the photo.
+description (optional)
+A description of the photo. May contain some limited HTML.
+tags (optional)
+A space-seperated list of tags to apply to the photo.
+safety_level (optional)
+Set to 1 for Safe, 2 for Moderate, or 3 for Restricted.
+content_type (optional)
+Set to 1 for Photo, 2 for Screenshot, or 3 for Other.
+*)
+    
 end

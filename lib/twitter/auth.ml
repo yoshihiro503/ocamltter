@@ -1,7 +1,6 @@
 open Spotlib.Spot
 open Spotlib.Result.Open (* Monads are Result *)
 open Util
-open Http
 open Oauth
 open Ocaml_conv
 
@@ -53,7 +52,7 @@ let fetch_request_token
 let fetch_access_token 
     app ({Token.token= req_token; secret= req_secret}, verif) = 
   fetch_access_token 
-    ~http_method:GET
+    ~http_method:`GET
     ~host:host
     ~path:"/oauth/access_token"
     ~oauth_consumer_key: app.Consumer.key
