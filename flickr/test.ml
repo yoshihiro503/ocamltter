@@ -48,6 +48,9 @@ let error = function
   | `Load (name, exn) ->
       !!% "Local file load failure: %s: %a@." name Exn.format exn;
       assert false
+  | `Xml_parse (s, exn) ->
+      !!% "XML parse failure: %a : %s@." Exn.format exn s;
+      assert false
 
 let () =
   match
@@ -90,5 +93,5 @@ let () =
 let () =
   match Flickr.Upload.upload ~is_family:true "test.jpg" o with
   | `Error e -> error e
-  | `Ok v -> !!% "%s@." v
+  | `Ok v -> !!% "%s@." (Xml.show v)
       

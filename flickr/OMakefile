@@ -5,11 +5,11 @@ OCAMLINCLUDES = $(dir . ../lib)
 OCAML_LIBS= ../lib/twitter
 OCamlRequire(../lib/twitter.cmo)
 
-OCAMLPACKS[] += orakuda
-CAMLP4PACKS[] += orakuda
+# OCAMLPACKS[]  += xmlm
+# CAMLP4PACKS[] += xmlm
 
-OCAMLDEPFLAGS= -syntax camlp4o -package meta_conv.syntax,orakuda.syntax
-OCAMLPPFLAGS = -syntax camlp4o -package meta_conv.syntax,orakuda.syntax
+OCAMLDEPFLAGS= -syntax camlp4o -package meta_conv.syntax
+OCAMLPPFLAGS = -syntax camlp4o -package meta_conv.syntax
 
 FILES[] = 
     app

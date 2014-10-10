@@ -2,9 +2,6 @@ open Spotlib.Spot
 open Twitter
 
 open Ocaml_conv
-(*
-open Meta_conv.Open
-*)
 open Json_conv
 
 open Result
@@ -342,22 +339,26 @@ end
 module Upload = struct
 
   let raw_api fields img o = 
-    Xoauth.access `HTTPS o
+    Xoauth.access_post2 `HTTPS o
       `POST2
       "up.flickr.com"
       "/services/upload"
       ~oauth_other_params: fields
-      ~non_oauth_params: ["photo", img]
-      
+      ~non_oauth_params: ["photo", `FILE img]
+
+  let catch_with err f v = try `Ok (f v) with e -> `Error (err e)
+
   let upload 
       ?(is_public=false)
       ?(is_friend=false)
       ?(is_family=false)
       ?(hidden=true)
       img_file o =
+(*
     match File.to_string img_file with
     | `Error (`Exn exn) -> `Error (`Load (img_file, exn))
     | `Ok img ->
+*)
         let bool k b = [k, if b then "1" else "0"] in
   	let fields = 
           List.concat 
@@ -367,7 +368,9 @@ module Upload = struct
   	    ; [ "hidden", if hidden then "2" else "1" ]
             ]
   	in
-  	raw_api fields img o
+  	raw_api fields img_file o
+        >>= fun s -> 
+        catch_with (fun exn -> `Xml_parse (s, exn)) Xml.parse_string s
 (*
 title (optional)
 The title of the photo.
