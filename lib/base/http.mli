@@ -6,7 +6,7 @@ val html_decode : string -> string
 type header = { code : string; fields : (string, string) Hashtbl.t; }
 type params = (string * string) list
 
-type meth = [ `GET | `POST | `POST2 ]
+type meth = [ `GET | `POST ]
 val string_of_meth : meth -> string
 
 (** http access *)
@@ -41,3 +41,16 @@ val by_curl :
   -> headers: params
   -> [> `Error of [> error ]
      |  `Ok of string ]
+
+val by_curl_post2 : ?handle_tweak:(Curl.handle -> unit) ->
+                         [< `POST2 ] ->
+                         [< `HTTP | `HTTPS ] ->
+                         string ->
+                         ?port:int ->
+                         string ->
+                         params:(string *
+                                 [< `CONTENT of string | `FILE of string ])
+                                list ->
+                         headers:(string * string) list ->
+                         [> `Error of [> `Http of int * string ]
+                          | `Ok of string ]

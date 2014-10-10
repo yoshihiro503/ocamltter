@@ -125,4 +125,5 @@ module Make(A : S) = struct
 end
 
 let access = Oauth.access
+let access_post2 = Oauth.access_post2
   

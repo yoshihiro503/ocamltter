@@ -73,3 +73,16 @@ val access
   -> [> `Error of [> Http.error ] | `Ok of string ]
   
 
+val access_post2 : [< `HTTP | `HTTPS ] ->
+                        ?oauth_other_params:(string * string) list ->
+                        ?non_oauth_params:(string *
+                                           [< `CONTENT of string
+                                            | `FILE of string
+                                            > `CONTENT ])
+                                          list ->
+                        Oauth.t ->
+                        [< `POST2 ] ->
+                        string ->
+                        string ->
+                        [> `Error of [> `Http of int * string ]
+                         | `Ok of string ]

@@ -45,7 +45,7 @@ type header = {
 
 type params = (string * string) list
 
-type meth = [ `GET | `POST | `POST2 ]
+type meth = [ `GET | `POST ]
 
 let string_of_meth = function
   | `GET ->  "GET"
@@ -151,15 +151,50 @@ let by_curl' ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
         *)
       h#set_postfieldsize (String.length s);
       h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
+  end;
+  
+  let buf = Buffer.create 100 in
+  assert (h#get_cookielist = []);
+  h#set_writefunction (fun s -> Buffer.add_string buf s; String.length s);
+  (* Tweak h by the hanlder *)
+  (match handle_tweak with Some f -> f h | None -> ());
+  h#perform;
+  let code = h#get_httpcode in
+  h#cleanup; (* Need to flush out cookies *)
+  let ok200 = function
+    | 200, v -> `Ok v
+    | n, mes -> `Error (`Http (n, mes))
+  in	
+  ok200 (code, Buffer.contents buf)
+
+let by_curl_post2 ?handle_tweak meth proto hostname ?port path ~params ~headers =
+  let open Curl in
+  let h = new Curl.handle in
+  (* h#set_verbose true; *)
+  let proto_string = match proto with `HTTP -> "http" | `HTTPS -> "https" in
+  let url = !% "%s://%s%s%s" 
+    proto_string 
+    hostname 
+    (match port with None -> "" | Some p -> !% ":%d" p) 
+    path
+  in
+  let headers = ("Host", hostname) :: headers in
+  (* DEBUG List.iter (fun (k,v) -> Printf.eprintf "%s: %s\n%!" k v) headers; *)
+  begin match meth with
   | `POST2 ->
       h#set_url url;
       h#set_post true;
-      let s = params2string ps in
+      h#set_httppost 
+        (List.map (function
+          | (k, `FILE path) -> CURLFORM_FILE (k, path, DEFAULT)
+          | (k, `CONTENT s) -> CURLFORM_CONTENT (k, s, DEFAULT)) params);
+(*
       h#set_postfields s;
         (* set_postfields of OCurl 0.5.3 has a bug. 
            We need explicit set_postfieldsize to workaround it.
         *)
       h#set_postfieldsize (String.length s);
+*)
       h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
   end;
   

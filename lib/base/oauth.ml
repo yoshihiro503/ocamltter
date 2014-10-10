@@ -255,6 +255,46 @@ let gen_access
     ~headers:[header] 
     ~params:(non_oauth_params @ oauth_other_params)
 
+(* CR jfuruse: 
+   The distinction of oauth_other_params and non_oauth_params is not meaningful. *)
+let gen_access_post2
+    ?handle_tweak
+    ~protocol
+    ~http_method ~host ?port ~path
+    ?(oauth_version = "1.0") 
+    ?(oauth_signature_method = `Hmac_sha1)
+    ?(oauth_timestamp = make_timestamp ()) 
+    ?(oauth_nonce = make_nonce ())
+    ?oauth_token 
+    ?oauth_token_secret
+    ~oauth_other_params
+    ~non_oauth_params
+    ~oauth_consumer_key 
+    ~oauth_consumer_secret 
+    ()
+    =
+  let url = string_of_protocol protocol ^ "://" ^ host ^ path in
+  let header = 
+    create_oauth_header
+      ~http_method:`POST ~url
+      ~oauth_version
+      ~oauth_signature_method
+      ~oauth_timestamp
+      ~oauth_nonce
+      ~oauth_consumer_key 
+      ~oauth_consumer_secret
+      ?oauth_token
+      ?oauth_token_secret
+      ~oauth_other_params 
+      (* ~non_oauth_params *)
+  in
+  begin let k,v = header in !!% "HEADER %s : %s@." k v; end;
+  Http.by_curl_post2
+    ?handle_tweak
+    http_method protocol host ?port path 
+    ~headers:[header] 
+    ~params:(non_oauth_params @ List.map (fun (k,v) -> k, `CONTENT v) oauth_other_params)
+
 let fetch_request_token ?(http_method=`POST) ?(oauth_other_params=[]) = 
   gen_access 
     ~protocol: `HTTPS 
@@ -273,12 +313,6 @@ let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(http_method=`PO
     ~oauth_other_params:["oauth_verifier",verif]
     ~non_oauth_params:[]
 
-(*
-let access_resource ~oauth_token ~oauth_token_secret ?(http_method=GET) =
-  gen_access ~http_method ~oauth_token ~oauth_token_secret
-*)
-let access_resource ?(http_method=`GET) = gen_access ~http_method
-
 type t = {
   consumer_key:string; 
   consumer_secret:string;
@@ -286,8 +320,18 @@ type t = {
   access_token_secret:string;
 } with conv(ocaml)
 
-let access proto ?(oauth_other_params=[]) ?(non_oauth_params=[]) oauth meth host path =
-  access_resource ~protocol:proto ~http_method:meth ~host:host ~path:path
+let access proto ?(oauth_other_params=[]) ?(non_oauth_params=[]) oauth http_method host path =
+  gen_access ~http_method ~protocol:proto ~host:host ~path:path
+    ~oauth_consumer_key:oauth.consumer_key
+    ~oauth_consumer_secret:oauth.consumer_secret
+    ~oauth_token:oauth.access_token
+    ~oauth_token_secret:oauth.access_token_secret
+    ~oauth_other_params
+    ~non_oauth_params
+    ()
+
+let access_post2 proto ?(oauth_other_params=[]) ?(non_oauth_params=[]) oauth http_method host path =
+  gen_access_post2 ~protocol:proto ~http_method ~host:host ~path:path
     ~oauth_consumer_key:oauth.consumer_key
     ~oauth_consumer_secret:oauth.consumer_secret
     ~oauth_token:oauth.access_token
