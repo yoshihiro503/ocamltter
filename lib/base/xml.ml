@@ -43,8 +43,9 @@ let pcdata =
     
 let parser_ =
     let rec iter () =
-      let top = char '<' >> char '?' >> many ident >> char '?' >> char '>'
-	  >>= fun _ -> iter()
+      let top = char '<' >> char '?' >> ident >>= fun _xml ->
+	many pattr <.< whitespace <.< char '?' <.< char '>' >>= fun _attrs ->
+	iter ()
       in
       let tag1 = char '<' >> ident >>= fun name ->
 	many pattr <.< char '>' >>= fun attrs ->
