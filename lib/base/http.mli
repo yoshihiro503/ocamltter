@@ -52,5 +52,5 @@ val by_curl_post2 : ?handle_tweak:(Curl.handle -> unit) ->
                                  [< `CONTENT of string | `FILE of string ])
                                 list ->
                          headers:(string * string) list ->
-                         [> `Error of [> `Http of int * string ]
+                         [> `Error of [> error ]
                           | `Ok of string ]

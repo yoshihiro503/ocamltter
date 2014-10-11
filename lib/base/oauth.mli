@@ -74,5 +74,5 @@ val access_post2 : [< `HTTP | `HTTPS ] ->
                         [< `POST2 ] ->
                         string ->
                         string ->
-                        [> `Error of [> `Http of int * string ]
+                        [> `Error of [> Http.error ]
                          | `Ok of string ]

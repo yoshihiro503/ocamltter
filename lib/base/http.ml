@@ -167,6 +167,15 @@ let by_curl' ?handle_tweak meth proto hostname ?port path ~params:ps ~headers =
   in	
   ok200 (code, Buffer.contents buf)
 
+
+let by_curl ?handle_tweak meth proto hostname ?port path ~params ~headers =
+  try 
+    by_curl' ?handle_tweak meth proto hostname ?port path ~params ~headers 
+  with
+  | Curl.CurlException (curlCode, int, mes) ->
+      `Error (`Curl (curlCode, int, mes))
+
+
 let by_curl_post2 ?handle_tweak meth proto hostname ?port path ~params ~headers =
   let open Curl in
   let h = new Curl.handle in
@@ -212,9 +221,9 @@ let by_curl_post2 ?handle_tweak meth proto hostname ?port path ~params ~headers 
   in	
   ok200 (code, Buffer.contents buf)
 
-let by_curl ?handle_tweak meth proto hostname ?port path ~params ~headers =
+let by_curl_post2 ?handle_tweak meth proto hostname ?port path ~params ~headers =
   try 
-    by_curl' ?handle_tweak meth proto hostname ?port path ~params ~headers 
+    by_curl_post2 ?handle_tweak meth proto hostname ?port path ~params ~headers 
   with
   | Curl.CurlException (curlCode, int, mes) ->
       `Error (`Curl (curlCode, int, mes))
