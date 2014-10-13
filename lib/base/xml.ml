@@ -9,6 +9,8 @@ type xml =
 let show xml =
   let indent d = String.make (2*d) ' ' in
   let rec iter d = function
+    | Tag (name,attrs,[]) ->
+	indent d ^ "<"^name^" "^slist " " (fun(k,v)->k^"="^v) attrs^"/>\n"
     | Tag (name,attrs,body) ->
 	indent d ^ "<"^name^" "^slist " " (fun(k,v)->k^"="^v) attrs^">\n"
 	^slist "\n" (iter (d+1)) body
