@@ -20,8 +20,8 @@ val sep : 'a t -> 'b t -> 'b list t
 val opt : 'a t -> 'a option t
 
 val char1 : char t
-val char_when : (char -> bool) -> char t
-val char : char -> char t
+val char_when : string (** waiting class name *) -> (char -> bool) -> char t
+val char : char -> unit t
 val keyword : string -> string t
 val make_ident : (char -> bool) -> string t
 val int : int t

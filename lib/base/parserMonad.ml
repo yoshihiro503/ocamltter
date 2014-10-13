@@ -108,15 +108,23 @@ let _char1_with_debug state = function
 
 let char1_without_debug state = function
   | Nil -> Inr (state,"(Nil)")
-  | Cons (x,xs) -> Inl (x, state, !$xs)
+  | Cons (x,xs) -> 
+      (* We do not touch [cs] since it is only for debugging *)
+      match x, state with
+      | '\n', (line,_pos,cs) ->
+	  Inl (x,(line+1,-1, cs), !$xs)
+      | _, (line,pos,cs) ->
+	  Inl (x,(line, pos+1, cs), !$xs)
 
 let char1 = char1_without_debug
 
-let char_when f = char1 >>= fun c ->
+let char_when cls f = char1 >>= fun c ->
   if f c then return c
-  else error (!%"(expected char:'%c')" c)
+  else error (!%"(unexpected char:'%c' when waiting %s)" c cls)
 
-let char c = char_when ((=) c)
+let char c = char1 >>= fun c' ->
+  if c = c' then return ()
+  else error (!%"(unexpected char:'%c' when waiting '%c')" c' c)
 
 let keyword w =
   let rec iter i =
@@ -127,7 +135,7 @@ let keyword w =
   iter 0
 
 let make_ident f =
-  many1 (char_when f) >>= fun cs ->
+  many1 (char_when "ident" f) >>= fun cs ->
     return (string_of_chars cs)
 
 let int =
