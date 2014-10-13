@@ -338,15 +338,76 @@ end
 
 module Upload = struct
 
-  let raw_api fields _img o = 
+  let raw_api fields img o = 
     Xoauth.access_post2 `HTTPS o
       `POST2
       "up.flickr.com"
       "/services/upload"
       ~oauth_other_params: fields
-      ~non_oauth_params: [] (* ["photo", `FILE img] *)
+      ~non_oauth_params: ["photo", `FILE img]
 
   let catch_with err f v = try `Ok (f v) with e -> `Error (err e)
+
+  open Xml
+
+  let tag p = function
+    | Tag (name, _, _) as xml when p name -> [xml]
+    | _ -> []
+
+  let tag_named name = tag (fun x -> x = name)
+
+  let pcdata = function
+    | PCData _ as xml -> [xml]
+    | _ -> []
+
+  let children = function
+    | Tag (_, _, xs) -> xs
+    | PCData _ -> []
+        
+  let attr k = function
+    | PCData _ -> []
+    | Tag (_, attrs, _) -> 
+        match List.assoc_opt k attrs with
+        | None -> []
+        | Some v -> [ PCData v ]
+        
+  let assoc_attr k = function
+    | PCData _ -> None
+    | Tag (_, attrs, _) -> List.assoc_opt k attrs
+        
+  let (^.) a b xml = List.concat_map a & b xml
+
+  let parse_rsp xml =
+    try
+      match (attr "stat" ^. tag_named "rsp") xml with
+      | [ PCData "ok" ] ->
+          let photoids = (pcdata ^. children ^. tag_named "photoid" ^. children) xml in
+          begin match photoids with
+          | [] -> `Error ("<photoid> is not found", xml)
+          | xs -> `Ok (`Ok (List.map (function PCData s -> s | _ -> assert false) xs))
+          end
+          
+      | [ PCData "fail" ] ->
+          begin match (tag_named "err" ^. children) xml with
+          | [e] ->
+              begin match assoc_attr "code" e, assoc_attr "msg" e with
+              | Some code, Some msg -> 
+                  begin try
+                    `Ok (`Error (`API {Fail.stat = "fail"; code = int_of_string code; message=msg }))
+                    with _ -> `Error ("error code is not int", xml)
+                  end
+                          
+              | _ -> assert false
+              end
+          | [] -> assert false
+          | _ -> assert false
+          end
+      | [ PCData s ] -> failwith s
+      | [] -> assert false
+      | _ -> assert false
+    with
+    | _ -> `Error ("rsp parse failed", xml)
+
 
   let upload 
       ?(is_public=false)
@@ -354,11 +415,6 @@ module Upload = struct
       ?(is_family=false)
       ?(hidden=true)
       img_file o =
-(*
-    match File.to_string img_file with
-    | `Error (`Exn exn) -> `Error (`Load (img_file, exn))
-    | `Ok img ->
-*)
         let bool k b = [k, if b then "1" else "0"] in
   	let fields = 
           List.concat 
@@ -368,9 +424,13 @@ module Upload = struct
   	    ; [ "hidden", if hidden then "2" else "1" ]
             ]
   	in
-  	raw_api fields img_file o
-        >>= fun s -> 
-        catch_with (fun exn -> `Xml_parse (s, exn)) Xml.parse_string s
+  	raw_api fields img_file o >>= fun s -> 
+        catch_with (fun exn -> `XML_parse (s, exn)) Xml.parse_string s >>= fun xml ->
+        match parse_rsp xml with
+        | `Ok v -> v
+        | `Error (mes, xml) -> `Error (`XML_conv (mes, xml))
+
+        
 (*
 title (optional)
 The title of the photo.

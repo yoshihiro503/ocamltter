@@ -56,8 +56,11 @@ let error = function
   | `Load (name, exn) ->
       !!% "Local file load failure: %s: %a@." name Exn.format exn;
       assert false
-  | `Xml_parse (s, exn) ->
+  | `XML_parse (s, exn) ->
       !!% "XML parse failure: %a : %s@." Exn.format exn s;
+      assert false
+  | `XML_conv (mes, xml) ->
+      !!% "XML conv failure: %s : %s@." mes (Xml.show xml);
       assert false
 
 let () =
@@ -79,17 +82,22 @@ let () =
   | `Error e -> error e
   | `Ok v -> !!% "%a@." (Ocaml.format_with Flickr.Photosets.GetList.ocaml_of_photoset) v
 
+(*
 let () =
   match Flickr.Photosets.getPhotos "72157648394310161" o with
   | `Error e -> error e
   | `Ok v -> !!% "%a@." (Ocaml.format_with Flickr.Photosets.GetPhotos.ocaml_of_photoset) v
+*)
 
+(*
 let () =
   match Flickr.Photosets.removePhotos "72157648394310161" ["700261373"] o with
   | `Error e -> error e
   | `Ok () -> !!% "done@."
+*)
 
 let () =
+  prerr_endline "Photo upload status test";
   match Flickr.People.getUploadStatus o with
   | `Error e -> error e
   | `Ok v -> !!% "%a@." (Ocaml.format_with Flickr.People.GetUploadStatus.ocaml_of_t) v
@@ -99,7 +107,9 @@ let () =
 *)
 
 let () =
+  prerr_endline "Photo uploading test";
   match Flickr.Upload.upload ~is_family:true "test.jpg" o with
   | `Error e -> error e
-  | `Ok v -> !!% "%s@." (Xml.show v)
+  | `Ok pids -> !!% "Uploaded [%s]@." (String.concat "; " pids)
+
       
