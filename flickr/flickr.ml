@@ -338,13 +338,13 @@ end
 
 module Upload = struct
 
-  let raw_api fields img o = 
+  let raw_api fields _img o = 
     Xoauth.access_post2 `HTTPS o
       `POST2
       "up.flickr.com"
       "/services/upload"
       ~oauth_other_params: fields
-      ~non_oauth_params: ["photo", `FILE img]
+      ~non_oauth_params: [] (* ["photo", `FILE img] *)
 
   let catch_with err f v = try `Ok (f v) with e -> `Error (err e)
 

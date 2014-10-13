@@ -31,6 +31,14 @@ let get_oauth () =
   let acc_token = get_acc_token () in
   Xoauth.oauth Flickr_oauth_conf.app acc_token
 
+let xml = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>
+<rsp stat=\"fail\">
+	<err code=\"2\" msg=\"No photo specified\" />
+</rsp>
+"
+
+let _ = Xml.parse_string xml
+
 let o = get_oauth ()
 
 let error = function
