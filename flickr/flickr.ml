@@ -4,18 +4,51 @@ open Twitter
 open Ocaml_conv
 open Json_conv
 
+type 'json mc_leftovers = (string * 'json) list with conv(ocaml)
+type 'a mc_option = 'a option with conv(ocaml)
+
 open Result
+
+module Oauth_conf = struct
+  let oauth_signature_method = `Hmac_sha1
+  let oauth_callback = Some None (* oob *)
+  let host = "www.flickr.com"
+  let request_path = "/services/oauth/request_token"
+  let access_path = "/services/oauth/access_token"
+  let authorize_url = "https://www.flickr.com/services/oauth/authorize?oauth_token="
+  let app = App.app
+end
+
+module Oauth = Xoauth.Make(Oauth_conf)
+
+let load_auth auth_file =
+  match Ocaml.load_with_exn Xoauth.Access_token.t_of_ocaml auth_file with
+  | [a] -> a
+  | _ -> assert false
+
+let get_acc_token auth_file =
+  try load_auth auth_file with
+  | _ -> 
+      let _res, acc_token = Oauth.authorize_cli_interactive () in
+      Ocaml.save_with Xoauth.Access_token.ocaml_of_t ~perm:0o600 auth_file [acc_token];
+      acc_token
+
+let get_oauth auth_file =
+  let acc_token = get_acc_token auth_file in
+  Xoauth.oauth Oauth_conf.app acc_token
 
 module Json = struct
   include Tiny_json.Json
+(*
   let json_of_t x = x
   let t_of_json ?trace:_ x = `Ok x
-
+*)
   let ocaml_of_t t = Ocaml.String (show t)
   let t_of_ocaml = Ocaml_conv.Helper.of_deconstr (function
     | Ocaml.String s -> parse s
     | _ -> failwith "Ocaml.String expected")
-
+  let t_of_ocaml_exn = Ocaml_conv.exn t_of_ocaml
+ 
   let ocaml_of_exn = ocaml_of_string *< Exn.to_string
 
   type error = 
@@ -49,6 +82,18 @@ module Json = struct
     | t -> `Error (Meta_conv.Error.Exception (Failure "Number or String expected"), t, `Node t :: trace)
 
   let json_of_sint = json_of_int
+
+  type sint64 = int64 with conv(ocaml)
+
+  let sint64_of_json ?(trace=[]) = function
+    | (Number _ as j) -> int64_of_json ~trace j
+    | (String s as t) -> 
+        begin try `Ok (Int64.of_string s) with
+        | e -> `Error (Meta_conv.Error.Exception e, t, `Node t :: trace)
+        end
+    | t -> `Error (Meta_conv.Error.Exception (Failure "Number or String expected"), t, `Node t :: trace)
+
+  let json_of_sint64 = json_of_int64
 
   type ibool = bool with conv(ocaml)
 
@@ -91,27 +136,257 @@ let lift_error f s = match f s with
     
 module Fail = struct
 
-  type t = { 
+  type t = < 
     stat : string (** "fail" *);
     code : sint;
     message : string 
-  } with conv(json, ocaml)
+  > with conv(json, ocaml)
 
   let format = Ocaml.format_with ocaml_of_t
 
   let check j =
     match lift_error t_of_json j with
-    | `Ok e when e.stat = "fail" -> `Error (`API e)
+    | `Ok e when e#stat = "fail" -> `Error (`API e)
     | _ -> `Ok j
 end
 
-type content = { _content : string } with conv(json, ocaml)
-  
+type content = < content as "_content" : string > with conv(json, ocaml)
+
+module Photos = struct  
+
+(*
+  let int_of_privacy_filter = function
+    | `Public -> 1
+    | `Friends -> 2
+    | `Family -> 3
+    | `Friends_and_family -> 4
+    | `Private -> 5
+
+  module Media = struct
+    type t = [`All     as "all"
+             | `Photos as "photos"
+             | `Videos as "videos" ] 
+    with conv(json, ocaml)
+  end
+*)
+
+  module GetNotInSet = struct
+     
+    type resp = < 
+      photos : photos;
+      stat   : string; 
+    >
+
+    and photos = <
+      page : sint;
+      pages : sint;
+      perpage : sint;
+      total : sint;
+      photo : photo list;
+    >
+
+    and photo = <
+      id : string;
+      owner : string;
+      secret : string;
+      server : string;
+      farm : sint;
+      title : string;
+      ispublic : ibool;
+      isfriend : ibool;
+      isfamily : ibool
+    >
+    with conv(json, ocaml)
+  end
+
+  let raw_getNotInSet ?(per_page=100) ?(page=1) (* ?privacy_filter ?media *) o = 
+    assert (page > 0);
+    json_api o "flickr.photos.getNotInSet"
+      [ "api_key", App.app.Xoauth.Consumer.key
+      ; "per_page", string_of_int per_page
+      ; "page", string_of_int page
+      ]
+    >>= Fail.check
+    >>= lift_error GetNotInSet.resp_of_json
+    >>| fun x -> x#photos
+
+(*
+max_upload_date (Optional)
+Maximum upload date. Photos with an upload date less than or equal to this value will be returned. The date can be in the form of a unix timestamp or mysql datetime.
+min_taken_date (Optional)
+Minimum taken date. Photos with an taken date greater than or equal to this value will be returned. The date can be in the form of a mysql datetime or unix timestamp.
+max_taken_date (Optional)
+Maximum taken date. Photos with an taken date less than or equal to this value will be returned. The date can be in the form of a mysql datetime or unix timestamp.
+min_upload_date (Optional)
+Minimum upload date. Photos with an upload date greater than or equal to this value will be returned. The date can be in the form of a unix timestamp or mysql datetime.
+extras (Optional)
+A comma-delimited list of extra information to fetch for each returned record. Currently supported fields are: description, license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_q, url_m, url_n, url_z, url_c, url_l, url_o
+page (Optional)
+The page of results to return. If this argument is omitted, it defaults to 1.
+*)
+
+  module GetInfo = struct
+
+    type owner = <
+        nsid: string;
+        username: string;
+        realname: string;
+        location: string;
+        unknowns: Json.t mc_leftovers;
+      >
+    
+    and dates = < 
+        posted: sint64;
+        taken: string;
+        unknowns: Json.t mc_leftovers 
+      >
+
+    and urls = < url: type_content list >
+
+    and type_content = < 
+        type_ as "type": string; (* "photopage", *)
+        content as "_content": string 
+      >
+
+    and resp = < photo: photo; stat: string >
+
+    and photo = <
+        id: string;
+        secret : string;
+        server : string;
+        farm: sint;
+        dateuploaded: sint64;
+        isfavorite: ibool;
+        license: sint;
+        safety_level: sint;
+        rotation: sint;
+        originalsecret: string; (* "edf076f1f2" *)
+        originalformat : string; (* "jpg" *)
+        owner: owner;
+        title: content;
+        description: content;
+        visibility: visibility;
+        dates: dates;
+        views: sint;
+        comments: content;
+        urls: urls;
+        media: string; (* "photo" *)
+        unknowns: Json.t mc_leftovers;
+      >
+
+    and visibility = < ispublic: ibool; isfriend: ibool; isfamily: ibool >
+
+    with conv(json, ocaml)
+
+  end
+      
+
+  let getInfo photo_id o =
+    json_api o "flickr.photos.getInfo"
+      [ "api_key", App.app.Xoauth.Consumer.key
+      ; "photo_id", photo_id
+      ]
+    >>= Fail.check
+    >>= lift_error GetInfo.resp_of_json
+    
+(*
+secret (Optional)
+The secret for the photo. If the correct secret is passed then permissions checking is skipped. This enables the 'sharing' of individual photos by passing around the id and secret.
+
+The <permissions> element is only returned for photos owned by the calling user. The isfavorite attribute only makes sense for logged in users who don't own the photo. The rotation attribute is the current clockwise rotation, in degrees, by which the smaller image sizes differ from the original image.
+
+The <date> element's lastupdate attribute is a Unix timestamp indicating the last time the photo, or any of its metadata (tags, comments, etc.) was modified.
+*)
+
+  module GetExif = struct
+
+    type exif = <
+        tagspace   : string;
+        tagspaceid : sint;
+        tag        : string;
+        label      : string;
+        raw        : content;
+        clean      : string mc_option
+      >
+
+    and resp = < photo : photo; stat : string >
+
+    and photo = <
+        id : string;
+        secret : string;
+        camera : string;
+        exif: exif list;
+        unknown : Json.t mc_leftovers 
+      >
+    with conv(json,ocaml)
+
+  end
+                  
+  let getExif photo_id o =
+    json_api o "flickr.photos.getExif"
+      [ "api_key", App.app.Xoauth.Consumer.key
+      ; "photo_id", photo_id
+      ]
+    >>= Fail.check
+    >>= lift_error GetExif.resp_of_json
+    >>| fun x -> x#photo  
+
+(*
+secret (Optional)
+The secret for the photo. If the correct secret is passed then permissions checking is skipped. This enables the 'sharing' of individual photos by passing around the id and secret.
+*)
+
+  let delete photo_id o = 
+    json_api ~post:true o "flickr.photos.delete"
+      [ "api_key", App.app.Xoauth.Consumer.key
+      ; "photo_id", photo_id
+      ]
+    >>= Fail.check
+    >>| fun _ -> ()
+
+end
+
 module Photosets = struct
+
+  module Create = struct
+
+    type resp = < photoset: photoset; stat : string >
+
+    and photoset = < id : string; url : string >
+    with conv(json, ocaml)
+  end
+
+  let create ~title ~primary_photo_id o =
+    json_api o "flickr.photosets.create"
+      [ "api_key", App.app.Xoauth.Consumer.key
+      ; "title", title
+      ; "primary_photo_id", primary_photo_id
+      ]
+    >>= Fail.check
+    >>= lift_error Create.resp_of_json
+    >>| fun x -> x#photoset
+    
+(*
+description (Optional)
+A description of the photoset. May contain limited html.
+primary_photo_id (Required)
+The id of the photo to represent this set. The photo must belong to the calling user.
+Example Response
+
+<photoset id="1234" url="http://www.flickr.com/photos/bees/sets/1234/" />
+New photosets are automatically put first in the photoset ordering for the user. Use flickr.photosets.orderSets if you don't want the new set to appear first on the user's photoset list.
+
+Error Codes
+
+1: No title specified
+No title parameter was passed in the request.
+2: Photo not found
+*)
+
 
   module GetList = struct
 
-    type set = { id : string;
+    type set = < id : string;
                  primary : string;
                  secret : string;
                  server : string;
@@ -127,17 +402,17 @@ module Photosets = struct
                  can_comment : ibool;
                  date_create : string;
                  date_update : string
-               }
+               >
   
-    and photoset = { cancreate : ibool;
+    and photoset = < cancreate : ibool;
                      page : sint;
                      pages : sint;
                      perpage : sint;
                      total : sint;
-                     photoset : set list }
+                     photoset : set list >
   
-    and t = { photosets : photoset;
-              stat : string; }
+    and resp = < photosets : photoset;
+                 stat : string; >
 
     with conv(json, ocaml_of )
 
@@ -150,7 +425,8 @@ module Photosets = struct
       ; "page", string_of_int page
       ]
     >>= Fail.check
-    >>= lift_error GetList.t_of_json
+    >>= lift_error GetList.resp_of_json
+    >>| fun x -> x#photosets
 
 (*
 user_id (Optional)
@@ -163,19 +439,39 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
 
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
   let getList o =
-    let open GetList in
     let rec f n st =
       raw_getList o ~page:n 
-      >>= fun { photosets = psets } ->
-        if psets.perpage * n > psets.total then
+      >>= fun psets ->
+        if psets#perpage * n > psets#total then
           (* last page *)
-          `Ok { psets with photoset = st @ psets.photoset; }
-        else f (n+1) (st @ psets.photoset)
+          `Ok (object
+            method cancreate = psets#cancreate
+            method total = psets#total
+            method photoset = st @ psets#photoset; 
+          end)
+        else f (n+1) (st @ psets#photoset)
     in
     f 1 []
 
-  module Photo = struct
-    type t = {
+  module GetPhotos = struct
+
+    type resp = < photoset : photoset; stat : string; >
+        
+    and photoset = <
+      id : string;
+      primary : string;
+      owner : string;
+      ownername : string;
+      photo : photo list;
+      page : sint;
+      per_page : sint;
+      perpage : sint;
+      pages : sint;
+      total : sint;
+      title : string;
+    >
+
+    and photo = <
       id : string;
       secret : string;
       server : string;
@@ -185,26 +481,7 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
       ispublic : ibool;
       isfriend : ibool;
       isfamily : ibool 
-    } with conv(json,ocaml)
-  end
-
-  module GetPhotos = struct
-
-    type t = { photoset : photoset; stat : string; }
-        
-    and photoset = {
-      id : string;
-      primary : string;
-      owner : string;
-      ownername : string;
-      photo : Photo.t list;
-      page : sint;
-      per_page : sint;
-      perpage : sint;
-      pages : sint;
-      total : sint;
-      title : string;
-    }
+    >
     with conv(json,ocaml)
 
   end
@@ -218,7 +495,8 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
       ; "page", string_of_int page
       ]
     >>= Fail.check
-    >>= lift_error GetPhotos.t_of_json
+    >>= lift_error GetPhotos.resp_of_json
+    >>| fun x -> x#photoset
 
 (*
 extras (Optional)
@@ -238,14 +516,21 @@ Filter results by media type. Possible values are all (default), photos or video
 
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
   let getPhotos photoset_id o =
-    let open GetPhotos in
     let rec f n st =
       raw_getPhotos photoset_id o ~page:n 
-      >>= fun { photoset = pset } ->
-        if pset.per_page * n > pset.total then
+      >>= fun pset ->
+        if pset#per_page * n > pset#total then
           (* last page *)
-          `Ok { pset with photo = st @ pset.photo; }
-        else f (n+1) (st @ pset.photo)
+          `Ok (object
+            method id        = pset#id
+            method primary   = pset#primary
+            method owner     = pset#owner
+            method ownername = pset#ownername
+            method photo     = st @ pset#photo
+            method total     = pset#total
+            method title     = pset#title
+          end)
+        else f (n+1) (st @ pset#photo)
     in
     f 1 []
 
@@ -258,15 +543,24 @@ Filter results by media type. Possible values are all (default), photos or video
       ]
     >>= Fail.check
     >>= fun _ -> return ()
-    
+
+
+  let addPhoto photoset_id ~photo_id o =
+    json_api o "flickr.photosets.getPhotos"
+      [ "api_key", App.app.Xoauth.Consumer.key
+      ; "photoset_id", photoset_id
+      ; "photo_id", photo_id
+      ]
+    >>= Fail.check
+    >>= fun _ -> `Ok ()
+
 end
 
 module People = struct
 
   module GetUploadStatus = struct
 
-    module Bandwidth = struct
-      type t = { 
+    type bandwidth = <
         max : int64;
         used : int64;
         maxbytes : int64;
@@ -276,55 +570,46 @@ module People = struct
         usedkb : int64;
         remainingkb : int64;
         unlimited : ibool
-      } with conv(json,ocaml)
-    end
+      >
 
-    module Filesize = struct
-      type t = {
+    and filesize = <
         max : int64;
         maxbytes : int64;
         maxkb : int64;
         maxmb : int64;
-      } with conv(json,ocaml)
-    end
+      >
 
-    module Videosize = struct
-      type t = {
+    and videosize = <
         maxbytes : int64;
         maxkb : int64;
         maxmb : int64;
-      } with conv(json,ocaml)
-    end
+      >
 
-    module Sets = struct
-      type t = { 
+    and sets = < 
         created : sint;
         remaining : string
-      } with conv(json,ocaml)
-    end
+      >
 
-    module Videos = struct
-      type t = { 
+    and videos = <
         uploaded : sint;
         remaining : string
-      } with conv(json,ocaml)
-    end
+      >
 
-    type t = { 
+    and resp = < 
       user : user;
       stat : string 
-    }
+    >
 
-    and user = { 
+    and user = < 
       id : string;
       ispro : ibool;
       username : content;
-      bandwidth : Bandwidth.t;
-      filesize : Filesize.t;
-      sets : Sets.t;
-      videosize : Videosize.t;
-      videos : Videos.t
-    } with conv(json,ocaml)
+      bandwidth : bandwidth;
+      filesize : filesize;
+      sets : sets;
+      videosize : videosize;
+      videos : videos;
+    > with conv(json,ocaml)
   end
 
   let getUploadStatus o =
@@ -332,7 +617,8 @@ module People = struct
       [ "api_key", App.app.Xoauth.Consumer.key
       ]
     >>= Fail.check
-    >>= lift_error GetUploadStatus.t_of_json
+    >>= lift_error GetUploadStatus.resp_of_json
+    >>| fun x -> x#user
 
 end
 
@@ -393,7 +679,7 @@ module Upload = struct
               begin match assoc_attr "code" e, assoc_attr "msg" e with
               | Some code, Some msg -> 
                   begin try
-                    `Ok (`Error (`API {Fail.stat = "fail"; code = int_of_string code; message=msg }))
+                    `Ok (`Error (`API (object method stat = "fail" method code = int_of_string code method  message=msg end)))
                     with _ -> `Error ("error code is not int", xml)
                   end
                           
@@ -445,3 +731,26 @@ Set to 1 for Photo, 2 for Screenshot, or 3 for Other.
 *)
     
 end
+
+let error = function
+  | (`Http _ | `Curl _ as e) -> Xoauth.error e
+  | `Json (e, s) -> 
+      !!% "Json: %a@." Json.format_error e;
+      !!% "  %S@." s;
+      assert false
+  | `Json_conv e ->
+      !!% "Json_conv: %a@." Json_conv.format_full_error e;
+      assert false
+  | `API fail ->
+      !!% "API: %a@." Fail.format fail;
+      assert false
+  | `Load (name, exn) ->
+      !!% "Local file load failure: %s: %a@." name Exn.format exn;
+      assert false
+  | `XML_parse (s, exn) ->
+      !!% "XML parse failure: %a : %s@." Exn.format exn s;
+      assert false
+  | `XML_conv (mes, xml) ->
+      !!% "XML conv failure: %s : %s@." mes (Xml.show xml);
+      assert false
+

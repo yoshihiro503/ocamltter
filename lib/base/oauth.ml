@@ -248,7 +248,7 @@ let gen_access
       ~oauth_other_params 
       (* ~non_oauth_params *)
   in
-  begin let k,v = header in !!% "HEADER %s : %s@." k v; end;
+  (* begin let k,v = header in !!% "HEADER %s : %s@." k v; end; *)
   Http.by_curl 
     ?handle_tweak
     http_method protocol host ?port path 
@@ -288,7 +288,7 @@ let gen_access_post2
       ~oauth_other_params 
       (* ~non_oauth_params *)
   in
-  begin let k,v = header in !!% "HEADER %s : %s@." k v; end;
+  (* begin let k,v = header in !!% "HEADER %s : %s@." k v; end; *)
   Http.by_curl_post2
     ?handle_tweak
     http_method protocol host ?port path 

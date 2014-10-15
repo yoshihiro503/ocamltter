@@ -1,36 +1,7 @@
 open Spotlib.Spot
-open Twitter
+open Flickr
 
-module Flickr_oauth_conf = struct
-  let oauth_signature_method = `Hmac_sha1
-  let oauth_callback = Some None (* oob *)
-  let host = "www.flickr.com"
-  let request_path = "/services/oauth/request_token"
-  let access_path = "/services/oauth/access_token"
-  let authorize_url = "https://www.flickr.com/services/oauth/authorize?oauth_token="
-  let app = App.app
-end
-
-include Xoauth.Make(Flickr_oauth_conf)
-
-let auth_file = "ocaml_flickr.auth"
-
-let load_auth () =
-  match Ocaml.load_with_exn Xoauth.Access_token.t_of_ocaml auth_file with
-  | [a] -> a
-  | _ -> assert false
-
-let get_acc_token () =
-  try load_auth () with
-  | _ -> 
-      let _res, acc_token = authorize_cli_interactive () in
-      Ocaml.save_with Xoauth.Access_token.ocaml_of_t ~perm:0o600 auth_file [acc_token];
-      acc_token
-
-let get_oauth () =
-  let acc_token = get_acc_token () in
-  Xoauth.oauth Flickr_oauth_conf.app acc_token
-
+(*
 let xml = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>
 <rsp stat=\"fail\">
 	<err code=\"2\" msg=\"No photo specified\" />
@@ -38,78 +9,75 @@ let xml = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>
 "
 
 let _ = Xml.parse_string xml
-
-let o = get_oauth ()
-
-let error = function
-  | (`Http _ | `Curl _ as e) -> Xoauth.error e
-  | `Json (e, s) -> 
-      !!% "Json: %a@." Flickr.Json.format_error e;
-      !!% "  %S@." s;
-      assert false
-  | `Json_conv e ->
-      !!% "Json_conv: %a@." Json_conv.format_full_error e;
-      assert false
-  | `API fail ->
-      !!% "API: %a@." Flickr.Fail.format fail;
-      assert false
-  | `Load (name, exn) ->
-      !!% "Local file load failure: %s: %a@." name Exn.format exn;
-      assert false
-  | `XML_parse (s, exn) ->
-      !!% "XML parse failure: %a : %s@." Exn.format exn s;
-      assert false
-  | `XML_conv (mes, xml) ->
-      !!% "XML conv failure: %s : %s@." mes (Xml.show xml);
-      assert false
-
-let () =
-  match
-    Xoauth.access `HTTPS o
-      `GET
-      "api.flickr.com"
-      "/services/rest"
-      ~oauth_other_params: [ "nojosoncallback", "1"
-                           ; "format", "json"
-                           ; "method", "flickr.test.login"
-                           ]
-  with
-  | `Error e -> error e
-  | `Ok s -> prerr_endline s
-
-let () =
-  match Flickr.Photosets.getList o with
-  | `Error e -> error e
-  | `Ok v -> !!% "%a@." (Ocaml.format_with Flickr.Photosets.GetList.ocaml_of_photoset) v
-
-(*
-let () =
-  match Flickr.Photosets.getPhotos "72157648394310161" o with
-  | `Error e -> error e
-  | `Ok v -> !!% "%a@." (Ocaml.format_with Flickr.Photosets.GetPhotos.ocaml_of_photoset) v
 *)
 
-(*
-let () =
-  match Flickr.Photosets.removePhotos "72157648394310161" ["700261373"] o with
+let auth_file = "ocaml_flickr.auth"
+
+let o = get_oauth auth_file
+
+let json_format = !!% "%a@." Tiny_json.Json.format
+let ocaml_format_with f = !!% "%a@." (Ocaml.format_with f)
+
+let fail_at_error = function
+  | `Ok v -> v
   | `Error e -> error e
-  | `Ok () -> !!% "done@."
-*)
 
-let () =
-  prerr_endline "Photo upload status test";
-  match Flickr.People.getUploadStatus o with
+let find_dups_in_sets () =
+  let psets = Photosets.getList o |> fail_at_error in
+  flip List.iter psets#photoset & fun set ->
+    let set_id = set#id in
+    let set_title = set#title#content in
+    let photos = Photosets.getPhotos set_id o |> fail_at_error 
+                 |> fun x -> x#photo
+                 |> List.map (fun x -> (x#title, x#id))
+    in
+    let tbl = Hashtbl.create 107 in
+    List.iter (fun (title, id) ->
+      Hashtbl.alter tbl title (function
+        | None -> Some [id]
+        | Some ids -> Some (id :: ids))) photos;
+    flip Hashtbl.iter tbl (fun title ids ->
+      match ids with
+      | [] -> assert false
+      | [_] -> ()
+      | xs -> 
+          Format.eprintf "Dups: set: %s (%s) title: %s ids: %s@."
+            set_title
+            set_id title (String.concat "," xs))
+
+let getInfo pid o =
+  match Photos.getInfo pid o with
   | `Error e -> error e
-  | `Ok v -> !!% "%a@." (Ocaml.format_with Flickr.People.GetUploadStatus.ocaml_of_t) v
+  | `Ok j -> ocaml_format_with Photos.GetInfo.ocaml_of_resp j
 
-(*
-  | `Ok j -> !!% "%a@." Tiny_json.Json.format j
-*)
+let delete_dups_in_sets () =
+  let psets = Photosets.getList o |> fail_at_error in
+  flip List.iter psets#photoset & fun set ->
+    let set_id = set#id in
+    let set_title = set#title#content in
+    let photos = Photosets.getPhotos set_id o |> fail_at_error 
+                 |> fun x -> x#photo 
+                 |> List.map (fun x -> (x#title, x#id))
+    in
+    let tbl = Hashtbl.create 107 in
+    List.iter (fun (title, id) ->
+      Hashtbl.alter tbl title (function
+        | None -> Some [id]
+        | Some ids -> Some (id :: ids))) photos;
+    flip Hashtbl.iter tbl & fun title ids ->
+      match ids with
+      | [] -> assert false
+      | [_] -> ()
+      | xs -> 
+          !!% "Dups: set: %s (%s) title: %s ids: %s@."
+            set_title
+            set_id title (String.concat "," xs);
+          if title <> "" then 
+            flip List.iter (List.tl xs) & fun photo_id ->
+              !!% "Deleting %s : %s@." title photo_id;
+              match Photos.delete photo_id o with
+              | `Error e -> error e
+              | `Ok () -> !!% "Deleted@."
+            
 
-let () =
-  prerr_endline "Photo uploading test";
-  match Flickr.Upload.upload ~is_family:true "test.jpg" o with
-  | `Error e -> error e
-  | `Ok pids -> !!% "Uploaded [%s]@." (String.concat "; " pids)
-
-      
+let () = delete_dups_in_sets ()
