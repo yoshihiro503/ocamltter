@@ -1,3 +1,5 @@
+open Spotlib.Spot
+
 exception Http_error of string
 
 val url_encode  : string -> string
@@ -29,28 +31,19 @@ type error =
 val string_of_error : error -> string
 
 (* CR jfuruse: no way to specify the port *)
-(** http access via cURL *)
+(** http/https access via cURL *)
 val by_curl : 
   ?handle_tweak: (Curl.handle -> unit) (** Final tweak func of Curl handler *)
-  -> meth              (** GET/POST *)
   -> [`HTTP | `HTTPS ] (** protocol *)
   -> string            (** hostname *)
   -> ?port: int        (** port *)
   -> string            (** path *)
-  -> params: params    (** get/post parameters *)
   -> headers: params
-  -> [> `Error of [> error ]
-     |  `Ok of string ]
-
-val by_curl_post2 : ?handle_tweak:(Curl.handle -> unit) ->
-                         [< `POST2 ] ->
-                         [< `HTTP | `HTTPS ] ->
-                         string ->
-                         ?port:int ->
-                         string ->
-                         params:(string *
-                                 [< `CONTENT of string | `FILE of string ])
-                                list ->
-                         headers:(string * string) list ->
-                         [> `Error of [> error ]
-                          | `Ok of string ]
+  -> [ `GET of params
+     | `POST of params
+     | `POST2 of (string * [ `CONTENT of string | `FILE of string ]) list
+     ] (** GET/POST with parameters.
+           POST2 sends parameters using multi-part. 
+           It can also ask cURL to send files by their file names.
+       *)
+  -> (string, error) Result.t
