@@ -35,8 +35,7 @@ let parse_http_params s =
 let read_params str = parse_http_params str
 let assoc key dic = try List.assoc key dic with Not_found -> raise (Failure (key ^ " not found"))
 
-let fetch_request_token 
-    app = 
+let fetch_request_token app = 
   fetch_request_token 
     ~host:host
     ~path:"/oauth/request_token"
@@ -52,7 +51,6 @@ let fetch_request_token
 let fetch_access_token 
     app ({Token.token= req_token; secret= req_secret}, verif) = 
   fetch_access_token 
-    ~http_method:`GET
     ~host:host
     ~path:"/oauth/access_token"
     ~oauth_consumer_key: app.Consumer.key
@@ -69,6 +67,15 @@ let fetch_access_token
     assoc "screen_name" res
   in user, { Token.token= acc_token; secret= acc_secret }
       
-let access = Oauth.access
+let access proto ?oauth_other_params ?(non_oauth_params=[]) o meth host path = 
+  Oauth.access
+    proto
+    ?oauth_other_params
+    o
+    host
+    path
+    ~meth: (match meth with 
+            | `GET -> `GET non_oauth_params
+            | `POST -> `POST non_oauth_params)
 
 

@@ -48,7 +48,7 @@ let find_dups_in_sets () =
 let getInfo pid o =
   match Photos.getInfo pid o with
   | `Error e -> error e
-  | `Ok j -> ocaml_format_with Photos.GetInfo.ocaml_of_resp j
+  | `Ok j -> ocaml_format_with Photos.GetInfo.ocaml_of_photo j
 
 let delete_dups_in_sets () =
   let psets = Photosets.getList o |> fail_at_error in

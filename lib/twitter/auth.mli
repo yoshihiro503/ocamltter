@@ -1,3 +1,5 @@
+open Spotlib.Spot
+
 module Consumer : sig
   type t = { key : string; secret : string } with conv(ocaml)
   val dummy : t (** a sample data *)
@@ -15,19 +17,17 @@ end
 val oauth : Consumer.t -> VerifiedToken.t -> Oauth.t
 val fetch_request_token : Consumer.t -> 
   (string (* URL *) * Token.t, 
-   [> Http.error ]) Meta_conv.Result.t
+   [> Http.error ]) Result.t
 val fetch_access_token  : Consumer.t -> VerifiedToken.t -> 
   (string (* username *) * Token.t, 
-   [> Http.error ]) Meta_conv.Result.t
+   [> Http.error ]) Result.t
 
 val access : 
   [`HTTP | `HTTPS]
   -> ?oauth_other_params: Http.params
   -> ?non_oauth_params: Http.params
   -> Oauth.t 
-  -> Http.meth 
+  -> [< `GET | `POST ]
   -> string (* host name *)
   -> string (* path *) 
-  -> [> `Error of [> Http.error ] 
-     |  `Ok of string ]
-
+  -> (string, [> Http.error ]) Result.t

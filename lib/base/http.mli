@@ -46,4 +46,4 @@ val by_curl :
            POST2 sends parameters using multi-part. 
            It can also ask cURL to send files by their file names.
        *)
-  -> (string, error) Result.t
+  -> (string, [> error]) Result.t

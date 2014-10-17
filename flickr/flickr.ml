@@ -109,26 +109,14 @@ type 'a jsonFlickrApi = [ `jsonFlickrApi of 'a ] with conv(json, ocaml)
 
 let raw_api ?(post=false) o m fields = 
   Xoauth.access `HTTPS o
-    (if post then `POST else `GET)
     "api.flickr.com"
     "/services/rest"
-    ~oauth_other_params: ([ "method", m
-                          ; "format", "json" ]
-                          @ fields)
-
-let json_api ?post o m fields =
-  raw_api ?post o m fields
-  >>= fun s ->
-      (* jsonFlickrApi(JSON) *)
-      let len = String.length s in
-      match 
-        String.sub s 0 14,
-        String.sub s 14 (len - 15),
-        s.[len-1]
-      with
-      | "jsonFlickrApi(", s, ')' -> Json.parse s
-      | exception _ -> `Error (`Json (Json.NoJsonResponse, s))
-      | _ -> `Error (`Json (Json.NoJsonResponse, s))
+    ~meth: (
+      let xs = [ "method", m
+               ; "format", "json" ] @ fields
+      in
+      if post then `POST xs else `GET xs
+    )
 
 let lift_error f s = match f s with
   | (`Ok _ as v) -> v
@@ -149,6 +137,22 @@ module Fail = struct
     | `Ok e when e#stat = "fail" -> `Error (`API e)
     | _ -> `Ok j
 end
+
+let json_api ?post o m fields =
+  raw_api ?post o m fields
+  >>= fun s ->
+      (* jsonFlickrApi(JSON) *)
+      let len = String.length s in
+      match 
+        String.sub s 0 14,
+        String.sub s 14 (len - 15),
+        s.[len-1]
+      with
+      | "jsonFlickrApi(", s, ')' -> 
+          (* Result has always the top field "stat" *)
+          Json.parse s >>= Fail.check
+      | exception _ -> `Error (`Json (Json.NoJsonResponse, s))
+      | _ -> `Error (`Json (Json.NoJsonResponse, s))
 
 type content = < content as "_content" : string > with conv(json, ocaml)
 
@@ -206,7 +210,6 @@ module Photos = struct
       ; "per_page", string_of_int per_page
       ; "page", string_of_int page
       ]
-    >>= Fail.check
     >>= lift_error GetNotInSet.resp_of_json
     >>| fun x -> x#photos
 
@@ -286,8 +289,8 @@ The page of results to return. If this argument is omitted, it defaults to 1.
       [ "api_key", App.app.Xoauth.Consumer.key
       ; "photo_id", photo_id
       ]
-    >>= Fail.check
     >>= lift_error GetInfo.resp_of_json
+    >>| fun x -> x#photo
     
 (*
 secret (Optional)
@@ -327,7 +330,6 @@ The <date> element's lastupdate attribute is a Unix timestamp indicating the las
       [ "api_key", App.app.Xoauth.Consumer.key
       ; "photo_id", photo_id
       ]
-    >>= Fail.check
     >>= lift_error GetExif.resp_of_json
     >>| fun x -> x#photo  
 
@@ -341,7 +343,6 @@ The secret for the photo. If the correct secret is passed then permissions check
       [ "api_key", App.app.Xoauth.Consumer.key
       ; "photo_id", photo_id
       ]
-    >>= Fail.check
     >>| fun _ -> ()
 
 end
@@ -362,7 +363,6 @@ module Photosets = struct
       ; "title", title
       ; "primary_photo_id", primary_photo_id
       ]
-    >>= Fail.check
     >>= lift_error Create.resp_of_json
     >>| fun x -> x#photoset
     
@@ -625,12 +625,11 @@ end
 module Upload = struct
 
   let raw_api fields img o = 
-    Xoauth.access_post2 `HTTPS o
-      `POST2
+    Xoauth.access `HTTPS o
       "up.flickr.com"
       "/services/upload"
       ~oauth_other_params: fields
-      ~non_oauth_params: ["photo", `FILE img]
+      ~meth: (`POST2 ["photo", `FILE img])
 
   let catch_with err f v = try `Ok (f v) with e -> `Error (err e)
 

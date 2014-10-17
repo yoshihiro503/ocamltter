@@ -65,24 +65,10 @@ end
 val access 
   : [ `HTTP | `HTTPS ] 
   -> ?oauth_other_params: Http.params 
-  -> ?non_oauth_params: Http.params
   -> Oauth.t 
-  -> Http.meth 
   -> string 
   -> string 
-  -> [> `Error of [> Http.error ] | `Ok of string ]
-  
-
-val access_post2 : [< `HTTP | `HTTPS ] ->
-                        ?oauth_other_params:(string * string) list ->
-                        ?non_oauth_params:(string *
-                                           [< `CONTENT of string
-                                            | `FILE of string
-                                            > `CONTENT ])
-                                          list ->
-                        Oauth.t ->
-                        [< `POST2 ] ->
-                        string ->
-                        string ->
-                        [> `Error of [> Http.error ]
-                         | `Ok of string ]
+  -> meth:[< `GET of Http.params
+          | `POST of Http.params
+          | `POST2 of (string * [ `CONTENT of string | `FILE of string ]) list ]
+  -> (string, [> Http.error ]) Result.t

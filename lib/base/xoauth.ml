@@ -95,7 +95,6 @@ module Make(A : S) = struct
   let fetch_access_token ~req_token ~verif = 
     fetch_access_token 
       ~oauth_signature_method
-      ~http_method:`GET
       ~host
       ~path: access_path
       ~oauth_consumer_key:    app.Consumer.key
@@ -125,5 +124,5 @@ module Make(A : S) = struct
 end
 
 let access = Oauth.access
-let access_post2 = Oauth.access_post2
+
   
