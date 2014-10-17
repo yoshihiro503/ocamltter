@@ -80,7 +80,7 @@ let conn ?(port=80) hostname meth ?headers  path ps ?(rawpost="") f =
 	^ hds
 	^ "Host: " ^ hostname ^ "\r\n"
 	^ "\r\n"
-    | `POST | `POST2 -> (* CR jfuruse: POST2 is not actually supported *)
+    | `POST ->
 	let s = params2string ps ^ rawpost in
 	!%"POST %s HTTP/1.0\r\n" path
 	^ "Host: " ^ hostname ^ "\r\n"
@@ -123,7 +123,7 @@ let string_of_error = function
   | `Http (n, s) -> !%"Http error %d: %s" n s
   | `Curl (cc, n, s) -> !%"Curl (%s) %d: %s" (Curl.strerror cc) n s
 
-let by_curl_gen ?handle_tweak proto hostname ?port path ~headers meth_params =
+let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_params =
   let open Curl in
   let h = new Curl.handle in
   (* h#set_verbose true; *)
@@ -152,7 +152,7 @@ let by_curl_gen ?handle_tweak proto hostname ?port path ~headers meth_params =
         *)
       h#set_postfieldsize (String.length s);
       h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
-  | `POST2 params ->
+  | `POST_MULTIPART params ->
       h#set_url url;
       h#set_post true;
       h#set_httppost 

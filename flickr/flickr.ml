@@ -105,8 +105,6 @@ end
 
 open Json
 
-type 'a jsonFlickrApi = [ `jsonFlickrApi of 'a ] with conv(json, ocaml)
-
 let raw_api ?(post=false) o m fields = 
   Xoauth.access `HTTPS o
     "api.flickr.com"
@@ -138,6 +136,10 @@ module Fail = struct
     | _ -> `Ok j
 end
 
+(* Flickr's JSON response is always surrounded by
+
+     jsonFlickrApi(<JSON>)
+*)
 let json_api ?post o m fields =
   raw_api ?post o m fields
   >>= fun s ->
@@ -624,12 +626,14 @@ end
 
 module Upload = struct
 
+  (* up.flickr.com does not support JSON response *)
+
   let raw_api fields img o = 
     Xoauth.access `HTTPS o
       "up.flickr.com"
       "/services/upload"
       ~oauth_other_params: fields
-      ~meth: (`POST2 ["photo", `FILE img])
+      ~meth: (`POST_MULTIPART ["photo", `FILE img])
 
   let catch_with err f v = try `Ok (f v) with e -> `Error (err e)
 

@@ -34,16 +34,16 @@ val string_of_error : error -> string
 (** http/https access via cURL *)
 val by_curl : 
   ?handle_tweak: (Curl.handle -> unit) (** Final tweak func of Curl handler *)
-  -> [`HTTP | `HTTPS ] (** protocol *)
+  -> ?proto : [`HTTP | `HTTPS ] (** protocol. The default is HTTPS *)
   -> string            (** hostname *)
-  -> ?port: int        (** port *)
+  -> ?port: int        (** port: the default is the default port of protocol *)
   -> string            (** path *)
   -> headers: params
   -> [ `GET of params
      | `POST of params
-     | `POST2 of (string * [ `CONTENT of string | `FILE of string ]) list
+     | `POST_MULTIPART of (string * [ `CONTENT of string | `FILE of string ]) list
      ] (** GET/POST with parameters.
-           POST2 sends parameters using multi-part. 
+           POST_MULTIPART sends parameters using multi-part. 
            It can also ask cURL to send files by their file names.
        *)
   -> (string, [> error]) Result.t
