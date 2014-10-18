@@ -16,7 +16,7 @@ let auth_file = "ocaml_flickr.auth"
 let o = get_oauth auth_file
 
 let json_format = !!% "%a@." Tiny_json.Json.format
-let ocaml_format_with f = !!% "%a@." (Ocaml.format_with f)
+let ocaml_format_with f = !!% "%a@." (Ocaml.format_with ~no_poly:true f)
 
 let fail_at_error = function
   | `Ok v -> v
@@ -80,4 +80,26 @@ let delete_dups_in_sets () =
               | `Ok () -> !!% "Deleted@."
             
 
+
+(*
 let () = delete_dups_in_sets ()
+*)
+
+let () = Photosets.getList o |> fail_at_error |> ocaml_format_with Photosets.GetList.ocaml_of_t
+
+let () = Flickr.Test.login o |> fail_at_error |> json_format
+
+let () =
+  match
+    Oauth.access `HTTPS o
+      "api.flickr.com"
+      "/services/rest"
+      ~meth: (`GET 
+                 [ "nojosoncallback", "1"
+                 ; "format", "json"
+                 ; "method", "flickr.test.login"
+                 ])
+  with
+  |  _ -> ()
+
+
