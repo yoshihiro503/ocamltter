@@ -236,7 +236,7 @@ let gen_access
   let url = string_of_protocol protocol ^ "://" ^ host ^ path in
   let header = 
     create_oauth_header
-      ~http_method: (match method_non_oauth_params with `GET _ -> `GET | `POST _ | `POST2 _ -> `POST)
+      ~http_method: (match method_non_oauth_params with `GET _ -> `GET | `POST _ | `POST_MULTIPART _ -> `POST)
       ~url
       ~oauth_version
       ~oauth_signature_method
@@ -251,12 +251,12 @@ let gen_access
   let method_params = match method_non_oauth_params with
     | `GET ps -> `GET (ps @ oauth_other_params)
     | `POST ps -> `POST (ps @ oauth_other_params)
-    | `POST2 psx -> `POST2 (psx @ List.map (fun (k,v) -> k, `CONTENT v) oauth_other_params)
+    | `POST_MULTIPART psx -> `POST_MULTIPART (psx @ List.map (fun (k,v) -> k, `CONTENT v) oauth_other_params)
   in
   (* begin let k,v = header in !!% "HEADER %s : %s@." k v; end; *)
   Http.by_curl 
     ?handle_tweak
-    protocol host ?port path 
+    ~proto:protocol host ?port path 
     ~headers:[header] 
     method_params
 
@@ -291,3 +291,5 @@ let access proto ?(oauth_other_params=[]) oauth host path ~meth:method_params =
     ~oauth_other_params
     ~meth: method_params
     ()
+
+

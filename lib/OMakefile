@@ -9,7 +9,7 @@ LIBFILES[] =
     base/utf16
     base/http
     base/oauth
-    base/xoauth
+    base/oauth_ex
     base/util
     twitter/auth
     twitter/api_intf

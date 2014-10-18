@@ -176,9 +176,9 @@ let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_
   in	
   ok200 (code, Buffer.contents buf)
 
-let by_curl ?handle_tweak proto hostname ?port path ~headers meth_params =
+let by_curl ?handle_tweak ?proto hostname ?port path ~headers meth_params =
   try 
-    by_curl_gen ?handle_tweak proto hostname ?port path ~headers meth_params
+    by_curl_gen ?handle_tweak ?proto hostname ?port path ~headers meth_params
   with
   | Curl.CurlException (curlCode, int, mes) ->
       `Error (`Curl (curlCode, int, mes))

@@ -59,5 +59,6 @@ val access :
   -> string (** path *) 
   -> meth:[< `GET of Http.params
           | `POST of Http.params
-          | `POST2 of (string * [ `CONTENT of string | `FILE of string ]) list ]
+          | `POST_MULTIPART of (string * [ `CONTENT of string | `FILE of string ]) list ]
   -> (string, [> Http.error]) Result.t 
+

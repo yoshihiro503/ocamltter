@@ -4,12 +4,9 @@ open Twitter
 open Ocaml_conv
 open Json_conv
 
-type 'json mc_leftovers = (string * 'json) list with conv(ocaml)
-type 'a mc_option = 'a option with conv(ocaml)
-
 open Result
 
-module Oauth_conf = struct
+module Oauth = Oauth_ex.Make(struct
   let oauth_signature_method = `Hmac_sha1
   let oauth_callback = Some None (* oob *)
   let host = "www.flickr.com"
@@ -17,12 +14,13 @@ module Oauth_conf = struct
   let access_path = "/services/oauth/access_token"
   let authorize_url = "https://www.flickr.com/services/oauth/authorize?oauth_token="
   let app = App.app
-end
+end)
 
-module Oauth = Xoauth.Make(Oauth_conf)
+type 'json mc_leftovers = (string * 'json) list with conv(ocaml)
+type 'a mc_option = 'a option with conv(ocaml)
 
 let load_auth auth_file =
-  match Ocaml.load_with_exn Xoauth.Access_token.t_of_ocaml auth_file with
+  match Ocaml.load_with_exn Oauth.Access_token.t_of_ocaml auth_file with
   | [a] -> a
   | _ -> assert false
 
@@ -30,12 +28,12 @@ let get_acc_token auth_file =
   try load_auth auth_file with
   | _ -> 
       let _res, acc_token = Oauth.authorize_cli_interactive () in
-      Ocaml.save_with Xoauth.Access_token.ocaml_of_t ~perm:0o600 auth_file [acc_token];
+      Ocaml.save_with Oauth.Access_token.ocaml_of_t ~perm:0o600 auth_file [acc_token];
       acc_token
 
 let get_oauth auth_file =
   let acc_token = get_acc_token auth_file in
-  Xoauth.oauth Oauth_conf.app acc_token
+  Oauth.oauth Oauth.Conf.app acc_token
 
 module Json = struct
   include Tiny_json.Json
@@ -106,7 +104,7 @@ end
 open Json
 
 let raw_api ?(post=false) o m fields = 
-  Xoauth.access `HTTPS o
+  Oauth.access `HTTPS o
     "api.flickr.com"
     "/services/rest"
     ~meth: (
@@ -208,7 +206,7 @@ module Photos = struct
   let raw_getNotInSet ?(per_page=100) ?(page=1) (* ?privacy_filter ?media *) o = 
     assert (page > 0);
     json_api o "flickr.photos.getNotInSet"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ; "per_page", string_of_int per_page
       ; "page", string_of_int page
       ]
@@ -288,7 +286,7 @@ The page of results to return. If this argument is omitted, it defaults to 1.
 
   let getInfo photo_id o =
     json_api o "flickr.photos.getInfo"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ; "photo_id", photo_id
       ]
     >>= lift_error GetInfo.resp_of_json
@@ -329,7 +327,7 @@ The <date> element's lastupdate attribute is a Unix timestamp indicating the las
                   
   let getExif photo_id o =
     json_api o "flickr.photos.getExif"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ; "photo_id", photo_id
       ]
     >>= lift_error GetExif.resp_of_json
@@ -342,7 +340,7 @@ The secret for the photo. If the correct secret is passed then permissions check
 
   let delete photo_id o = 
     json_api ~post:true o "flickr.photos.delete"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ; "photo_id", photo_id
       ]
     >>| fun _ -> ()
@@ -361,7 +359,7 @@ module Photosets = struct
 
   let create ~title ~primary_photo_id o =
     json_api o "flickr.photosets.create"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ; "title", title
       ; "primary_photo_id", primary_photo_id
       ]
@@ -423,7 +421,7 @@ No title parameter was passed in the request.
   let raw_getList ?(page=1) o = 
     assert (page > 0);
     json_api o "flickr.photosets.getList"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ; "page", string_of_int page
       ]
     >>= Fail.check
@@ -492,7 +490,7 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
   let raw_getPhotos photoset_id ?(page=1) o =
     assert (page > 0);
     json_api o "flickr.photosets.getPhotos"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ; "photoset_id", photoset_id
       ; "page", string_of_int page
       ]
@@ -539,7 +537,7 @@ Filter results by media type. Possible values are all (default), photos or video
 
   let removePhotos photoset_id photo_ids o =
     json_api ~post:true o "flickr.photosets.removePhotos"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ; "photoset_id", photoset_id
       ; "photo_ids", String.concat "," photo_ids
       ]
@@ -549,7 +547,7 @@ Filter results by media type. Possible values are all (default), photos or video
 
   let addPhoto photoset_id ~photo_id o =
     json_api o "flickr.photosets.getPhotos"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ; "photoset_id", photoset_id
       ; "photo_id", photo_id
       ]
@@ -616,7 +614,7 @@ module People = struct
 
   let getUploadStatus o =
     json_api o "flickr.people.getUploadStatus"
-      [ "api_key", App.app.Xoauth.Consumer.key
+      [ "api_key", App.app.Oauth.Consumer.key
       ]
     >>= Fail.check
     >>= lift_error GetUploadStatus.resp_of_json
@@ -629,7 +627,7 @@ module Upload = struct
   (* up.flickr.com does not support JSON response *)
 
   let raw_api fields img o = 
-    Xoauth.access `HTTPS o
+    Oauth.access `HTTPS o
       "up.flickr.com"
       "/services/upload"
       ~oauth_other_params: fields
@@ -736,7 +734,9 @@ Set to 1 for Photo, 2 for Screenshot, or 3 for Other.
 end
 
 let error = function
-  | (`Http _ | `Curl _ as e) -> Xoauth.error e
+  | (`Http _ | `Curl _ as e) -> 
+      !!% "HTTP: %s@." & Http.string_of_error e;
+      assert false
   | `Json (e, s) -> 
       !!% "Json: %a@." Json.format_error e;
       !!% "  %S@." s;
