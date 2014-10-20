@@ -67,15 +67,16 @@ let fetch_access_token
     assoc "screen_name" res
   in user, { Token.token= acc_token; secret= acc_secret }
       
-let access proto ?oauth_other_params ?(non_oauth_params=[]) o meth host path = 
+let access ?proto ?(oauth_other_params=[]) ?(non_oauth_params=[]) meth host ?port path o = 
   Oauth.access
-    proto
-    ?oauth_other_params
-    o
-    host
-    path
+    ?proto
+    ~host
+    ?port
+    ~path
     ~meth: (match meth with 
             | `GET -> `GET non_oauth_params
             | `POST -> `POST non_oauth_params)
+    ~oauth_other_params
+    o
 
 

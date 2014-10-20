@@ -251,7 +251,7 @@ let gen_access
   let method_params = match method_non_oauth_params with
     | `GET ps -> `GET (ps @ oauth_other_params)
     | `POST ps -> `POST (ps @ oauth_other_params)
-    | `POST_MULTIPART psx -> `POST_MULTIPART (psx @ List.map (fun (k,v) -> k, `CONTENT v) oauth_other_params)
+    | `POST_MULTIPART psx -> `POST_MULTIPART (psx @ List.map (fun (k,v) -> k, `String v) oauth_other_params)
   in
   (* begin let k,v = header in !!% "HEADER %s : %s@." k v; end; *)
   Http.by_curl 
@@ -262,14 +262,14 @@ let gen_access
 
 let fetch_request_token ?(post=true) = 
   gen_access 
-    ~protocol: `HTTPS 
+    ~proto: `HTTPS 
     ~meth: (if post then `POST [] else `GET [])
     ?oauth_token:None 
     ?oauth_token_secret:None 
  
 let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(post=true) =
   gen_access 
-    ~protocol: `HTTPS 
+    ~proto: `HTTPS 
     ~meth: (if post then `POST [] else `GET [])
     ~oauth_token 
     ~oauth_token_secret 

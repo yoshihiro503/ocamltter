@@ -43,13 +43,16 @@ type header = {
     fields : (string, string) Hashtbl.t
   }
 
+type headers = (string * string) list
 type params = (string * string) list
+type params2 = (string * [ `String of string
+                         | `File   of string (** file contents *) ]) list
 
 type meth = [ `GET | `POST ]
 
 let string_of_meth = function
   | `GET ->  "GET"
-  | `POST | `POST2 -> "POST"
+  | `POST -> "POST"
 
 let params2string ps =
   String.concat "&" @@ List.map (fun (k,v) -> k^"="^url_encode v) ps
@@ -157,8 +160,8 @@ let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_
       h#set_post true;
       h#set_httppost 
         (List.map (function
-          | (k, `FILE path) -> CURLFORM_FILE (k, path, DEFAULT)
-          | (k, `CONTENT s) -> CURLFORM_CONTENT (k, s, DEFAULT)) params);
+          | (k, `File path) -> CURLFORM_FILE (k, path, DEFAULT)
+          | (k, `String s) -> CURLFORM_CONTENT (k, s, DEFAULT)) params);
       h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
   end;
   

@@ -10,7 +10,6 @@ type headers = (string * string) list
 type params = (string * string) list
 type params2 = (string * [ `String of string
                          | `File   of string (** file contents *) ]) list
-
 type meth = [ `GET | `POST ]
 val string_of_meth : meth -> string
 

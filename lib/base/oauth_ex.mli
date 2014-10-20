@@ -92,7 +92,7 @@ module Make(Conf : Conf) : sig
             | `POST of Http.params
             | `POST_MULTIPART of Http.params2 ]
        (** These parameters are outside of OAuth signature creation *)
-    -> ~oauth_other_params: Http.params
+    -> oauth_other_params: Http.params
        (** These parameters are included in the targets for OAuth signature creation *)
     -> t (** Auth *)
     -> (string, [> Http.error]) Result.t 

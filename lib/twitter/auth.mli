@@ -23,11 +23,12 @@ val fetch_access_token  : Consumer.t -> VerifiedToken.t ->
    [> Http.error ]) Result.t
 
 val access : 
-  [`HTTP | `HTTPS]
+  ?proto: [`HTTP | `HTTPS]
   -> ?oauth_other_params: Http.params
   -> ?non_oauth_params: Http.params
-  -> Oauth.t 
   -> [< `GET | `POST ]
   -> string (* host name *)
+  -> ?port: int
   -> string (* path *) 
+  -> Oauth.t 
   -> (string, [> Http.error ]) Result.t
