@@ -108,12 +108,11 @@ let raw_api o meth m fields =
     ~host: "api.flickr.com"
     ~path: "/services/rest"
     ~meth: (
-      let xs = [ "method", m
-               ; "format", "json" ] @ fields
-      in
-      match meth with `POST -> `POST xs | `GET -> `GET xs
+      match meth with `POST -> `POST [] | `GET -> `GET []
     )
-    ~oauth_other_params: fields
+    ~oauth_other_params: 
+      ( [ "method", m
+        ; "format", "json" ] @ fields )
 
 let lift_error f s = match f s with
   | (`Ok _ as v) -> v
