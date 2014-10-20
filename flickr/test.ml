@@ -1,3 +1,4 @@
+open Spotlib.Spot
 open Flickr
 open Tools
 module Xml = Twitter.Xml
@@ -36,4 +37,5 @@ let () = Flickr.Upload.upload "test.jpg" o |> fail_at_error |>
 
 let user = get_current_user o |> fail_at_error
 
+let () = !!% "id=%s username=%s@." user#id user#username
 let () = Photos.search ~user_id:user#id o |> fail_at_error |> json_format
