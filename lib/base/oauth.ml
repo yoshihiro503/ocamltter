@@ -219,7 +219,7 @@ let string_of_protocol = function
    The distinction of oauth_other_params and non_oauth_params is not meaningful. *)
 let gen_access
     ?handle_tweak
-    ~protocol
+    ?(proto=`HTTPS)
     ~host ?port ~path
     ~meth: method_non_oauth_params
     ?(oauth_version = "1.0") 
@@ -233,7 +233,7 @@ let gen_access
     ~oauth_consumer_secret 
     ()
     =
-  let url = string_of_protocol protocol ^ "://" ^ host ^ path in
+  let url = string_of_protocol proto ^ "://" ^ host ^ path in
   let header = 
     create_oauth_header
       ~http_method: (match method_non_oauth_params with `GET _ -> `GET | `POST _ | `POST_MULTIPART _ -> `POST)
@@ -256,7 +256,7 @@ let gen_access
   (* begin let k,v = header in !!% "HEADER %s : %s@." k v; end; *)
   Http.by_curl 
     ?handle_tweak
-    ~proto:protocol host ?port path 
+    ~proto host ?port path 
     ~headers:[header] 
     method_params
 
@@ -282,8 +282,8 @@ type t = {
   access_token_secret:string;
 } with conv(ocaml)
 
-let access proto ?(oauth_other_params=[]) oauth host path ~meth:method_params =
-  gen_access ~protocol:proto ~host:host ~path:path
+let access ?proto ~host ?port ~path ~meth:method_params ~oauth_other_params oauth =
+  gen_access ?proto ~host ~path ?port
     ~oauth_consumer_key:oauth.consumer_key
     ~oauth_consumer_secret:oauth.consumer_secret
     ~oauth_token:oauth.access_token
@@ -291,5 +291,4 @@ let access proto ?(oauth_other_params=[]) oauth host path ~meth:method_params =
     ~oauth_other_params
     ~meth: method_params
     ()
-
 

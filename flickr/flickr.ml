@@ -103,16 +103,17 @@ end
 
 open Json
 
-let raw_api ?(post=false) o m fields = 
-  Oauth.access `HTTPS o
-    "api.flickr.com"
-    "/services/rest"
+let raw_api post o m fields = 
+  Oauth.access o
+    ~host: "api.flickr.com"
+    ~path: "/services/rest"
     ~meth: (
       let xs = [ "method", m
                ; "format", "json" ] @ fields
       in
-      if post then `POST xs else `GET xs
+      match post with `POST -> `POST xs | `GET -> `GET xs
     )
+    ~oauth_other_params: fields
 
 let lift_error f s = match f s with
   | (`Ok _ as v) -> v
@@ -136,7 +137,8 @@ end
 
 (* Flickr's JSON response is always surrounded by
 
-     jsonFlickrApi(<JSON>)
+     jsonFlickrApi({ stats: <ok/fail>
+                   ; k = ... })
 *)
 let json_api ?post o m fields =
   raw_api ?post o m fields
@@ -182,20 +184,20 @@ module Photos = struct
     >
 
     and photos = <
-      page : sint;
-      pages : sint;
+      page    : sint;
+      pages   : sint;
       perpage : sint;
-      total : sint;
-      photo : photo list;
+      total   : sint;
+      photo   : photo list;
     >
 
     and photo = <
-      id : string;
-      owner : string;
-      secret : string;
-      server : string;
-      farm : sint;
-      title : string;
+      id       : string;
+      owner    : string;
+      secret   : string;
+      server   : string;
+      farm     : sint;
+      title    : string;
       ispublic : ibool;
       isfriend : ibool;
       isfamily : ibool
@@ -231,50 +233,50 @@ The page of results to return. If this argument is omitted, it defaults to 1.
   module GetInfo = struct
 
     type owner = <
-        nsid: string;
-        username: string;
-        realname: string;
-        location: string;
-        unknowns: Json.t mc_leftovers;
+        nsid     : string;
+        username : string;
+        realname : string;
+        location : string;
+        unknowns : Json.t mc_leftovers;
       >
     
     and dates = < 
-        posted: sint64;
-        taken: string;
-        unknowns: Json.t mc_leftovers 
+        posted   : sint64;
+        taken    : string;
+        unknowns : Json.t mc_leftovers 
       >
 
     and urls = < url: type_content list >
 
     and type_content = < 
-        type_ as "type": string; (* "photopage", *)
-        content as "_content": string 
+        type_ as "type"       : string; (* "photopage", *)
+        content as "_content" : string 
       >
 
     and resp = < photo: photo; stat: string >
 
     and photo = <
-        id: string;
-        secret : string;
-        server : string;
-        farm: sint;
-        dateuploaded: sint64;
-        isfavorite: ibool;
-        license: sint;
-        safety_level: sint;
-        rotation: sint;
-        originalsecret: string; (* "edf076f1f2" *)
+        id             : string;
+        secret         : string;
+        server         : string;
+        farm           : sint;
+        dateuploaded   : sint64;
+        isfavorite     : ibool;
+        license        : sint;
+        safety_level   : sint;
+        rotation       : sint;
+        originalsecret : string; (* "edf076f1f2" *)
         originalformat : string; (* "jpg" *)
-        owner: owner;
-        title: content;
-        description: content;
-        visibility: visibility;
-        dates: dates;
-        views: sint;
-        comments: content;
-        urls: urls;
-        media: string; (* "photo" *)
-        unknowns: Json.t mc_leftovers;
+        owner          : owner;
+        title          : content;
+        description    : content;
+        visibility     : visibility;
+        dates          : dates;
+        views          : sint;
+        comments       : content;
+        urls           : urls;
+        media          : string; (* "photo" *)
+        unknowns       : Json.t mc_leftovers;
       >
 
     and visibility = < ispublic: ibool; isfriend: ibool; isfamily: ibool >
@@ -315,10 +317,10 @@ The <date> element's lastupdate attribute is a Unix timestamp indicating the las
     and resp = < photo : photo; stat : string >
 
     and photo = <
-        id : string;
-        secret : string;
-        camera : string;
-        exif: exif list;
+        id      : string;
+        secret  : string;
+        camera  : string;
+        exif    : exif list;
         unknown : Json.t mc_leftovers 
       >
     with conv(json,ocaml)
@@ -386,33 +388,34 @@ No title parameter was passed in the request.
 
   module GetList = struct
 
-    type set = < id : string;
-                 primary : string;
-                 secret : string;
-                 server : string;
-                 farm : sint;
-                 photos : Json.sint;
-                 videos : Json.sint;
-                 title : content;
-                 description : content;
-                 needs_interstitial : ibool;
+    type set = < id                     : string;
+                 primary                : string;
+                 secret                 : string;
+                 server                 : string;
+                 farm                   : sint;
+                 photos                 : Json.sint;
+                 videos                 : Json.sint;
+                 title                  : content;
+                 description            : content;
+                 needs_interstitial     : ibool;
                  visibility_can_see_set : ibool;
-                 count_views : sint;
-                 count_comments : sint;
-                 can_comment : ibool;
-                 date_create : string;
-                 date_update : string
+                 count_views            : sint;
+                 count_comments         : sint;
+                 can_comment            : ibool;
+                 date_create            : string;
+                 date_update            : string
                >
   
     and photoset = < cancreate : ibool;
-                     page : sint;
-                     pages : sint;
-                     perpage : sint;
-                     total : sint;
-                     photoset : set list >
+                     page      : sint;
+                     pages     : sint;
+                     perpage   : sint;
+                     total     : sint;
+                     photoset  : set list 
+                   >
   
     and resp = < photosets : photoset;
-                 stat : string; >
+                 stat      : string; >
 
     with conv(json, ocaml_of )
 
@@ -424,7 +427,6 @@ No title parameter was passed in the request.
       [ "api_key", App.app.Oauth.Consumer.key
       ; "page", string_of_int page
       ]
-    >>= Fail.check
     >>= lift_error GetList.resp_of_json
     >>| fun x -> x#photosets
 
@@ -458,29 +460,29 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
     type resp = < photoset : photoset; stat : string; >
         
     and photoset = <
-      id : string;
-      primary : string;
-      owner : string;
+      id        : string;
+      primary   : string;
+      owner     : string;
       ownername : string;
-      photo : photo list;
-      page : sint;
-      per_page : sint;
-      perpage : sint;
-      pages : sint;
-      total : sint;
-      title : string;
+      photo     : photo list;
+      page      : sint;
+      per_page  : sint;
+      perpage   : sint;
+      pages     : sint;
+      total     : sint;
+      title     : string;
     >
 
     and photo = <
-      id : string;
-      secret : string;
-      server : string;
-      farm : sint;
-      title : string;
+      id        : string;
+      secret    : string;
+      server    : string;
+      farm      : sint;
+      title     : string;
       isprimary : ibool;
-      ispublic : ibool;
-      isfriend : ibool;
-      isfamily : ibool 
+      ispublic  : ibool;
+      isfriend  : ibool;
+      isfamily  : ibool 
     >
     with conv(json,ocaml)
 
@@ -494,7 +496,6 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
       ; "photoset_id", photoset_id
       ; "page", string_of_int page
       ]
-    >>= Fail.check
     >>= lift_error GetPhotos.resp_of_json
     >>| fun x -> x#photoset
 
@@ -541,7 +542,6 @@ Filter results by media type. Possible values are all (default), photos or video
       ; "photoset_id", photoset_id
       ; "photo_ids", String.concat "," photo_ids
       ]
-    >>= Fail.check
     >>= fun _ -> return ()
 
 
@@ -551,7 +551,6 @@ Filter results by media type. Possible values are all (default), photos or video
       ; "photoset_id", photoset_id
       ; "photo_id", photo_id
       ]
-    >>= Fail.check
     >>= fun _ -> `Ok ()
 
 end
@@ -561,37 +560,37 @@ module People = struct
   module GetUploadStatus = struct
 
     type bandwidth = <
-        max : int64;
-        used : int64;
-        maxbytes : int64;
-        usedbytes : int64;
+        max            : int64;
+        used           : int64;
+        maxbytes       : int64;
+        usedbytes      : int64;
         remainingbytes : int64;
-        maxkb : int64;
-        usedkb : int64;
-        remainingkb : int64;
-        unlimited : ibool
+        maxkb          : int64;
+        usedkb         : int64;
+        remainingkb    : int64;
+        unlimited      : ibool
       >
 
     and filesize = <
-        max : int64;
+        max      : int64;
         maxbytes : int64;
-        maxkb : int64;
-        maxmb : int64;
+        maxkb    : int64;
+        maxmb    : int64;
       >
 
     and videosize = <
         maxbytes : int64;
-        maxkb : int64;
-        maxmb : int64;
+        maxkb    : int64;
+        maxmb    : int64;
       >
 
     and sets = < 
-        created : sint;
+        created   : sint;
         remaining : string
       >
 
     and videos = <
-        uploaded : sint;
+        uploaded  : sint;
         remaining : string
       >
 
@@ -601,14 +600,14 @@ module People = struct
     >
 
     and user = < 
-      id : string;
-      ispro : ibool;
-      username : content;
+      id        : string;
+      ispro     : ibool;
+      username  : content;
       bandwidth : bandwidth;
-      filesize : filesize;
-      sets : sets;
+      filesize  : filesize;
+      sets      : sets;
       videosize : videosize;
-      videos : videos;
+      videos    : videos;
     > with conv(json,ocaml)
   end
 
@@ -616,7 +615,6 @@ module People = struct
     json_api o "flickr.people.getUploadStatus"
       [ "api_key", App.app.Oauth.Consumer.key
       ]
-    >>= Fail.check
     >>= lift_error GetUploadStatus.resp_of_json
     >>| fun x -> x#user
 
