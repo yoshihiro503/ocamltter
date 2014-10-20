@@ -6,7 +6,10 @@ val url_encode  : string -> string
 val html_decode : string -> string
 
 type header = { code : string; fields : (string, string) Hashtbl.t; }
+type headers = (string * string) list
 type params = (string * string) list
+type params2 = (string * [ `String of string
+                         | `File   of string (** file contents *) ]) list
 
 type meth = [ `GET | `POST ]
 val string_of_meth : meth -> string
@@ -30,20 +33,16 @@ type error =
 
 val string_of_error : error -> string
 
-(* CR jfuruse: no way to specify the port *)
 (** http/https access via cURL *)
 val by_curl : 
-  ?handle_tweak: (Curl.handle -> unit) (** Final tweak func of Curl handler *)
+  ?handle_tweak: (Curl.handle -> unit) (** Final direct tweak against the Curl header *)
   -> ?proto : [`HTTP | `HTTPS ] (** protocol. The default is HTTPS *)
   -> string            (** hostname *)
-  -> ?port: int        (** port: the default is the default port of protocol *)
+  -> ?port: int        (** port: the default is the default port of the protocol *)
   -> string            (** path *)
-  -> headers: params
-  -> [ `GET of params
-     | `POST of params
-     | `POST_MULTIPART of (string * [ `CONTENT of string | `FILE of string ]) list
-     ] (** GET/POST with parameters.
-           POST_MULTIPART sends parameters using multi-part. 
-           It can also ask cURL to send files by their file names.
-       *)
+  -> headers: headers
+  -> [ `GET of params (** GET *)
+     | `POST of params (** POST *)
+     | `POST_MULTIPART of params2 (** POST by multipart *)
+     ]
   -> (string, [> error]) Result.t
