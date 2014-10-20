@@ -107,17 +107,18 @@ let raw_api ?(post=false) o m fields =
   Oauth.access `HTTPS o
     "api.flickr.com"
     "/services/rest"
-    ~meth: (
-      let xs = [ "method", m
-               ; "format", "json" ] @ fields
-      in
-      if post then `POST xs else `GET xs
-    )
+    ~oauth_other_params:([ "method", m
+                         ; "format", "json" ] @ fields)
+    ~meth:(if post then `POST [] else `GET [])
 
 let lift_error f s = match f s with
   | (`Ok _ as v) -> v
   | `Error e -> `Error (`Json_conv e)
     
+let opt f k = function
+  | None -> None
+  | Some v -> Some (k, f v)
+
 module Fail = struct
 
   type t = < 
@@ -359,11 +360,16 @@ The secret for the photo. If the correct secret is passed then permissions check
       ]
     >>| fun _ -> ()
 
-  let opt f k = function
-    | None -> None
-    | Some v -> Some (k, f v)
+(*
+{ "photos": { "page": 1, "pages": 34, "perpage": 100, "total": "3343",
+              "photo": [ { "id": "15379632298", "owner": "9582328@N04",
+                           "secret": "c90f3ac8c1", "server": "3939",
+                           "farm": 4, "title": "test", "ispublic": 0,
+                           "isfriend": 0, "isfamily": 0 },
+                         { "id": "15505863036", "owner": "9582328@N04",
+*)
 
-  let search ?user_nsid ?tags ?text ?per_page ?page o =
+  let search ?user_id ?tags ?text ?per_page ?page o =
     let tags, tag_mode = match tags with
       | None -> None, None
       | Some (`Any ts) -> Some (String.concat "," ts), Some "any"
@@ -372,7 +378,7 @@ The secret for the photo. If the correct secret is passed then permissions check
     json_api ~post:true o "flickr.photos.search"
     & [ "api_key", App.app.Oauth.Consumer.key ]
     @ List.filter_map id 
-      [ opt id "user_id" user_nsid 
+      [ opt id "user_id" user_id 
       ; opt id "tags" tags
       ; opt id "tag_mode" tag_mode
       ; opt id "text" text
@@ -794,13 +800,19 @@ end
 
 module Test = struct
 
-
+  module Login = struct
+    type resp = < user : t; stat : string >
+    and t = < id : string;
+              username : content >
+    with conv(json, ocaml)
+  end
   let login o =
     json_api o "flickr.test.login"
       [ "api_key", App.app.Oauth.Consumer.key
       ]
     >>= Fail.check
-
+    >>= lift_error Login.resp_of_json
+    >>| fun x -> x#user
 end
 
 module Upload = struct

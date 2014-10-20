@@ -14,6 +14,7 @@ OCAMLPPFLAGS = -syntax camlp4o -package meta_conv.syntax
 FILES[] = 
     app
     flickr
+    tools
     test
 
 NO_INSTALL=true

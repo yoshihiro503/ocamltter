@@ -267,7 +267,7 @@ let fetch_request_token ?(post=true) =
     ?oauth_token:None 
     ?oauth_token_secret:None 
  
-let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(post=false) =
+let fetch_access_token ~verif ~oauth_token ~oauth_token_secret ?(post=true) =
   gen_access 
     ~protocol: `HTTPS 
     ~meth: (if post then `POST [] else `GET [])
