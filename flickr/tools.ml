@@ -72,7 +72,12 @@ let uploads ~photoset img_files o =
       !!% "%s is already in the photoset@." img_file
     else begin
       !!% "Uploading %s@." img_file;
-      match Upload.upload ~title img_file o |> fail_at_error with
+      match 
+        Upload.upload 
+          ~title img_file 
+          ~tags:["uploading"; "photoset_" ^ photoset] 
+          o |> fail_at_error 
+      with
       | ([] | _::_::_) -> assert false
       | [photo_id] ->
           photos := (title, photo_id) :: !photos;

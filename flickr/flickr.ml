@@ -177,17 +177,6 @@ end
 
 module Page = struct
 
-  type 'a mc_embeded = 'a
-
-  type 'a paged = <
-      page      : sint;
-      perpage   : sint;
-      pages     : sint;
-      total     : sint;
-      data      : 'a mc_embeded;
-    >
-  with conv(json,ocaml)
-
   (** Page to stream interface *)
 
   let to_stream f ~per_page get_list maker =
@@ -989,18 +978,23 @@ module Upload = struct
       ?(is_family=false)
       ?(hidden=true)
       ?title
+      ?description
+      ?tags (** Must not contain white speca chars, but not check performed yet *) 
       img_file o =
         let title = Option.default title & fun () ->
           Filename.(basename *> split_extension *> fst) img_file
         in
-        let bool k b = [k, if b then "1" else "0"] in
+        let bool k b = k, Some (if b then "1" else "0") in
   	let fields = 
-          List.concat 
+          List.filter_map (fun (k,vopt) ->
+            flip Option.map vopt & fun v -> k,v)
             [ bool "is_public" is_public
   	    ; bool "is_friend" is_friend
   	    ; bool "is_family" is_family
-  	    ; [ "hidden", if hidden then "2" else "1" ]
-            ; [ "title", title ]
+  	    ; "hidden", Some (if hidden then "2" else "1")
+            ; "title", Some title
+            ; "description", description
+            ; "tags", Option.map (String.concat " ") tags
             ] 
   	in
   	raw_api fields img_file o >>= fun s -> 
@@ -1011,10 +1005,6 @@ module Upload = struct
 
         
 (*
-description (optional)
-A description of the photo. May contain some limited HTML.
-tags (optional)
-A space-seperated list of tags to apply to the photo.
 safety_level (optional)
 Set to 1 for Safe, 2 for Moderate, or 3 for Restricted.
 content_type (optional)
