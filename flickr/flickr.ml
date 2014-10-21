@@ -373,6 +373,36 @@ The secret for the photo. If the correct secret is passed then permissions check
                          { "id": "15505863036", "owner": "9582328@N04",
 *)
 
+  module Search = struct
+
+    type resp = <
+        photos : photos;
+        stat   : string
+      >
+
+    and photos = <
+        page    : sint;
+        pages   : sint;
+        perpage : sint;
+        total   : sint;
+        photo   : photo list
+      >
+
+    and photo = <
+        id       : string;
+        owner    : string;
+        secret   : string;
+        server   : string;
+        farm     : sint;
+        title    : string;
+        ispublic : ibool;
+        isfriend : ibool;
+        isfamily : ibool
+      >
+    with conv(json, ocaml)
+      
+  end
+
   let search ?user_id ?tags ?text ?per_page ?page o =
     let tags, tag_mode = match tags with
       | None -> None, None
@@ -380,7 +410,7 @@ The secret for the photo. If the correct secret is passed then permissions check
       | Some (`All ts) -> Some (String.concat "," ts), Some "all"
     in
     json_api o `POST "flickr.photos.search"
-    & [ "api_key", App.app.Oauth.Consumer.key ]
+    ( [ "api_key", App.app.Oauth.Consumer.key ]
     @ List.filter_map id 
       [ opt id "user_id" user_id 
       ; opt id "tags" tags
@@ -389,6 +419,9 @@ The secret for the photo. If the correct secret is passed then permissions check
       ; opt string_of_int "per_page" per_page (* <= 500 *)
       ; opt string_of_int "page" page
       ]
+    )
+    >>= lift_error Search.resp_of_json
+    >>| fun x -> x#photos
 
 (*
 min_upload_date (Optional)
@@ -562,38 +595,44 @@ No title parameter was passed in the request.
 
   module GetList = struct
 
-    type set = < id                     : string;
-                 primary                : string;
-                 secret                 : string;
-                 server                 : string;
-                 farm                   : sint;
-                 photos                 : Json.sint;
-                 videos                 : Json.sint;
-                 title                  : content;
-                 description            : content;
-                 needs_interstitial     : ibool;
-                 visibility_can_see_set : ibool;
-                 count_views            : sint;
-                 count_comments         : sint;
-                 can_comment            : ibool;
-                 date_create            : string;
-                 date_update            : string
-               >
+    type set = < 
+        id                     : string;
+        primary                : string;
+        secret                 : string;
+        server                 : string;
+        farm                   : sint;
+        photos                 : Json.sint;
+        videos                 : Json.sint;
+        title                  : content;
+        description            : content;
+        needs_interstitial     : ibool;
+        visibility_can_see_set : ibool;
+        count_views            : sint;
+        count_comments         : sint;
+        can_comment            : ibool;
+        date_create            : string;
+        date_update            : string
+      >
   
-    and photoset = < cancreate : ibool;
-                     page      : sint;
-                     pages     : sint;
-                     perpage   : sint;
-                     total     : sint;
-                     photoset  : set list 
-                   >
+    and photoset = < 
+        cancreate : ibool;
+        page      : sint;
+        pages     : sint;
+        perpage   : sint;
+        total     : sint;
+        photoset  : set list 
+      >
   
-    and t = < cancreate : bool;
-              total : sint;
-              photoset : set list >
+    and t = < 
+        cancreate : bool;
+        total : sint;
+        photoset : set list 
+      >
 
-    and resp = < photosets : photoset;
-                 stat      : string; >
+    and resp = < 
+        photosets : photoset;
+        stat      : string; 
+      >
 
     with conv(json, ocaml_of )
 
@@ -724,12 +763,13 @@ Filter results by media type. Possible values are all (default), photos or video
 
 
   let addPhoto photoset_id ~photo_id o =
-    json_api o `GET "flickr.photosets.getPhotos"
+    json_api o `GET "flickr.photosets.addPhoto"
       [ "api_key", App.app.Oauth.Consumer.key
       ; "photoset_id", photoset_id
       ; "photo_id", photo_id
       ]
-    >>= fun _ -> `Ok ()
+    >>= fun j -> !!% "JSON=%a@." Json.format j; return j
+    >>= fun _ -> return ()
 
 end
 
@@ -893,7 +933,11 @@ module Upload = struct
       ?(is_friend=false)
       ?(is_family=false)
       ?(hidden=true)
+      ?title
       img_file o =
+        let title = Option.default title & fun () ->
+          Filename.(basename *> split_extension *> fst) img_file
+        in
         let bool k b = [k, if b then "1" else "0"] in
   	let fields = 
           List.concat 
@@ -901,7 +945,8 @@ module Upload = struct
   	    ; bool "is_friend" is_friend
   	    ; bool "is_family" is_family
   	    ; [ "hidden", if hidden then "2" else "1" ]
-            ]
+            ; [ "title", title ]
+            ] 
   	in
   	raw_api fields img_file o >>= fun s -> 
         catch_with (fun exn -> `XML_parse (s, exn)) Xml.parse_string s >>= fun xml ->
@@ -911,8 +956,6 @@ module Upload = struct
 
         
 (*
-title (optional)
-The title of the photo.
 description (optional)
 A description of the photo. May contain some limited HTML.
 tags (optional)
