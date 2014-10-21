@@ -307,7 +307,7 @@ module Rate_limit_status = struct
   type limit = <
       limit     : float;
       remaining : float;
-      reset     : float
+      reset     : float (** unix epoch *)
     > with conv(json,ocaml)
 
   type t = <
@@ -353,16 +353,10 @@ module Rate_limit_status = struct
 	  suggestions         as "/users/suggestions"                 : limit;
 	  lookup              as "/users/lookup"                      : limit;
 	  search              as "/users/search"                      : limit;
-	  contributors        as "/users/contributors"                : limit;
-	  contributees        as "/users/contributees"                : limit;
 	  suggestions_slug    as "/users/suggestions/:slug"           : limit;
+          report_spam         as "/users/report_spam"                 : limit;
+          derived_info        as "/users/derived_info"                : limit;
         >;
-(*
-      prompts : <
-	  record_event        as "/prompts/record_event"              : limit;
-	  suggest             as "/prompts/suggest"                   : limit;
-        >;
-*)
       followers : <
 	  list                as "/followers/list"                    : limit;
 	  ids                 as "/followers/ids"                     : limit;
@@ -376,16 +370,21 @@ module Rate_limit_status = struct
 	  user_timeline       as "/statuses/user_timeline"            : limit;
 	  retweets            as "/statuses/retweets/:id"             : limit;
 	  retweets_of_me      as "/statuses/retweets_of_me"           : limit;
+          friends             as "/statuses/friends"                  : limit;
+          lookup              as "/statuses/lookup"                   : limit;
         >;
       help : <
 	  privacy             as "/help/privacy"                      : limit;
           tos                 as "/help/tos"                          : limit;
 	  configuration       as "/help/configuration"                : limit;
 	  languages           as "/help/languages"                    : limit;
+          settings            as "/help/settings"                     : limit;
         >;
       friends : <
 	  ids                 as "/friends/ids"                       : limit;
 	  list                as "/friends/list"                      : limit;
+	  following_ids                 as "/friends/following/ids"                       : limit;
+	  following_list                as "/friends/following/list"                      : limit;
         >;
       direct_messages : <
 	  show                as "/direct_messages/show"              : limit;
@@ -396,6 +395,8 @@ module Rate_limit_status = struct
       account : <
 	  verify_credentials  as "/account/verify_credentials"        : limit;
           settings            as "/account/settings"                  : limit;
+          login_verification_enrollment as "/account/login_verification_enrollment" : limit;
+          update_profile as "/account/update_profile" : limit;
         >;
       favorites : <
 	  list                as "/favorites/list"                    : limit;
@@ -412,6 +413,13 @@ module Rate_limit_status = struct
 	  available           as "/trends/available"                  : limit;
           place               as "/trends/place"                      : limit;
 	  closest             as "/trends/closest"                    : limit;
+        >;
+      mutes : <
+          users_list as "/mutes/users/list" : limit;
+          users_ids as "/mutes/users/ids" : limit;
+        >;
+      device : <
+          token as "/device/token" : limit;
         >;
      >
   > with conv(json, ocaml)
