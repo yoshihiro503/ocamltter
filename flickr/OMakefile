@@ -19,3 +19,12 @@ FILES[] =
 
 NO_INSTALL=true
 MyOCamlProgram(flickr_test, $(FILES))
+
+FILES[] = 
+    app
+    flickr
+    tools
+    uploads
+
+NO_INSTALL=true
+MyOCamlProgram(uploads, $(FILES))
