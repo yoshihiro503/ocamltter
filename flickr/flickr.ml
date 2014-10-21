@@ -175,6 +175,49 @@ module Auth = struct
   end
 end
 
+module Page = struct
+
+  type 'a mc_embeded = 'a
+
+  type 'a paged = <
+      page      : sint;
+      perpage   : sint;
+      pages     : sint;
+      total     : sint;
+      data      : 'a mc_embeded;
+    >
+  with conv(json,ocaml)
+
+  (** Page to stream interface *)
+
+  let to_stream f ~per_page get_list maker =
+    f ~per_page ~page:1 >>= fun res ->
+      `Ok (
+        maker 
+          ~total: res#total
+          ~pages: res#pages
+          ~perpage: res#perpage
+          (let open Spotlib.Spot.Stream in
+           let get_ok_stream res =
+             of_list & List.map (fun x -> `Ok x) & get_list res
+           in
+           if res#perpage >= res#total then get_ok_stream res
+           else begin
+             let rec loop page = lazy begin
+               match f ~per_page ~page with
+               | `Error e -> Cons (`Error (e, loop, page), null)
+               | `Ok res ->
+                   Lazy.force &
+                     if res#perpage * res#page >= res#total then
+                       get_ok_stream res
+                     else
+                       append (get_ok_stream res) & loop & page + 1
+             end in
+             append (get_ok_stream res) & loop 2
+           end)
+      )
+end
+
 module Photos = struct  
 
 (*
@@ -222,7 +265,7 @@ module Photos = struct
     with conv(json, ocaml)
   end
 
-  let raw_getNotInSet ?(per_page=100) ?(page=1) (* ?privacy_filter ?media *) o = 
+  let raw_getNotInSet ~per_page ~page (* ?privacy_filter ?media *) o = 
     assert (page > 0);
     json_api o `GET "flickr.photos.getNotInSet"
       [ "api_key", App.app.Oauth.Consumer.key
@@ -231,6 +274,18 @@ module Photos = struct
       ]
     >>= lift_error GetNotInSet.resp_of_json
     >>| fun x -> x#photos
+
+  let getNoInSet ?(per_page=100) o =
+    Page.to_stream (raw_getNotInSet o) ~per_page 
+      (fun xs -> xs#photo)
+      (fun ~total ~pages ~perpage stream ->
+       object
+         method total = total
+         method pages = pages
+         method perpage = perpage
+         method stream = stream
+       end
+      )
 
 (*
 max_upload_date (Optional)

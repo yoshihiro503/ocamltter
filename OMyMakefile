@@ -38,10 +38,10 @@ BYTE_ENABLED = true
 OCAMLFLAGS = -g 
 
 #|Warnings not to be printed separted with space
-OCAMLWARNING_IGNORE[] = 4 9 40 42 44 45
+OCAMLWARNING_IGNORE[] = 4 9 40 42 44 45 48
 
 #|Warnings treated as non errors
-OCAMLWARNING_NON_ERROR[] = 4 9 40 42 44 45
+OCAMLWARNING_NON_ERROR[] = 4 9 40 42 44 45 48
 
 #|If it is false, warnings do not stop the compilation even if they are listed in OCAMLWARNING_NON_ERROR
 #If you are in developing something, turn it to true!

@@ -13,7 +13,7 @@ val fetch_request_token :
   -> path:string 
 
   -> ?oauth_version:string 
-  -> ?oauth_signature_method:signature_method 
+  -> ?oauth_signature_method:signature_method (** default is `Hmac_sha1 *)
   -> ?oauth_timestamp:float 
   -> ?oauth_nonce:string 
   -> ?oauth_other_params:(string * string) list
@@ -36,7 +36,7 @@ val fetch_access_token :
   -> path:string 
 
   -> ?oauth_version:string 
-  -> ?oauth_signature_method:signature_method 
+  -> ?oauth_signature_method:signature_method  (** default is `Hmac_sha1 *)
   -> ?oauth_timestamp:float 
   -> ?oauth_nonce:string 
   -> oauth_consumer_key:string 
