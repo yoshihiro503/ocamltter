@@ -38,4 +38,14 @@ let () = Flickr.Upload.upload "test.jpg" o |> fail_at_error |>
 let user = get_current_user o |> fail_at_error
 
 let () = !!% "id=%s username=%s@." user#id user#username
-let () = Photos.search ~user_id:user#id o |> fail_at_error |> json_format
+
+let photos = Photos.search ~user_id:user#id o |> fail_at_error
+
+let () = ocaml_format_with Photos.Search.ocaml_of_photos photos
+
+let () =
+  match photos#photo with
+  | [] -> assert false
+  | p::_ ->
+      Photos.getInfo p#id o |> fail_at_error 
+      |> fun p -> prerr_endline p#dates#taken
