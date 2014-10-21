@@ -12,6 +12,7 @@ LIBFILES[] =
     base/oauth_ex
     base/util
     twitter/auth
+    twitter/conf
     twitter/api_intf
     twitter/api11
 
