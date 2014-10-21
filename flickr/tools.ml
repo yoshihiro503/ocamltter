@@ -47,3 +47,43 @@ let delete_dups_in_sets o =
               | `Error e -> error e
               | `Ok () -> !!% "Deleted@."
 
+let uploads ~photoset img_files o =
+  let psets = (Photosets.getList o |> fail_at_error)#photoset in
+  let psid_opt = 
+    (* maybe overridden later *)
+    ref (
+      List.find_opt (fun pset -> pset#title#content = photoset) psets 
+      |> Option.map (fun pset -> pset#id)
+    )
+  in
+  let photos =
+    ref (
+      match !psid_opt with
+      | None -> []
+      | Some psid ->
+          !!% "Getting photos of photoset %s (%s)@." photoset psid;
+          let ps = (Photosets.getPhotos psid o |> fail_at_error)#photo in
+          List.map (fun p -> (p#title, p#id)) ps
+    )
+  in
+  flip List.iter img_files & fun img_file ->
+    let title = Filename.(basename *> split_extension *> fst) img_file in
+    if List.mem_assoc title !photos then
+      !!% "%s is already in the photoset@." img_file
+    else begin
+      !!% "Uploading %s@." img_file;
+      match Upload.upload ~title img_file o |> fail_at_error with
+      | ([] | _::_::_) -> assert false
+      | [photo_id] ->
+          photos := (title, photo_id) :: !photos;
+          match !psid_opt with
+          | None ->
+              !!% "Creating new photoset %s with photo %s@." photoset img_file;
+              psid_opt := Some (
+                Photosets.create ~title:photoset ~primary_photo_id: photo_id o
+                |> fail_at_error |> fun x -> x#id
+              );
+          | Some psid ->
+              !!% "Adding %s to photoset %s@." img_file photoset;
+              Photosets.addPhoto psid ~photo_id o |> fail_at_error
+    end
