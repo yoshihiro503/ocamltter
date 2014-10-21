@@ -1,42 +1,9 @@
 open Twitter
-open Auth
 open Api_intf
 
 exception Error of Api11.Error.t
 
 type tweet = Api_intf.Tweet.t
-
-module Auth : sig
-
-  module App : sig
-    type t = { name : string; consumer : Consumer.t; } with conv(ocaml)
-    val dummy : t
-    val ocamltter : t
-  end
-  
-  module User : sig
-    type t = { token : string; token_secret : string; verif : string; } 
-    with conv(ocaml)
-    val dummy : t
-  end
-
-  type t = { app : App.t; users : (string, User.t) Hashtbl.t; } with conv(ocaml)
-  type tbl = (App.t, (string, User.t) Hashtbl.t) Hashtbl.t
-  val dummy : t
-  val oauth : App.t -> User.t -> Twitter.Oauth.t
-  val load : string -> tbl
-  val save : string -> tbl -> unit
-  val save_dummy : string -> unit
-  val find : tbl -> App.t -> string -> User.t list
-  val authorize : App.t -> Twitter.Auth.VerifiedToken.t -> string * User.t
-  val authorize_interactive : App.t -> string * User.t
-  
-  module Single : sig
-    val save : string -> User.t -> unit
-    val load : string -> User.t
-    val oauth : string -> App.t -> Twitter.Oauth.t
-  end
-end
 
 module Cache : sig
   type t
