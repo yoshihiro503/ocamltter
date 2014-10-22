@@ -5,6 +5,7 @@ open Json_conv
 open Spotlib.Spot
 open Spotlib.Result.Open (* Monads are Result *)
 
+open Oauthlib
 open Api_intf
 
 
@@ -46,13 +47,15 @@ type 'a result = ('a, Error.t) Result.t
 
 (** {6 Base communication} *)
 
-(* Api 1.1 seems to requir https *)
-let twitter oauth ?(host="api.twitter.com") meth cmd params =
+let twitter oauth ?(host="api.twitter.com") meth path params =
   (* prerr_endline cmd; *)
   (* List.iter (fun (k,v) -> Format.eprintf "%s=%s@." k v) params; *)
-  Auth.access 
+  Oauth.access 
+    ~host
+    ~path
+    ~meth:( match meth with `GET -> `GET [] | `POST -> `POST [] )
     ~oauth_other_params:params 
-    meth host cmd oauth >>= fun s -> 
+    oauth >>= fun s -> 
   Result.catch (fun ~fail -> try Json.parse s with e -> fail (`Json_parse (e,s)))
       
 

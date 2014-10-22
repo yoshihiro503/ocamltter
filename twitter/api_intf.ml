@@ -2,6 +2,7 @@ open Spotlib.Spot
 open Meta_conv.Open
 open Json_conv
 open Ocaml_conv
+open Oauthlib
 
 (* Do not [open Tiny_json], since [Twitter] and [Tiny_json] both have [Util] *)
 

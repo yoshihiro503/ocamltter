@@ -1,7 +1,8 @@
 open Spotlib.Spot
 module Spot = Spotlib.Spot
-open Twitter
+open Oauthlib
 open Util
+open Twitter
 module TTS = GoogleTTS
 
 module Oauth = struct

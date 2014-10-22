@@ -1,6 +1,6 @@
 open Spotlib.Spot
 open Flickr
-module Xml = Twitter.Xml
+module Xml = Oauthlib.Xml
 
 let auth_file = "ocaml_flickr.auth"
 

@@ -1,5 +1,5 @@
 open Spotlib.Spot
-open Twitter
+open Oauthlib
 
 open Ocaml_conv
 open Json_conv

@@ -1,7 +1,7 @@
 open Spotlib.Spot
 open Flickr
 open Tools
-module Xml = Twitter.Xml
+module Xml = Oauthlib.Xml
 
 let xml_parse () =
   let xml = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>

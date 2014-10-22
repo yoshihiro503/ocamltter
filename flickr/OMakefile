@@ -1,9 +1,7 @@
-OCAMLFLAGS = -thread
-
 OCAMLINCLUDES = $(dir . ../lib)
 
-OCAML_LIBS= ../lib/twitter
-OCamlRequire(../lib/twitter.cmo)
+OCAML_LIBS= ../lib/oauthlib
+OCamlRequire(../lib/oauthlib.cmo)
 
 # OCAMLPACKS[]  += xmlm
 # CAMLP4PACKS[] += xmlm

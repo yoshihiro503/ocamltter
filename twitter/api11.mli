@@ -1,4 +1,5 @@
 open Spotlib.Spot
+open Oauthlib
 open Api_intf
 
 (** {6 HTTP parameters} *)
