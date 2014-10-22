@@ -161,6 +161,12 @@ let json_api o meth m fields =
 
 type content = < content as "_content" : string > with conv(json, ocaml)
 
+module EmptyResp = struct
+  type resp = < stat : string > with conv(ocaml, json)
+
+  let check j = lift_error resp_of_json j >>| fun _ -> ()
+end
+
 module Auth = struct
   module Oauth = struct
     let checkToken _oauth_token o =
@@ -207,6 +213,16 @@ module Page = struct
       )
 end
 
+module TagList = struct
+  type t = string list with conv(ocaml)
+
+  let json_of_t xs = json_of_string (String.concat " " xs)
+  let t_of_json ?trace j =
+    string_of_json ?trace j >>= fun s -> 
+    return & String.split (function ' ' -> true | _ -> false) s
+      
+end
+
 module Photos = struct  
 
 (*
@@ -249,23 +265,37 @@ module Photos = struct
       title    : string;
       ispublic : ibool;
       isfriend : ibool;
-      isfamily : ibool
+      isfamily : ibool;
+
+      (* optional fields *)
+
+      tags : TagList.t mc_option;
     >
     with conv(json, ocaml)
   end
 
-  let raw_getNotInSet ~per_page ~page (* ?privacy_filter ?media *) o = 
+  let raw_getNotInSet ~per_page ~page (* ?privacy_filter ?media *) 
+      ?(tags=false) o = 
     assert (page > 0);
+    let tags = if tags then Some "tags" else None in
+    let extras =
+      match List.filter_map id [ tags ] with
+      | [] -> None
+      | xs -> Some (String.concat "," xs)
+    in
     json_api o `GET "flickr.photos.getNotInSet"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "per_page", string_of_int per_page
-      ; "page", string_of_int page
-      ]
+      ([ "api_key", App.app.Oauth.Consumer.key
+       ; "per_page", string_of_int per_page
+       ; "page", string_of_int page
+       ]
+       @ List.filter_map id
+         [ opt id "extras" extras ]
+      )
     >>= lift_error GetNotInSet.resp_of_json
     >>| fun x -> x#photos
 
-  let getNoInSet ?(per_page=100) o =
-    Page.to_stream (raw_getNotInSet o) ~per_page 
+  let getNotInSet ?(per_page=100) ?tags o =
+    Page.to_stream (raw_getNotInSet ?tags o) ~per_page 
       (fun xs -> xs#photo)
       (fun ~total ~pages ~perpage stream ->
        object
@@ -401,12 +431,28 @@ secret (Optional)
 The secret for the photo. If the correct secret is passed then permissions checking is skipped. This enables the 'sharing' of individual photos by passing around the id and secret.
 *)
 
+  let addTags photo_id tags o =
+    json_api o `GET "flickr.photos.addTags"
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photo_id", photo_id
+      ; "tags", String.concat " " tags
+      ]
+    >>= EmptyResp.check
+
+  let setTags photo_id tags o =
+    json_api o `GET "flickr.photos.setTags"
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photo_id", photo_id
+      ; "tags", String.concat " " tags
+      ]
+    >>= EmptyResp.check
+
   let delete photo_id o = 
     json_api o `POST "flickr.photos.delete"
       [ "api_key", App.app.Oauth.Consumer.key
       ; "photo_id", photo_id
       ]
-    >>| fun _ -> ()
+    >>= EmptyResp.check
 
 (*
 { "photos": { "page": 1, "pages": 34, "perpage": 100, "total": "3343",
@@ -803,7 +849,7 @@ Filter results by media type. Possible values are all (default), photos or video
       ; "photoset_id", photoset_id
       ; "photo_ids", String.concat "," photo_ids
       ]
-    >>= fun _ -> return ()
+    >>= EmptyResp.check
 
 
   let addPhoto photoset_id ~photo_id o =
@@ -812,8 +858,7 @@ Filter results by media type. Possible values are all (default), photos or video
       ; "photoset_id", photoset_id
       ; "photo_id", photo_id
       ]
-    >>= fun j -> !!% "JSON=%a@." Json.format j; return j
-    >>= fun _ -> return ()
+    >>= EmptyResp.check
 
 end
 
@@ -882,6 +927,49 @@ module People = struct
 
 end
 
+module Tags = struct
+    (* flickr.tags.getListPhoto *)
+
+  module GetListPhoto = struct
+
+    type resp = <
+        photo : photo;
+        stat : string 
+      >
+        
+    and photo = <
+        id : string;
+        tags : tags;
+      >
+
+    and tags = <
+        tag : t;
+      >
+
+    and t = tag list
+
+    and tag = < 
+        id : string;
+        author : string;
+        authorname : string;
+        raw : string;
+        tag as "_content" : string;
+        machine_tag : ibool
+      >
+    with conv(json, ocaml)
+
+  end
+
+  let getListPhoto photo_id o =
+    json_api o `GET "flickr.tags.getListPhoto"
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photo_id", photo_id
+      ]
+    >>= lift_error GetListPhoto.resp_of_json
+    >>| fun x -> x#photo#tags#tag
+
+end
+
 module Test = struct
 
   module Login = struct
@@ -947,7 +1035,8 @@ module Upload = struct
           let photoids = (pcdata ^. children ^. tag_named "photoid" ^. children) xml in
           begin match photoids with
           | [] -> `Error ("<photoid> is not found", xml)
-          | xs -> `Ok (`Ok (List.map (function PCData s -> s | _ -> assert false) xs))
+          | [PCData x] -> `Ok (`Ok x)
+          | _ -> `Error ("malformed <photoid>(s)", xml)
           end
           
       | [ PCData "fail" ] ->
@@ -1013,27 +1102,24 @@ Set to 1 for Photo, 2 for Screenshot, or 3 for Other.
     
 end
 
-let error = function
+let format_error ppf =
+  function
   | (`Http _ | `Curl _ as e) -> 
-      !!% "HTTP: %s@." & Http.string_of_error e;
-      assert false
+      Format.fprintf ppf "HTTP: %s@." & Http.string_of_error e;
   | `Json (e, s) -> 
-      !!% "Json: %a@." Json.format_error e;
-      !!% "  %S@." s;
-      assert false
+      Format.fprintf ppf "Json: %a@." Json.format_error e;
+      Format.fprintf ppf "  %S@." s;
   | `Json_conv e ->
-      !!% "Json_conv: %a@." Json_conv.format_full_error e;
-      assert false
+      Format.fprintf ppf "Json_conv: %a@." Json_conv.format_full_error e;
   | `API fail ->
-      !!% "API: %a@." Fail.format fail;
-      assert false
+      Format.fprintf ppf "API: %a@." Fail.format fail;
   | `Load (name, exn) ->
-      !!% "Local file load failure: %s: %a@." name Exn.format exn;
-      assert false
+      Format.fprintf ppf "Local file load failure: %s: %a@." name Exn.format exn;
   | `XML_parse (s, exn) ->
-      !!% "XML parse failure: %a : %s@." Exn.format exn s;
-      assert false
+      Format.fprintf ppf "XML parse failure: %a : %s@." Exn.format exn s;
   | `XML_conv (mes, xml) ->
-      !!% "XML conv failure: %s : %s@." mes (Xml.show xml);
-      assert false
+      Format.fprintf ppf "XML conv failure: %s : %s@." mes (Xml.show xml)
 
+let error e = 
+  format_error Format.stderr e;
+  assert false
