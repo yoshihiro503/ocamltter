@@ -49,6 +49,7 @@ let delete_dups_in_sets o =
 
 let uploads ~photoset img_files o =
   let psets = (Photosets.getList o |> fail_at_error)#photoset in
+  !!% "Got existing photosets (%d)@." & List.length psets;
   let psid_opt = 
     (* maybe overridden later *)
     ref (
@@ -113,7 +114,7 @@ let uploads ~photoset img_files o =
       | `Ok () -> `Ok photo_id
     in
 
-    let trial = 3 in
+    let trial = 2 in
     let wait = 30 in
 
     let rec try_ left f =
