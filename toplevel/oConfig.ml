@@ -6,12 +6,11 @@ let filter tw =
       not (List.mem d#screen_name ignores)
 
 let watching_words =
-(*
   ["#Coq"; "OCamltter"; "ProofCafe"; "#OCaml"]
-*)
-  ["#OCaml"]
 
-let coffee_break = ref 60.0 (* second *)
-(* 2014/10 : coffee_break 30.0 secs are too short and exceed the limit *)
+let coffee_break = ref 61.0 (* seconds *)
+(* 2014/10 : home_timeline rate limit is 15/15mins 
+   (search is 180/15mins)
+*)
 
 let talk = ref false
