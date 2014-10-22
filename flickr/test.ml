@@ -16,6 +16,14 @@ let auth_file = "ocaml_flickr.auth"
 
 let o = get_oauth auth_file
 
+(*
+let () =
+  let pid = Upload.upload ~tags:["tags"] "test.jpg" o |> fail_at_error in
+  Tags.getListPhoto pid o |> fail_at_error |> ocaml_format_with Tags.GetListPhoto.ocaml_of_t
+
+let _ = exit 0
+*)
+
 let getInfo pid o =
   match Photos.getInfo pid o with
   | `Error e -> error e

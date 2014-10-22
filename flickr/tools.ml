@@ -66,29 +66,80 @@ let uploads ~photoset img_files o =
           List.map (fun p -> (p#title, p#id)) ps
     )
   in
-  flip List.iter img_files & fun img_file ->
-    let title = Filename.(basename *> split_extension *> fst) img_file in
-    if List.mem_assoc title !photos then
-      !!% "%s is already in the photoset@." img_file
-    else begin
+
+  let up ~title img_file =
+    let rec upload () =
       !!% "Uploading %s@." img_file;
       match 
         Upload.upload 
           ~title img_file 
           ~tags:["uploading"; "photoset_" ^ photoset] 
-          o |> fail_at_error 
+          o
       with
-      | ([] | _::_::_) -> assert false
-      | [photo_id] ->
+      | `Error e -> `Error (e, upload)
+      | `Ok photo_id -> 
           photos := (title, photo_id) :: !photos;
-          match !psid_opt with
-          | None ->
-              !!% "Creating new photoset %s with photo %s@." photoset img_file;
-              psid_opt := Some (
-                Photosets.create ~title:photoset ~primary_photo_id: photo_id o
-                |> fail_at_error |> fun x -> x#id
-              );
-          | Some psid ->
-              !!% "Adding %s to photoset %s@." img_file photoset;
-              Photosets.addPhoto psid ~photo_id o |> fail_at_error
-    end
+          add_to_photoset photo_id
+
+    and add_to_photoset photo_id =
+      (* moving to the photoset *)
+      match !psid_opt with
+      | None ->
+          !!% "Creating new photoset %s with photo %s@." photoset img_file;
+          begin match 
+            Photosets.create ~title:photoset ~primary_photo_id: photo_id o
+          with
+          | `Error e -> `Error (e, fun () -> add_to_photoset photo_id)
+          | `Ok res -> 
+              psid_opt := Some res#id;
+              clean_uploading_tag photo_id
+          end
+      | Some psid ->
+          !!% "Adding %s to photoset %s@." img_file photoset;
+          begin match 
+              Photosets.addPhoto psid ~photo_id o 
+          with
+          | `Error e -> `Error (e, fun () -> add_to_photoset photo_id)
+          | `Ok () -> 
+              clean_uploading_tag photo_id
+          end              
+
+    and clean_uploading_tag photo_id =
+      (* remove "uploading" tag *)
+      match
+        Photos.setTags photo_id ["photoset_" ^ photoset] o 
+      with
+      | `Error e -> `Error (e, fun () -> clean_uploading_tag photo_id)
+      | `Ok () -> `Ok photo_id
+    in
+
+    let trial = 3 in
+    let wait = 30 in
+
+    let rec try_ left f =
+      match f () with
+      | `Error (e, _) when left = 0 -> 
+          format_error Format.stderr e;
+          !!% "No more retry@.";
+          `Error e
+      | `Error (e, retry) ->
+          format_error Format.stderr e;
+          !!% "Retrying (left=%d) after %d secs...@." left wait;
+          Unix.sleep wait;
+          try_ (left-1) retry
+      | (`Ok _ as ok) -> ok
+    in
+    try_ trial upload
+  in
+
+  flip List.iter img_files & fun img_file ->
+    let title = Filename.(basename *> split_extension *> fst) img_file in
+    if List.mem_assoc title !photos then
+      !!% "%s is already in the photoset@." img_file
+    else 
+      match up ~title img_file with
+      | `Ok pid -> 
+          !!% "Uploaded as id = %s@." pid
+      | `Error _e ->
+          !!% "Errors reached critical level. Aborting.@.";
+          exit 1
