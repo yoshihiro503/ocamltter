@@ -13,4 +13,5 @@ let coffee_break = ref 61.0 (* seconds *)
    (search is 180/15mins)
 *)
 
-let talk = ref false
+let talk = ref true
+
