@@ -14,6 +14,7 @@ FILES[] =
     oConfig
     ocamltter
 
+NO_INSTALL=true
 MyOCamlTop(ocamltter_top, $(FILES))
 
 install::

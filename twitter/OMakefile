@@ -5,4 +5,5 @@ LIBFILES[] =
     api_intf
     api11
 
+SUB_PACKAGE=true
 MyOCamlPackage(twitter, $(LIBFILES), $(EMPTY), $(EMPTY))

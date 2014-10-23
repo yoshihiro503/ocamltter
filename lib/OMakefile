@@ -11,4 +11,6 @@ LIBFILES[] =
     oauth_ex
     util
 
+SUB_PACKAGE=true
 MyOCamlPackage(oauthlib, $(LIBFILES), $(EMPTY), $(EMPTY))
+

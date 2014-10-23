@@ -20,3 +20,20 @@ OCAMLDEPFLAGS= -syntax camlp4o -package meta_conv.syntax
 OCAMLPPFLAGS = -syntax camlp4o -package meta_conv.syntax
 
 Subdirs()
+
+load_install_targets(dir) =
+    chan = $(fopen $(dir)/install_targets.txt, r)
+    files = $(addprefix $(dir)/, $(split $(input-line $(chan))))
+    close($(chan))
+#    println($(string $(files)))
+    return $(files)
+
+install: META lib/install_targets.txt twitter/install_targets.txt
+    section:
+        files[]= META
+        files += $(load_install_targets lib)
+        files += $(load_install_targets twitter)
+        println($(string $(files)))
+        $(OCAMLFIND) remove ocamltter 
+        $(OCAMLFIND) install ocamltter $(files)
+

@@ -437,11 +437,20 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
   ## install
 
   # CR jfuruse: x.cmi is required if x.mli does not exist!
-  targets[]=META $(glob i, *.mli) $(library_name).cmi $(library_name).cmo $(library_name).cmx $(library_name).cma $(library_name).cmxa $(library_name).cmxs $(library_name).o $(library_name).a $(CSTUBLIBRARIES) $(MyOCamlPackageExtras)
+  sub_targets[]= $(glob i, *.mli) $(library_name).cmi $(library_name).cmo $(library_name).cmx $(library_name).cma $(library_name).cmxa $(library_name).cmxs $(library_name).o $(library_name).a $(CSTUBLIBRARIES) $(MyOCamlPackageExtras)
 
-  targets[]+= $(library_name).cmt
+  sub_targets[]+= $(library_name).cmt
 
-  if $(not $(defined NO_INSTALL))
+  targets[]= META $(sub_targets)
+
+  if $(defined SUB_PACKAGE)
+    install_targets.txt: 
+        section:
+            chan=$(fopen $@, w)
+            fprintln($(chan), $(string $(sub_targets)))
+            close($(chan))
+
+  if $(and $(not $(defined NO_INSTALL)) $(not $(defined SUB_PACKAGE)))
     if $(defined INSTALLED)
       $(Installed $(library_name)): $(targets)
         $(OCAMLFIND) remove $(library_name)
