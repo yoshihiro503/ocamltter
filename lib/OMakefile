@@ -10,4 +10,4 @@ LIBFILES[] =
     oauth_ex
     util
 
-MyOCamlPackage(oauthlib, $(LIBFILES), $(EMPTY), $(EMPTY))
+MyOCamlPackage(oCamltter_oauth, $(LIBFILES), $(EMPTY), $(EMPTY))

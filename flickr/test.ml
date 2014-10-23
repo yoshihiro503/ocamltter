@@ -1,7 +1,7 @@
 open Spotlib.Spot
-open Flickr
+open Api
 open Tools
-module Xml = Oauthlib.Xml
+module Xml = OCamltter_oauth.Xml
 
 let xml_parse () =
   let xml = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>

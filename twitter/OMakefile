@@ -1,8 +1,8 @@
-OCAMLINCLUDES = . $(dir ../lib)
+OCAMLINCLUDES = $(dir . ../lib)
 
 LIBFILES[] = 
     conf
     api_intf
     api11
 
-MyOCamlPackage(twitter, $(LIBFILES), $(EMPTY), $(EMPTY))
+MyOCamlPackage(oCamltter_twitter, $(LIBFILES), $(EMPTY), $(EMPTY))

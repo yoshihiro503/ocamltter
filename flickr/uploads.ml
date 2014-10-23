@@ -1,6 +1,6 @@
 open Spotlib.Spot
-open Flickr
-module Xml = Oauthlib.Xml
+open Api
+module Xml = OCamltter_oauth.Xml
 
 let auth_file = "ocaml_flickr.auth"
 

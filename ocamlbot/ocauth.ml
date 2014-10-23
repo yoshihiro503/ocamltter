@@ -1,6 +1,6 @@
 (* application level library *)
 open Spotlib.Spot
-open Oauthlib
+open OCamltter_oauth
 open Oauth_ex
 
 module Auth = struct

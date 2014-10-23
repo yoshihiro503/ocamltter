@@ -1,5 +1,5 @@
 open Spotlib.Spot
-open Flickr
+open Api
 
 let json_format = !!% "%a@." Tiny_json.Json.format
 let ocaml_format_with f = !!% "%a@." (Ocaml.format_with ~no_poly:true f)
@@ -10,7 +10,7 @@ let fail_at_error = function
 
 let get_current_user o =
   let open Result in
-  Flickr.Test.login o >>= fun x -> 
+  Api.Test.login o >>= fun x -> 
   (* CR jfuruse: we should have a nice embedding of content... *)      
   return (object method id = x#id method username = x#username#content end)
 

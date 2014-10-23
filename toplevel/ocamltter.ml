@@ -1,13 +1,13 @@
 open Spotlib.Spot
 module Spot = Spotlib.Spot
-open Oauthlib
+open OCamltter_oauth
 open Util
-open Twitter
+open OCamltter_twitter
 module TTS = GoogleTTS
 
 module Oauth = struct
   include Oauth_ex.Make(struct
-    include Twitter.Conf
+    include OCamltter_twitter.Conf
     let app = { Oauth_ex.Consumer.key = "vS0nKAS6ieWL76zZaQgF4A";
                 secret = "XHa1ZiPcNRsYKw4mdIv8wHUiNulpBFxKT1ntXXuJgo"; }
   end)
