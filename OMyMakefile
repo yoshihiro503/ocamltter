@@ -16,11 +16,18 @@ default
 # OCaml 
 # ========================================================================
 
+#| OCAMLANY is either byte or native
+OCAMLANY =
+    if $(OCAMLC_EXISTS)
+        value $(OCAMLC)
+    else 
+        value $(OCAMLOPT)
+
 #|Path to the OCaml library directory
-OCAML_WHERE = $(shell ocamlc -where)
+OCAML_WHERE = $(shell $(OCAMLANY) -where)
 
 #|Version without extensions
-OCAML_VERSION = $(shell ocamlc -version | sed -e 's/^\([0-9.]*\).*/\1/')
+OCAML_VERSION = $(shell $(OCAMLANY) -version | sed -e 's/^\([0-9.]*\).*/\1/')
 
 #|OMy requires OCamlFind!
 USE_OCAMLFIND = true
@@ -30,27 +37,28 @@ OCAMLFIND_QUERY(name) =
     return $(shell ocamlfind query $(name))
 
 #|Set NATIVE_ENABLED false locally if a project does not requre opt compilation.
-NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
 NATIVE_SHARED_ENABLED = $(OCAMLOPT_EXISTS)
+
+#|BYTE_ENABLED = true by default
 BYTE_ENABLED = true
 
 #|The default warning and errors. If you want to use different warning and error switches, use redefine the variable.
 OCAMLFLAGS = -g 
 
 #|Warnings not to be printed separted with space
-OCAMLWARNING_IGNORE[] = 4 9 40 42 44 45 48
+OCAMLWARNING_IGNORE[] = 3 4 9 40 42 44 45 48
 
 #|Warnings treated as non errors
 OCAMLWARNING_NON_ERROR[] = 4 9 40 42 44 45 48
 
 #|If it is false, warnings do not stop the compilation even if they are listed in OCAMLWARNING_NON_ERROR
-#If you are in developing something, turn it to true!
+#If you are in developing something, override it to true!
 OCAMLWARNING_STOP_AT_ERROR_WARNING=false
 
 #|The maximum warning value.
 # This is the maximum warning ID NOT of the current OCaml compiler,
-#                                BUT of the OCaml compiler used by the author.
-OCAMLWARNING_MAX= 45
+#                                BUT of the OCaml compiler used by the author of OMyMakefile.
+OCAMLWARNING_MAX= 49
 
 #|Function to build warning switches
 OCAMLWARNING_MAKE()=
@@ -108,13 +116,12 @@ if $(and $(not $(NATIVE_ENABLED)) $(not $(BYTE_ENABLED)))
 #|Additional implicit rules by file extensions
 # annot, cmt, cmti files
 %.annot %.cmt: %.ml %.cmi
-	$(OCamlC) -c -annot $(OCAMLANNOTFLAGS) $<
+	$(OCamlC) -c $<
 
 %.cmti: %.mli 
-	$(OCamlC) -c $(OCAMLANNOTFLAGS) $<
+	$(OCamlC) -c $<
 
-#|Define OCAML_ANNOT so that ocamlc/ocamlopt automatically create annot/cmt/cmti files, even without -annot/-bin-annot option. This requires a special compiler patch 
-setenv(OCAML_ANNOT, 1)
+#| We recommend to have OCAMLPARAM=_,g=1,annot=1,bin-annot=1,short-paths=1
 
 #|Enable the backtrace
 setenv(OCAMLRUNPARAM, b)
@@ -460,12 +467,7 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
 
 ############################################################## build ocaml exec
 
-#| Add a rule to build a program $(name)
-#      name
-#          Name of the program
-#      files
-#          OCaml module names (without .ml)
-MyOCamlTestProgram(name, files) =
+MyOCamlGenericProgram(name, files) =
   WithOCamlVeryClean()
   AddLocalOCamlPackageDependencies()
   export # The above thing is local: need to be exported
@@ -481,6 +483,16 @@ MyOCamlTestProgram(name, files) =
   # but who cases ?
   AutoClean()
 
+#| Add a rule to build a test program $(name)
+#      name
+#          Name of the program
+#      files
+#          OCaml module names (without .ml)
+MyOCamlTestProgram(name, files) =
+  # We need -linkall not to miss any module for test
+  OCAML_LINK_FLAGS += -linkall
+  MyOCamlGenericProgram($(name), $(files))
+
 #| Add a rule to build a program $(name)
 #      name
 #          Name of the program
@@ -489,8 +501,8 @@ MyOCamlTestProgram(name, files) =
 #  In addition to MyOCamlTestProgram, the binary is installed by omake install
 MyOCamlProgram(name, files) =
   WithOCamlVeryClean()
-  MyOCamlTestProgram($(name), $(files))
-  export # The above thing is local: need to be exported
+  MyOCamlGenericProgram($(name), $(files))
+  export # The above thing is local: need to be exported # really?
 
   if $(not $(defined NO_INSTALL))
     install: $(name) $(name).run $(name).opt
@@ -529,6 +541,7 @@ OCamlTop(name, files) =
    #
    $(BYTEPROG): $(CMAFILES) $(CMOFILES) $(CLIBS)
         $(OCAMLFIND) $(OCAMLMKTOP) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) $(OCAMLCFLAGS)\
+                $(OCAMLWARNING_MAKE) \
                 $(PREFIXED_OCAMLINCLUDES) $(OCAML_BYTE_LINK_FLAGS)\
                 -o $@ $(CMA_OTHER_FILES) $(CMAFILES) $(OCamlLinkSort $(CMOFILES))\
                 $(CLIBS) $(OCAML_LINK_FLAGS)

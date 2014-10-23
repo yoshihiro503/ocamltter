@@ -4,9 +4,6 @@ open Json_conv
 open Ocaml_conv
 open Oauthlib
 
-(* Do not [open Tiny_json], since [Twitter] and [Tiny_json] both have [Util] *)
-
-
 module Json = struct
   include Tiny_json.Json
   let json_of_t x = x

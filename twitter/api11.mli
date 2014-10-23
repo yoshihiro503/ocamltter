@@ -32,7 +32,6 @@ val twitter :
   -> string                 (** URL path part *)
   -> (string * string) list (** header *)
   -> (Json.t, [> Error.http | Error.json_parse ]) Result.t
-(* CR jfuruse: We should use [params] instead of [(string * string) list] *)
 
 type 'a json_converter = Json.t -> ('a, Json.t Meta_conv.Error.t) Result.t 
 (** The type of Json to OCaml converter *)
@@ -44,6 +43,7 @@ val api' :
   -> params 
   -> Oauth.t 
   -> 'b result
+(** API call with JSON-to-OCaml conversion *)
 
 val api :
   'b json_converter

@@ -65,11 +65,12 @@ module Extra = struct
     val access_path : string
   
     val authorize_url : string
-    (** "https://www.flickr.com/services/oauth/authorize?oauth_token=" *)
+    (** ex. "https://www.flickr.com/services/oauth/authorize?oauth_token=" *)
   
     val app : Consumer.t
   
   end
+
 end
 
 include Extra
@@ -134,5 +135,4 @@ module Make(Conf : Conf) = struct
 
   let access = Oauth.access
 end
-
 

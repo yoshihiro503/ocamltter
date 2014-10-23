@@ -6,6 +6,10 @@ OCAML_LIBS= ../lib/oauthlib ../twitter/twitter
 OCamlRequire(../lib/oauthlib.cmo)
 OCamlRequire(../twitter/twitter.cmo)
 
+# We get tons of Warning 31 since we link ocamlcommon.cma twice
+OCAMLWARNING_IGNORE[] += 31
+OCAMLWARNING_NON_ERROR[] += 31
+
 FILES[] = 
     oConfig
     ocamltter

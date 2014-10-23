@@ -97,6 +97,6 @@ module Make(Conf : Conf) : sig
     -> t (** Auth *)
     -> (string, [> Http.error]) Result.t 
 
-end with type t = Oauth.t
+end
 
 

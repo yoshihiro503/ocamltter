@@ -1,7 +1,6 @@
 open Spotlib.Spot
-module Spot = Spotlib.Spot
 open Oauthlib
-open Util
+open Oauthlib.Util
 open Twitter
 module TTS = GoogleTTS
 
@@ -81,7 +80,7 @@ end
 
 exception Error of Api11.Error.t
 
-let default def v = v |> Spot.result id (fun e ->
+let default def v = v |> Result.result id (fun e ->
   Format.eprintf "%a@." Api11.Error.format e;
   def)
 

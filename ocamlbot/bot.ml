@@ -1,7 +1,9 @@
 open Spotlib.Spot
+
 open Oauthlib
 open Twitter
-open Api11
+open Twitter.Api11
+
 open Orakuda.Regexp.Infix
 
 let auth_file = match Exn.catch Sys.getenv "HOME" with
