@@ -1,5 +1,5 @@
 open Spotlib.Spot
-open Oauthlib
+open OCamltter_oauth
 open Api_intf
 
 (** {6 HTTP parameters} *)

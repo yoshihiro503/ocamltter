@@ -1,5 +1,5 @@
-open Oauthlib
-open Twitter
+open OCamltter_oauth
+open OCamltter_twitter
 open Api_intf
 
 exception Error of Api11.Error.t

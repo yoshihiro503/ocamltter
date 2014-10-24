@@ -2,7 +2,7 @@ open Spotlib.Spot
 open Meta_conv.Open
 open Json_conv
 open Ocaml_conv
-open Oauthlib
+open OCamltter_oauth
 
 module Json = struct
   include Tiny_json.Json

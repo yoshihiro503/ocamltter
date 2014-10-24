@@ -13,6 +13,15 @@ default
   eprintln(Specify PREFIX or prefix environment variable.)
   exit 1 
 
+# Misc tools
+# ======================================================================
+
+#|ditto.
+mkdir_if_not_exists(dir) =
+  if $(not $(test -e $(dir))):
+    mkdir -p $(dir) 
+  return
+
 # OCaml 
 # ========================================================================
 
@@ -443,14 +452,15 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
 
   targets[]= META $(sub_targets)
 
-  if $(defined SUB_PACKAGE)
-    install_targets.txt: 
-        section:
-            chan=$(fopen $@, w)
-            fprintln($(chan), $(string $(sub_targets)))
-            close($(chan))
+  if $(defined SUB_INSTALL)
+    install: $(sub_targets) $(SUB_INSTALL)
+      mkdir_if_not_exists($(SUB_INSTALL))
+      /bin/rm -rf $(SUB_INSTALL)/$(library_name)
+      mkdir $(SUB_INSTALL)/$(library_name)
+      cp $(sub_targets) $(SUB_INSTALL)/$(library_name)
+    export
 
-  if $(and $(not $(defined NO_INSTALL)) $(not $(defined SUB_PACKAGE)))
+  if $(and $(not $(defined NO_INSTALL)) $(not $(defined SUB_INSTALL)))
     if $(defined INSTALLED)
       $(Installed $(library_name)): $(targets)
         $(OCAMLFIND) remove $(library_name)
@@ -698,15 +708,6 @@ list_filter(pred, list) =
 #| Obtain files installed as PACK
 GET_OCAMLFIND_OBJS(pack)=
     return $(Files $(OCAMLFIND_DESTDIR)/$(pack))
-
-# Misc tools
-# ======================================================================
-
-#|ditto.
-mkdir_if_not_exists(dir) =
-  if $(not $(test -e $(dir))):
-    mkdir -p $(dir) 
-  return
 
 # Pa_ounit test
 # =======================================================================

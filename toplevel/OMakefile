@@ -1,10 +1,14 @@
 OCAMLFLAGS = -thread
 
-OCAMLINCLUDES += $(dir . ../lib ../twitter)
+OCAMLINCLUDES = $(dir . ../lib ../twitter)
 
-OCAML_LIBS= ../lib/oauthlib ../twitter/twitter
-OCamlRequire(../lib/oauthlib.cmo)
-OCamlRequire(../twitter/twitter.cmo)
+# ocamlcommon.cma is linked twice by MyOCamlTop + ocaml_conv
+OCAMLWARNING_IGNORE[] += 31
+OCAMLWARNING_NON_ERROR[] += 31
+
+OCAML_LIBS= ../lib/oCamltter_oauth ../twitter/oCamltter_twitter
+OCamlRequire(../lib/oCamltter_oauth.cmo)
+OCamlRequire(../twitter/oCamltter_twitter.cmo)
 
 # We get tons of Warning 31 since we link ocamlcommon.cma twice
 OCAMLWARNING_IGNORE[] += 31

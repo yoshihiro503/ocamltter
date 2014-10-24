@@ -2,9 +2,9 @@ OCAMLFLAGS = -thread
 
 OCAMLINCLUDES = $(dir . ../lib ../twitter)
 
-OCAML_LIBS= ../lib/oauthlib ../twitter/twitter
-OCamlRequire(../lib/oauthlib.cmo)
-OCamlRequire(../twitter/twitter.cmo)
+OCAML_LIBS= ../lib/oCamltter_oauth ../twitter/oCamltter_twitter
+OCamlRequire(../lib/oCamltter_oauth.cmo)
+OCamlRequire(../twitter/oCamltter_twitter.cmo)
 
 OCAMLPACKS[] += orakuda
 CAMLP4PACKS[] += orakuda

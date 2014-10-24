@@ -1,9 +1,7 @@
 open Spotlib.Spot
-
-open Oauthlib
-open Twitter
-open Twitter.Api11
-
+open OCamltter_oauth
+open OCamltter_twitter
+open Api11
 open Orakuda.Regexp.Infix
 
 let auth_file = match Exn.catch Sys.getenv "HOME" with
@@ -26,7 +24,7 @@ let { Ocauth.Auth.consumer } = match Ocauth.Auth.find_app auths "ocamlbot" with
   | None -> failwith "no ocamlbot app found"
 
 module Oauthx = Oauth_ex.Make(struct
-  include Twitter.Conf
+  include OCamltter_twitter.Conf
   let app = consumer
 end)
 

@@ -1,6 +1,6 @@
 (** OCamllter application level auth library *)
 
-open Oauthlib
+open OCamltter_oauth
 
 (* application level library *)
 
