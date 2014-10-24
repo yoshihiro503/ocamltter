@@ -1,19 +1,26 @@
-name="ocamltter"
-description="OCamltter Oauth framework"
-
-version="3.0.0"
+name = "ocamltter"
+description = "Libraries for Oauth, Twitter and Flickr"
 
 package "oauthlib" (
-  version = "3.0.0"
-  requires="cryptokit,str,meta_conv,spotlib,curl,ocaml_conv"
-  archive(byte) = "oauthlib.cmo"
-  archive(native) = "oauthlib.cmx"
+  version="3.0.0"
+  requires="cryptokit,str,meta_conv,tiny_json_conv,spotlib,curl,ocaml_conv"
+  archive(byte)="oauthlib.cmo"
+  archive(native)="oauthlib.cmx"
+  linkopts = ""
 )
 
 package "twitter" (
-  version = "3.0.0"
-  requires="oauthlib,tiny_json_conv"
-  archive(byte) = "twitter.cmo"
-  archive(native) = "twitter.cmx"
+  version="3.0.0"
+  requires="cryptokit,str,meta_conv,tiny_json_conv,spotlib,curl,ocaml_conv"
+  archive(byte)="twitter.cmo"
+  archive(native)="twitter.cmx"
+  linkopts = ""
 )
 
+package "flickr" (
+  version="3.0.0"
+  requires="cryptokit,str,meta_conv,tiny_json_conv,spotlib,curl,ocaml_conv"
+  archive(byte)="flickr.cmo"
+  archive(native)="flickr.cmx"
+  linkopts = ""
+)
