@@ -404,6 +404,7 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
   CMA=$(library_name).cma
   CMXA=$(library_name).cmxa
   CMXS=$(library_name).cmxs
+  findlib_name=$(lowercase $(library_name))
 
   if $(not $(defined MyOCamlPackageExtras))
       MyOCamlPackageExtras[]=
@@ -455,32 +456,32 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
   if $(defined SUB_INSTALL)
     install: $(sub_targets) $(SUB_INSTALL)
       mkdir_if_not_exists($(SUB_INSTALL))
-      /bin/rm -rf $(SUB_INSTALL)/$(library_name)
-      mkdir $(SUB_INSTALL)/$(library_name)
-      cp $(sub_targets) $(SUB_INSTALL)/$(library_name)
+      /bin/rm -rf $(SUB_INSTALL)/$(findlib_name)
+      mkdir $(SUB_INSTALL)/$(findlib_name)
+      cp $(sub_targets) $(SUB_INSTALL)/$(findlib_name)
     export
 
   if $(and $(not $(defined NO_INSTALL)) $(not $(defined SUB_INSTALL)))
     if $(defined INSTALLED)
-      $(Installed $(library_name)): $(targets)
-        $(OCAMLFIND) remove $(library_name)
+      $(Installed $(findlib_name)): $(targets)
+        $(OCAMLFIND) remove $(findlib_name)
         section:
-              $(OCAMLFIND) install $(library_name) $(targets)
-              CreateInstalled($(library_name), $(targets))
+              $(OCAMLFIND) install $(findlib_name) $(targets)
+              CreateInstalled($(findlib_name), $(targets))
 
-      install: $(Installed $(library_name))
+      install: $(Installed $(findlib_name))
 
       uninstall:
-        rm -f $(Installed $(library_name))
-        $(OCAMLFIND) remove $(library_name)
+        rm -f $(Installed $(findlib_name))
+        $(OCAMLFIND) remove $(findlib_name)
       export
     else
       install: $(targets)
-        $(OCAMLFIND) remove $(library_name)
-        $(OCAMLFIND) install $(library_name) $(targets)
+        $(OCAMLFIND) remove $(findlib_name)
+        $(OCAMLFIND) install $(findlib_name) $(targets)
 
       uninstall:
-	$(OCAMLFIND) remove $(library_name)
+	$(OCAMLFIND) remove $(findlib_name)
       export
     export
 
@@ -560,7 +561,6 @@ OCamlTop(name, files) =
    #
    $(BYTEPROG): $(CMAFILES) $(CMOFILES) $(CLIBS)
         $(OCAMLFIND) $(OCAMLMKTOP) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) $(OCAMLCFLAGS)\
-                $(OCAMLWARNING_MAKE) \
                 $(PREFIXED_OCAMLINCLUDES) $(OCAML_BYTE_LINK_FLAGS)\
                 -o $@ $(CMA_OTHER_FILES) $(CMAFILES) $(OCamlLinkSort $(CMOFILES))\
                 $(CLIBS) $(OCAML_LINK_FLAGS)
