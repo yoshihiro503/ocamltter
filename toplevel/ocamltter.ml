@@ -111,11 +111,11 @@ let get_timeline ?(c=20) ?since_id verbose =
           (print_endline (!%"%d" (List.length ts)); flush stdout);
         ts
       in
-      list_concatmap search OConfig.watching_words
+      list_concatmap search !OConfig.watching_words
     in
     let tl2 =
       if verbose then (print_endline "loading..."; flush stdout);
-      List.filter OConfig.filter
+      List.filter !OConfig.filter
       & default []
       & Timelines.home_timeline ~count:c (get_oauth ())
     in

@@ -26,7 +26,7 @@ install::
     install ocamltter $(PREFIX)/bin
     # to library directory
     ocamlfind remove ocamltter
-    ocamlfind install ocamltter ocamlinit.ml META
+    ocamlfind install ocamltter ocamlinit.ml oConfig.mli oConfig.ml META
 
 uninstall::
     rm -f $(PREFIX)/bin/ocamltter

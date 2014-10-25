@@ -1,4 +1,5 @@
-open Twitter;;
+open OCamltter_oauth
+open OCamltter_twitter
 open Util;;
 open Http;;
 open Api11;;
@@ -24,3 +25,10 @@ start_polling ();;
 
 open Api11;;
 
+(* You can override the settings of oConfig.ml *)
+(*
+OConfig.(
+  watching_words := [];
+  talk := false
+);;
+*)
