@@ -4,7 +4,7 @@ ocamltterhome=`dirname $0`
 cd $ocamltterhome
 
 with_pkgs=""
-for pkg in cryptokit tiny_json tiny_json_conv ocaml_conv meta_conv spotlib curl ocamltter_twitter
+for pkg in cryptokit tiny_json tiny_json_conv ocaml_conv meta_conv spotlib curl ocamltter_oauth ocamltter_twitter
 do
   with_pkgs="$with_pkgs -I `ocamlfind query $pkg`"
 done
@@ -15,7 +15,7 @@ if [ -f ocamltter.ml ]; then
   initfile='./ocamlinit.ml'
 else
   # We are not at the source dir. omake install has been done.
-  for pkg in twitter ocamltter
+  for pkg in ocamltter
   do
     with_pkgs="$with_pkgs -I `ocamlfind query $pkg`"
   done
