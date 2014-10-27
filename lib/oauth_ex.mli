@@ -3,13 +3,13 @@ open Spotlib.Spot
 module Extra : sig
 
   include module type of struct include Oauth end
-  (* It is an extension of Oauth *)
+  (** It is an extension of Oauth *)
      
   module Consumer : sig
     type t = { key : string; secret : string; } with conv(ocaml)
     val dummy : t
 
-    (** The type of Consumer (i.e. App). Normally you get this from
+    (** The type of Consumer (i.e. Application). Normally you get this from
         the service provider (Twitter/Flickr) by registering a new app.
     *)
   end
@@ -28,7 +28,7 @@ module Extra : sig
   val oauth : Consumer.t -> Access_token.t -> Oauth.t
   (** The key to APIs is a combination of [Consumer.t] and [Access_token.t] *)
 
-  (** Configuration of a service *)  
+  (** Configuration of a service-application pair *)  
   module type Conf = sig
   
     val oauth_signature_method : Oauth.signature_method
@@ -40,41 +40,57 @@ module Extra : sig
         Some (Some url)
     *)
   
-    val host : string (** "www.flickr.com" *)
+    val host : string (** ex. "www.flickr.com" *)
   
-    val request_path : string (** "/services/oauth/request_token" *)
+    val request_path : string (** ex. "/services/oauth/request_token" *)
   
-    val access_path : string (** "/services/oauth/access_token" *)
+    val access_path : string (** ex. "/services/oauth/access_token" *)
   
     val authorize_url : string
-    (** "https://www.flickr.com/services/oauth/authorize?oauth_token=" *)
+    (** ex. "https://www.flickr.com/services/oauth/authorize?oauth_token=" *)
   
     val app : Consumer.t
-  
+    (** Information of the registered application *)
   end
 end
 
 include module type of struct include Extra end
+(** The module itself has the same components of Extra *)
 
+(** [Make(Conf)] makes a OAuth interface of one service and 
+    one application for the service specified by [Conf]. 
+*)
 module Make(Conf : Conf) : sig
 
   include module type of struct include Extra end
-  (* It is an extension of Extra, which is an extension of Oauth *)
+  (** It is an extension of Extra, which is an extension of Oauth *)
 
   module Conf : Conf
 
   val fetch_request_token 
     : unit 
     -> (Request_token.t, [> Http.error ]) Result.t
-  
+  (** Fetch a request token from the service. 
+
+      See the implementation of [authorize_cli_interactive]
+      for the typical use of this function.
+  *)
+      
   val fetch_access_token 
     : req_token:Request_token.t 
     -> verif:string 
     -> ((string * string) list * Access_token.t, [> Http.error ]) Result.t
+  (** Fetch an access token sending the request token 
+      and the corresponding verification string from the service 
+
+      See the implementation of [authorize_cli_interactive]
+      for the typical use of this function.
+  *)
 
   val authorize_cli_interactive 
     : unit -> (string * string) list * Access_token.t
   (** Starts CLI OAuth authorization.
+
       It asks the user to access an URL of the service to grant the app
       to access the service using the user credential. Once approved, 
       the service should return a verification key string. The user is
@@ -96,7 +112,14 @@ module Make(Conf : Conf) : sig
        (** These parameters are included in the targets for OAuth signature creation *)
     -> t (** Auth *)
     -> (string, [> Http.error]) Result.t 
+  (** Access the service API. 
 
+      Please note that [Http.params] and [Http.params2] of [meth]
+      are not used for the OAuth method signing. Usually they should be null.
+      
+      Normally if you want to send some parameters to the service you have to
+      use [oauth_other_params] instead.
+  *)
 end
 
 

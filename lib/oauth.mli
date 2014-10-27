@@ -1,3 +1,10 @@
+(**
+
+   Consider to use [Oauth_ex.Make(Conf)], which provides a wrapper
+   of this module which suits with the typical usage of OAuth.
+
+*)
+
 open Spotlib.Spot
 
 type signature_method = [ `Hmac_sha1
