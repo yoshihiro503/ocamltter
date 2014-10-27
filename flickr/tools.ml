@@ -46,7 +46,51 @@ let delete_dups_in_sets o =
               match Photos.delete photo_id o with
               | `Error e -> error e
               | `Ok () -> !!% "Deleted@."
+(* 
 
+   This is an upload algorithm which suits the author's personal situation. 
+   This may not fit with your purpose at all! Be careful. Read the source!
+
+   * Currently this is just for uploading. No real syncing is provided.
+
+   * In one photoset, media(photos/videos) are identified by their title.
+
+   * Titles of media are their basenames without file extension:
+     "foo" for "directory/foo.jpg" and "bar" for "dir/bar.mpg".
+
+   * Therefore, you CANNOT have files like "family.jpg" and "family.mpg"
+     in one photoset. If one of them is uploaded, then the other is simply
+     skipped and never uploaded. 
+     There is no safety check of this (for the moment).
+
+   * Currently there is no syncing. Even if your local media are
+     modified, the updated versions are never uploaded until the corresponding
+     files are removed from the photoset by some other means.
+
+   Algorithm:
+
+   * A medium is uploaded with the following informatin:
+
+     * Title: its basename without extension
+     * Tags: "uploading" and "photoset_<photoset>"
+
+   * If uploading is successful, the medium is added to the photoset.
+
+   * If the photoset addition is successful, the tag "uploading" is removed.
+
+   * For one medium, the function tries to recover communication errors
+     at most 2 times (i.e. 3 trials).
+
+   Things to do
+
+   * If a photoset addition fails, there remains a medium with "uploading"
+     tag which is not in any photoset. It should be recovred by "getNotInSet"
+     method and add into the appropriate photoset in later trials. 
+
+   * If a medium is added to the photoset but if "uploading" tag removal
+     fails, the medium remains in the photoset with the tag. It is not critical
+     but the function should clean the tag in later trials.
+*)
 let uploads ~photoset img_files o =
   let psets = (Photosets.getList o |> fail_at_error)#photoset in
   !!% "Got existing photosets (%d)@." & List.length psets;
