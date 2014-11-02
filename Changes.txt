@@ -1,9 +1,11 @@
 3.0.0
 ----------------
 
-- Port to OCaml 4.02
+- Port to OCaml 4.02.x
+- Added Oauth_ex, a wrapper layer of Oauth
 - Generalized OAuth code for Flickr
 - Added Flickr API
+- Now provides 3 separate library packages: ocamltter_oauth, ocamltter_twitter and ocamltter_flickr
 
 2.1.2
 ----------------
