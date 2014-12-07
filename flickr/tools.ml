@@ -12,7 +12,7 @@ let get_current_user o =
   let open Result in
   Api.Test.login o >>= fun x -> 
   (* CR jfuruse: we should have a nice embedding of content... *)      
-  return (object method id = x#id method username = x#username#content end)
+  return (object method id = x#id method username = x#username end)
 
 (* Remove the duped photos in each photoset.
    Here "duped" means photos with the same non-empty title.
@@ -22,7 +22,7 @@ let delete_dups_in_sets o =
   let psets = Photosets.getList o |> fail_at_error in
   flip List.iter psets#photoset & fun set ->
     let set_id = set#id in
-    let set_title = set#title#content in
+    let set_title = set#title in
     let photos = Photosets.getPhotos set_id o |> fail_at_error 
                  |> fun x -> x#photo 
                  |> List.map (fun x -> (x#title, x#id))
@@ -97,7 +97,7 @@ let uploads ~photoset img_files o =
   let psid_opt = 
     (* maybe overridden later *)
     ref (
-      List.find_opt (fun pset -> pset#title#content = photoset) psets 
+      List.find_opt (fun pset -> pset#title = photoset) psets 
       |> Option.map (fun pset -> pset#id)
     )
   in
