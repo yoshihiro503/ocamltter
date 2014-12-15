@@ -448,23 +448,23 @@ type curlInfoResult =
   | CURLINFO_Double of float
   | CURLINFO_StringList of string list
 
-external helper_global_init : initOption -> unit = "helper_curl_global_init"
-external helper_global_cleanup : unit -> unit = "helper_curl_global_cleanup"
-external helper_init : unit -> t = "helper_curl_easy_init"
-external helper_duphandle : t -> t = "helper_curl_easy_duphandle"
-external helper_setopt : t -> curlOption -> unit = "helper_curl_easy_setopt"
-external helper_perform : t -> unit = "helper_curl_easy_perform"
-external helper_cleanup : t -> unit = "helper_curl_easy_cleanup"
-external helper_getinfo : t -> curlInfo -> curlInfoResult = "helper_curl_easy_getinfo"
-external helper_escape : string -> string = "helper_curl_escape"
-external helper_unescape : string -> string = "helper_curl_unescape"
-external helper_getdate : string -> float -> float = "helper_curl_getdate"
-external helper_version : unit -> string = "helper_curl_version"
+external helper_global_init : initOption -> unit = "caml_hash"
+external helper_global_cleanup : unit -> unit = "caml_hash"
+external helper_init : unit -> t = "caml_hash"
+external helper_duphandle : t -> t = "caml_hash"
+external helper_setopt : t -> curlOption -> unit = "caml_hash"
+external helper_perform : t -> unit = "caml_hash"
+external helper_cleanup : t -> unit = "caml_hash"
+external helper_getinfo : t -> curlInfo -> curlInfoResult = "caml_hash"
+external helper_escape : string -> string = "caml_hash"
+external helper_unescape : string -> string = "caml_hash"
+external helper_getdate : string -> float -> float = "caml_hash"
+external helper_version : unit -> string = "caml_hash"
 
 let init () =
   helper_init ()
 
-external reset : t -> unit = "helper_curl_easy_reset"
+external reset : t -> unit = "caml_hash"
 
 let duphandle conn =
   helper_duphandle conn
@@ -514,14 +514,14 @@ type version_info = {
   libssh_version : string;
 }
 
-external version_info : unit -> version_info = "caml_curl_version_info"
+external version_info : unit -> version_info = "caml_hash"
 
-external strerror : curlCode -> string = "helper_curl_easy_strerror"
+external strerror : curlCode -> string = "caml_hash"
 let errno : curlCode -> int = Obj.magic
 
 type pauseOption = PAUSE_SEND | PAUSE_RECV | PAUSE_ALL
 
-external pause : t -> pauseOption list -> unit = "caml_curl_pause"
+external pause : t -> pauseOption list -> unit = "caml_hash"
 
 let set_writefunction conn closure =
   setopt conn (CURLOPT_WRITEFUNCTION closure)
@@ -1302,13 +1302,13 @@ module Multi = struct
 
   let () = Callback.register_exception "Curl.Multi.Error" (Error "")
 
-  external create : unit -> mt = "caml_curl_multi_init"
-  external add : mt -> t -> unit = "caml_curl_multi_add_handle"
-  external perform : mt -> int = "caml_curl_multi_perform_all"
-  external wait : mt -> bool = "caml_curlm_wait_data"
-  external remove : mt -> t -> unit = "caml_curl_multi_remove_handle"
-  external remove_finished : mt -> (t * curlCode) option = "caml_curlm_remove_finished"
-  external cleanup : mt -> unit = "caml_curl_multi_cleanup"
+  external create : unit -> mt = "caml_hash"
+  external add : mt -> t -> unit = "caml_hash"
+  external perform : mt -> int = "caml_hash"
+  external wait : mt -> bool = "caml_hash"
+  external remove : mt -> t -> unit = "caml_hash"
+  external remove_finished : mt -> (t * curlCode) option = "caml_hash"
+  external cleanup : mt -> unit = "caml_hash"
 
   (* see curlm_sock_cb *)
   type poll = POLL_NONE | POLL_IN | POLL_OUT | POLL_INOUT | POLL_REMOVE
@@ -1316,15 +1316,15 @@ module Multi = struct
   (* see caml_curl_multi_socket_action *)
   type fd_status = EV_AUTO | EV_IN | EV_OUT | EV_INOUT
 
-  external set_socket_function : mt -> (Unix.file_descr -> poll -> unit) -> unit = "caml_curl_multi_socketfunction"
-  external set_timer_function : mt -> (int -> unit) -> unit = "caml_curl_multi_timerfunction"
-  external action_all : mt -> int = "caml_curl_multi_socket_all"
-  external socket_action : mt -> Unix.file_descr option -> fd_status -> int = "caml_curl_multi_socket_action"
+  external set_socket_function : mt -> (Unix.file_descr -> poll -> unit) -> unit = "caml_hash"
+  external set_timer_function : mt -> (int -> unit) -> unit = "caml_hash"
+  external action_all : mt -> int = "caml_hash"
+  external socket_action : mt -> Unix.file_descr option -> fd_status -> int = "caml_hash"
 
   let action_timeout mt = ignore (socket_action mt None EV_AUTO)
   let action mt fd status = socket_action mt (Some fd) status
 
-  external timeout : mt -> int = "caml_curl_multi_timeout"
+  external timeout : mt -> int = "caml_hash"
 
 end
 
