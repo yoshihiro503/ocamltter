@@ -16,7 +16,7 @@ ocamltter_top*
 OMakeroot
 setup.data
 setup.ml.ba*
-ocamlbot/ocamlbot
-ocamlbot/ocamlbot.opt
-ocamlbot/ocamlbot.run
+*.exe
+*.opt
+*.run
 
