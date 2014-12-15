@@ -11,7 +11,7 @@ OCAMLFLAGS = -thread
 
 ####################################################### 
 
-OCAMLPACKS[] = cryptokit str spotlib tiny_json_conv ocaml_conv curl
+OCAMLPACKS[] = cryptokit str spotlib tiny_json_conv ocaml_conv
 CAMLP4PACKS[] = meta_conv
 
 OCAMLDEPFLAGS= -syntax camlp4o -package meta_conv.syntax
