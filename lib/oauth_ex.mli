@@ -6,7 +6,7 @@ module Extra : sig
   (** It is an extension of Oauth *)
      
   module Consumer : sig
-    type t = { key : string; secret : string; } with conv(ocaml)
+    type t = { key : string; secret : string; } [@@deriving conv{ocaml}]
     val dummy : t
 
     (** The type of Consumer (i.e. Application). Normally you get this from
@@ -18,11 +18,11 @@ module Extra : sig
      strictly distinguished by their types. *)
   
   module Request_token : sig
-    type t = { token : string; secret : string; } with conv(ocaml)
+    type t = { token : string; secret : string; } [@@deriving conv{ocaml}]
   end
   
   module Access_token : sig
-    type t = { token : string; secret : string; } with conv(ocaml)
+    type t = { token : string; secret : string; } [@@deriving conv{ocaml}]
   end
   
   val oauth : Consumer.t -> Access_token.t -> Oauth.t

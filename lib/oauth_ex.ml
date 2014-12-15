@@ -14,7 +14,7 @@ module Extra = struct
     assert false
   
   module Consumer = struct
-    type t = { key : string; secret : string } with conv(ocaml)
+    type t = { key : string; secret : string } [@@deriving conv{ocaml}]
     let dummy = { key = "Base64EncodedDataHereX";
                   secret = "AnotherBase64EncodedDataHereAnotherBase64E"; }
   end
@@ -23,11 +23,11 @@ module Extra = struct
      strictly distinguished by their types. *)
   
   module Request_token = struct
-    type t = { token : string; secret : string } with conv(ocaml)
+    type t = { token : string; secret : string } [@@deriving conv{ocaml}]
   end
   
   module Access_token = struct
-    type t = { token : string; secret : string } with conv(ocaml)
+    type t = { token : string; secret : string } [@@deriving conv{ocaml}]
   end
   
   let oauth app acc_tkn = {

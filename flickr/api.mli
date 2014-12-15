@@ -3,7 +3,7 @@ open OCamltter_oauth
 
 module Oauth : module type of struct include Oauth_ex.Make(Conf) end
 
-type 'json mc_leftovers = (string * 'json) list with conv(ocaml)
+type 'json mc_leftovers = (string * 'json) list [@@deriving conv{ocaml}]
 
 val load_auth     : string -> Oauth.Access_token.t
 val get_acc_token : string -> Oauth.Access_token.t
@@ -19,7 +19,7 @@ module Json : sig
     | UnknownErr of string
     | NotJsonErr of exn
     | NoJsonResponse
-  with conv(ocaml_of)
+  [@@deriving conv{ocaml_of}]
 
   val parse : string -> [> `Error of [> `Json of error * string ] | `Ok of t ]
 end
@@ -35,7 +35,7 @@ module Fail : sig
   type t = < code : int;
              message : string; 
              stat : string >
-  with conv(json, ocaml)
+  [@@deriving conv{ocaml; json}]
   val format : Format.formatter -> t -> unit
   val check : Json.t -> [> `Error of [> `API of t ] | `Ok of Json.t ]
 end
@@ -52,10 +52,10 @@ val json_api :
     | `Json of Json.error * string ])
   Result.t
 
-type content = < content : string > with conv(json, ocaml)
+type content = < content : string > [@@deriving conv{ocaml; json}]
 
 module EmptyResp : sig
-  type resp = < stat : string > with conv(json, ocaml) 
+  type resp = < stat : string > [@@deriving conv{ocaml; json}] 
   val check :
     Json.t ->
     (unit, [> `Json_conv of Json.t Meta_conv.Error.t ])
@@ -77,7 +77,7 @@ module Auth : sig
 end
 
 module TagList : sig
-  type t = string list with conv(ocaml, json)
+  type t = string list [@@deriving conv{ocaml; json}]
 end
 
 module Photos : sig
@@ -103,7 +103,7 @@ module Photos : sig
         ; tags : TagList.t option
         ; title : string 
         >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
   end
 
   val raw_getNotInSet :
@@ -187,7 +187,7 @@ module Photos : sig
           ; isfriend : bool
           ; ispublic : bool 
           >
-        with conv(ocaml, json)
+        [@@deriving conv{ocaml; json}]
     end
 
     val getInfo :
@@ -215,7 +215,7 @@ module Photos : sig
         ; id : string
         ; secret : string
         ; unknown : Json.t mc_leftovers >
-      with conv(json, ocaml)
+      [@@deriving conv{ocaml; json}]
     end
 
     val getExif :
@@ -283,7 +283,7 @@ module Photos : sig
           ; server : string
           ; title : string 
           >
-        with conv(json,ocaml)
+        [@@deriving conv{ocaml; json}]
       end
 
     val search :
@@ -309,7 +309,7 @@ module Photosets :
         < id : string
         ; url : string 
         >
-      with conv(json, ocaml)
+      [@@deriving conv{ocaml; json}]
     end
 
     val create :
@@ -356,7 +356,7 @@ module Photosets :
         ; photoset : set list
         ; total : int 
         >
-      with conv(json,ocaml_of)
+      [@@deriving conv{ocaml_of; json}]
     end
 
     val raw_getList :
@@ -406,7 +406,7 @@ module Photosets :
         ; secret : string
         ; server : string
         ; title : string >
-      with conv(json,ocaml)
+      [@@deriving conv{ocaml; json}]
     end
 
     val raw_getPhotos :
@@ -503,7 +503,7 @@ module People :
           ; videos : videos
           ; videosize : videosize 
           >
-        with conv(json,ocaml)
+        [@@deriving conv{ocaml; json}]
       end
 
     val getUploadStatus :
@@ -533,7 +533,7 @@ module Tags :
           ; machine_tag : bool
           ; raw : string
           ; tag : string >
-        with conv(json,ocaml)
+        [@@deriving conv{ocaml; json}]
       end
 
     val getListPhoto :
@@ -553,7 +553,7 @@ module Test : sig
     type t = 
       < id : string
       ; username : content >
-    with conv(json,ocaml)
+    [@@deriving conv{ocaml; json}]
   end
 
   val login :

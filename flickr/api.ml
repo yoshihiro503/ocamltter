@@ -7,8 +7,8 @@ open OCamltter_oauth
 
 module Oauth = Oauth_ex.Make(Conf)
 
-type 'json mc_leftovers = (string * 'json) list with conv(ocaml)
-type 'a mc_option = 'a option with conv(ocaml)
+type 'json mc_leftovers = (string * 'json) list [@@deriving conv{ocaml}]
+type 'a mc_option = 'a option [@@deriving conv{ocaml}]
 
 let load_auth auth_file =
   match Ocaml.load_with_exn Oauth.Access_token.t_of_ocaml auth_file with
@@ -47,7 +47,7 @@ module Json = struct
     | UnknownErr of string
     | NotJsonErr of exn
     | NoJsonResponse
-  with conv(ocaml_of)
+  [@@deriving conv{ocaml_of}]
 
   let format_error = Ocaml.format_with ocaml_of_error
 
@@ -60,34 +60,40 @@ module Json = struct
 
   let parse s = try `Ok (parse s) with exn -> `Error (`Json (of_exn exn, s))
 
-  type sint = int with conv(ocaml)
+  type sint = int [@@deriving conv{ocaml}]
 
   let sint_of_json ?(trace=[]) = function
     | (Number _ as j) -> int_of_json ~trace j
     | (String s as t) -> 
         begin try `Ok (int_of_string s) with
-        | e -> `Error (Meta_conv.Error.Exception e, t, `Node t :: trace)
+        | e -> `Error (`Exception e, t, `Node t :: trace)
         end
-    | t -> `Error (Meta_conv.Error.Exception (Failure "Number or String expected"), t, `Node t :: trace)
+    | t -> `Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
+
+  let sint_of_json_exn = Json_conv.exn sint_of_json
 
   let json_of_sint = json_of_int
 
-  type sint64 = int64 with conv(ocaml)
+  type sint64 = int64 [@@deriving conv{ocaml}]
 
   let sint64_of_json ?(trace=[]) = function
     | (Number _ as j) -> int64_of_json ~trace j
     | (String s as t) -> 
         begin try `Ok (Int64.of_string s) with
-        | e -> `Error (Meta_conv.Error.Exception e, t, `Node t :: trace)
+        | e -> `Error (`Exception e, t, `Node t :: trace)
         end
-    | t -> `Error (Meta_conv.Error.Exception (Failure "Number or String expected"), t, `Node t :: trace)
+    | t -> `Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
+
+  let sint64_of_json_exn = Json_conv.exn sint64_of_json
 
   let json_of_sint64 = json_of_int64
 
-  type ibool = bool with conv(ocaml)
+  type ibool = bool [@@deriving conv{ocaml}]
 
   let ibool_of_json ?trace j = 
     sint_of_json ?trace j >>= fun n -> `Ok (n <> 0)
+
+  let ibool_of_json_exn = Json_conv.exn ibool_of_json
 
   let json_of_ibool b = Number (if b then "1" else "0")
 end
@@ -119,7 +125,7 @@ module Fail = struct
     stat : string (** "fail" *);
     code : sint;
     message : string 
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 
   let format = Ocaml.format_with ocaml_of_t
 
@@ -150,10 +156,10 @@ let json_api o meth m fields =
       | exception _ -> `Error (`Json (Json.NoJsonResponse, s))
       | _ -> `Error (`Json (Json.NoJsonResponse, s))
 
-type content = < content as "_content" : string > with conv(json, ocaml)
+type content = < content [@conv.as {json="_content"}] : string > [@@deriving conv{ocaml; json}]
 
 module EmptyResp = struct
-  type resp = < stat : string > with conv(ocaml, json)
+  type resp = < stat : string > [@@deriving conv{ocaml; json}]
 
   let check j = lift_error resp_of_json j >>| fun _ -> ()
 end
@@ -205,7 +211,7 @@ module Page = struct
 end
 
 module TagList = struct
-  type t = string list with conv(ocaml)
+  type t = string list [@@deriving conv{ocaml}]
 
   let json_of_t xs = json_of_string (String.concat " " xs)
   let t_of_json ?trace j =
@@ -228,7 +234,7 @@ module Photos = struct
     type t = [`All     as "all"
              | `Photos as "photos"
              | `Videos as "videos" ] 
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
   end
 *)
 
@@ -262,7 +268,7 @@ module Photos = struct
 
       tags : TagList.t mc_option;
     >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
   end
 
   let raw_getNotInSet ~per_page ~page (* ?privacy_filter ?media *) 
@@ -331,8 +337,8 @@ The page of results to return. If this argument is omitted, it defaults to 1.
     and urls = < url: type_content list >
 
     and type_content = < 
-        type_ as "type"       : string; (* "photopage", *)
-        content as "_content" : string 
+        type_   [@conv.as {json="type"}]     : string; (* "photopage", *)
+        content [@conv.as {json="_content"}] : string 
       >
 
     and resp = < photo: photo; stat: string >
@@ -363,7 +369,7 @@ The page of results to return. If this argument is omitted, it defaults to 1.
 
     and visibility = < ispublic: ibool; isfriend: ibool; isfamily: ibool >
 
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
 
   end
       
@@ -405,7 +411,7 @@ The <date> element's lastupdate attribute is a Unix timestamp indicating the las
         exif    : exif list;
         unknown : Json.t mc_leftovers 
       >
-    with conv(json,ocaml)
+    [@@deriving conv{ocaml; json}]
 
   end
                   
@@ -480,7 +486,7 @@ The secret for the photo. If the correct secret is passed then permissions check
         isfriend : ibool;
         isfamily : ibool
       >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
       
   end
 
@@ -644,7 +650,7 @@ module Photosets = struct
     type resp = < photoset: photoset; stat : string >
 
     and photoset = < id : string; url : string >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
   end
 
   let create ~title ~primary_photo_id o =
@@ -714,8 +720,7 @@ No title parameter was passed in the request.
         photosets : photoset;
         stat      : string; 
       >
-
-    with conv(json, ocaml_of )
+    [@@deriving conv{ocaml_of; json}]
 
   end
 
@@ -782,7 +787,7 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
       isfriend  : ibool;
       isfamily  : ibool 
     >
-    with conv(json,ocaml)
+    [@@deriving conv{ocaml; json}]
 
   end
 
@@ -906,7 +911,7 @@ module People = struct
       sets      : sets;
       videosize : videosize;
       videos    : videos;
-    > with conv(json,ocaml)
+    > [@@deriving conv{ocaml; json}]
   end
 
   let getUploadStatus o =
@@ -944,10 +949,10 @@ module Tags = struct
         author : string;
         authorname : string;
         raw : string;
-        tag as "_content" : string;
+        tag [@conv.as {json="_content"}] : string;
         machine_tag : ibool
       >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
 
   end
 
@@ -967,7 +972,7 @@ module Test = struct
     type resp = < user : t; stat : string >
     and t = < id : string;
               username : content >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
   end
   let login o =
     json_api o `GET "flickr.test.login"

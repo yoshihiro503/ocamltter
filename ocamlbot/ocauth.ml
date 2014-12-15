@@ -13,7 +13,7 @@ module Auth = struct
   type t = (string, app) hashtbl 
   and app = { consumer : Consumer.t;
               users : (string, Access_token.t) hashtbl }
-  with conv(ocaml)
+  (* with conv(ocaml) *)
 
   let dummy = 
     Hashtbl.of_list 17

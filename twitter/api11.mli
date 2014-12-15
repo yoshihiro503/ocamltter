@@ -397,14 +397,14 @@ module Friendships : sig
 
   type connection =
     [ `Followed_by | `Following | `Follwing_requested | `None ]
-  with conv(json, ocaml)
+  [@@deriving conv{ocaml; json}]
 
   type t =
        < connections : connection list; id : int64; id_str : string;
     name : string; screen_name : string >
-  with conv(json, ocaml)
+  [@@deriving conv{ocaml; json}]
 
-  type ts = t list with conv(json, ocaml)
+  type ts = t list [@@deriving conv{ocaml; json}]
 
   val lookup :
     ?screen_name:string list ->
@@ -412,7 +412,7 @@ module Friendships : sig
     Oauth.t ->
     ts result
 
-  type ids = { ids : int64 list; } with conv(json, ocaml)
+  type ids = { ids : int64 list; } [@@deriving conv{ocaml; json}]
 
   val gen_io :
     string ->

@@ -41,7 +41,7 @@ let o : Oauth.t =
 let () = prerr_endline "oauth done"
 
 let is_ocaml_misspell = 
-  let rex = <:m<ocaml/i>> in
+  let rex = {m|ocaml/i|m} in
   let rec loop text = 
     match text =~ rex with
     | None -> false
@@ -51,7 +51,7 @@ let is_ocaml_misspell =
         | _ -> 
             (* Ok it is like "Ocaml" *)
             (* But we ignore the text just "Ocaml". *)
-            String.length (<:s<\s//g>> text) > 5
+            String.length ({s|\s//g|s} text) > 5
   in
   loop 
 

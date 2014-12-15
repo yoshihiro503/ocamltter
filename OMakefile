@@ -11,11 +11,11 @@ OCAMLFLAGS = -thread
 
 ####################################################### 
 
-OCAMLPACKS[] = cryptokit str spotlib tiny_json_conv ocaml_conv
-CAMLP4PACKS[] = meta_conv
+OCAMLPACKS[] = cryptokit str spotlib ppx_tiny_json_conv ppx_ocaml_conv
+CAMLP4PACKS[] =
 
-OCAMLDEPFLAGS= -syntax camlp4o -package meta_conv.syntax
-OCAMLPPFLAGS = -syntax camlp4o -package meta_conv.syntax
+OCAMLDEPFLAGS= -package ppx_meta_conv
+OCAMLPPFLAGS = -package ppx_meta_conv
 
 # SUB_INSTALL=$(dir _install)
 # 
