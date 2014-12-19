@@ -186,7 +186,7 @@ module User = struct
 
   type ts = t list [@@deriving conv{ocaml; json}]
 
-  let format =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
+  let format x =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
 end
 
 module Hashtag = struct
@@ -268,8 +268,8 @@ module Tweet = struct
 
   type ts = t list [@@deriving conv{ocaml; json}]
 
-  let format    = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
-  let format_ts = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_ts
+  let format    x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
+  let format_ts x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_ts x
 
 end
 
@@ -296,7 +296,7 @@ module Search_tweets = struct
     search_metadata : Search_metadata.t;
   > [@@deriving conv{ocaml; json}]
 
-  let format = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
+  let format x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
 
 end
 
@@ -422,6 +422,6 @@ module Rate_limit_status = struct
      >
   > [@@deriving conv{ocaml; json}]
 
-  let format =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
+  let format x =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
 
 end
