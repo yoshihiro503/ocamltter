@@ -14,6 +14,14 @@ let get_current_user o =
   (* CR jfuruse: we should have a nice embedding of content... *)      
   return (object method id = x#id method username = x#username end)
 
+(* By extension. Maybe incorrect *)
+let uploadable_by_name s =
+  let _, ext = Filename.split_extension s in
+  match String.lowercase ext with
+  | ".jpg" | ".jpeg" | ".gif" | ".png" | ".tif" | ".tiff" -> true
+  | ".wmv" | ".mp4" | ".avi" | ".mpg" | ".mpeg" | ".mov" -> true
+  | _ -> false
+
 (* Remove the duped photos in each photoset.
    Here "duped" means photos with the same non-empty title.
    Note that there is no real comparison of photos/videos.
@@ -106,7 +114,7 @@ let uploads ~photoset img_files o =
       match !psid_opt with
       | None -> []
       | Some psid ->
-          !!% "Getting photos of photoset %s (%s)@." photoset psid;
+          !!% "Getting photos of photoset %s (id=%s)@." photoset psid;
           let ps = (Photosets.getPhotos psid o |> fail_at_error)#photo in
           List.map (fun p -> (p#title, p#id)) ps
     )
@@ -179,9 +187,10 @@ let uploads ~photoset img_files o =
 
   flip List.iter img_files & fun img_file ->
     let title = Filename.(basename *> split_extension *> fst) img_file in
-    if List.mem_assoc title !photos then
-      !!% "%s is already in the photoset@." img_file
-    else 
+    if List.mem_assoc title !photos then begin
+      (* !!% "%s is already in the photoset@." img_file; *)
+      ()
+    end else 
       match up ~title img_file with
       | `Ok pid -> 
           !!% "Uploaded as id = %s@." pid

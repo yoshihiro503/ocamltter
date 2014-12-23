@@ -1,10 +1,9 @@
 open Spotlib.Spot
-open OCamltter_oauth
-
 open Ocaml_conv
 open Json_conv
-
 open Result
+
+open OCamltter_oauth
 
 module Oauth = Oauth_ex.Make(struct
   let oauth_signature_method = `Hmac_sha1
@@ -45,7 +44,7 @@ module Json = struct
   let t_of_ocaml = Ocaml_conv.Helper.of_deconstr (function
     | Ocaml.String s -> parse s
     | _ -> failwith "Ocaml.String expected")
-  let t_of_ocaml_exn = Ocaml_conv.exn t_of_ocaml
+  (* let t_of_ocaml_exn = Ocaml_conv.exn t_of_ocaml *)
  
   let ocaml_of_exn = ocaml_of_string *< Exn.to_string
 
@@ -175,7 +174,7 @@ end
 
 module Auth = struct
   module Oauth = struct
-    let checkToken _oauth_token o =
+    let checkToken (* _oauth_token *) o =
       json_api o `GET "flickr.auth.oauth.checkToken"
       [ (* ; "oauth_token", oauth_token *) ]
 (*
@@ -224,7 +223,7 @@ module TagList = struct
   let t_of_json ?trace j =
     string_of_json ?trace j >>= fun s -> 
     return & String.split (function ' ' -> true | _ -> false) s
-      
+  let t_of_json_exn = Json_conv.exn t_of_json
 end
 
 module Photos = struct (* Photo *)
