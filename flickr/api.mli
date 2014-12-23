@@ -52,7 +52,7 @@ val json_api :
     | `Json of Json.error * string ])
   Result.t
 
-type content = < content : string > with conv(json, ocaml)
+type content = string with conv(json, ocaml)
 
 module EmptyResp : sig
   type resp = < stat : string > with conv(json, ocaml) 

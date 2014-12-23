@@ -5,15 +5,7 @@ open Result
 
 open OCamltter_oauth
 
-module Oauth = Oauth_ex.Make(struct
-  let oauth_signature_method = `Hmac_sha1
-  let oauth_callback = Some None (* oob *)
-  let host = "www.flickr.com"
-  let request_path = "/services/oauth/request_token"
-  let access_path = "/services/oauth/access_token"
-  let authorize_url = "https://www.flickr.com/services/oauth/authorize?oauth_token="
-  let app = App.app
-end)
+module Oauth = Oauth_ex.Make(Conf)
 
 type 'json mc_leftovers = (string * 'json) list with conv(ocaml)
 type 'a mc_option = 'a option with conv(ocaml)
@@ -165,7 +157,8 @@ let json_of_content (s : string) = json_of_raw_content & object method content =
 let content_of_json ?trace j = 
   let open Result in
   raw_content_of_json ?trace j >>= fun o -> return o#content
-
+let content_of_json_exn = exn content_of_json
+  
 module EmptyResp = struct
   type resp = < stat : string > with conv(ocaml, json)
 
