@@ -3,7 +3,6 @@
 open Spotlib.Spot
 open Spotlib.Result.Open (* Monads are Result *)
 open Util
-open Ocaml_conv
 
 module Extra = struct
 

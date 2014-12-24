@@ -3,8 +3,8 @@ OCAMLFLAGS = -thread
 OCAMLINCLUDES = $(dir . ../lib ../twitter)
 
 # ocamlcommon.cma is linked twice by MyOCamlTop + ocaml_conv
-OCAMLWARNING_IGNORE[] += 31
-OCAMLWARNING_NON_ERROR[] += 31
+OCAMLWARNING_IGNORE[] += 29 31
+OCAMLWARNING_NON_ERROR[] += 29 31
 
 OCAML_LIBS= ../lib/oCamltter_oauth ../twitter/oCamltter_twitter
 OCamlRequire(../lib/oCamltter_oauth.cmo)

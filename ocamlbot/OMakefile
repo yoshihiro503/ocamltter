@@ -4,7 +4,7 @@ OCAML_LIBS= ../lib/oCamltter_oauth ../twitter/oCamltter_twitter
 OCamlRequire(../lib/oCamltter_oauth.cmo)
 OCamlRequire(../twitter/oCamltter_twitter.cmo)
 
-OCAMLPACKS[]  +=
+OCAMLPACKS[]  += orakuda
 CAMLP4PACKS[] +=
 
 OCAMLDEPFLAGS= -package orakuda

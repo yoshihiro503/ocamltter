@@ -70,7 +70,7 @@ module Json = struct
         end
     | t -> `Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
 
-  let sint_of_json_exn = Json_conv.exn sint_of_json
+  (* let sint_of_json_exn = Json_conv.exn sint_of_json *)
 
   let json_of_sint = json_of_int
 
@@ -84,7 +84,7 @@ module Json = struct
         end
     | t -> `Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
 
-  let sint64_of_json_exn = Json_conv.exn sint64_of_json
+  (* let sint64_of_json_exn = Json_conv.exn sint64_of_json *)
 
   let json_of_sint64 = json_of_int64
 
@@ -93,7 +93,7 @@ module Json = struct
   let ibool_of_json ?trace j = 
     sint_of_json ?trace j >>= fun n -> `Ok (n <> 0)
 
-  let ibool_of_json_exn = Json_conv.exn ibool_of_json
+  (* let ibool_of_json_exn = Json_conv.exn ibool_of_json *)
 
   let json_of_ibool b = Number (if b then "1" else "0")
 end

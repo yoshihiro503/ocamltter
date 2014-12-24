@@ -3,6 +3,9 @@ OCAMLINCLUDES = $(dir . ../lib)
 OCAML_LIBS= ../lib/oCamltter_oauth
 OCamlRequire(../lib/oCamltter_oauth.cmo)
 
+OCAMLWARNING_IGNORE[]    += 29
+OCAMLWARNING_NON_ERROR[] += 29
+
 # OCAMLPACKS[]  += xmlm
 # CAMLP4PACKS[] += xmlm
 
