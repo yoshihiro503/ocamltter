@@ -15,7 +15,7 @@ OCAMLWARNING_NON_ERROR[] += 29
 FILES[] =
     app
     conf
-    job
+    auth
     api
     tools
 
@@ -24,6 +24,7 @@ MyOCamlPackage(oCamltter_flickr, $(FILES), $(EMPTY), $(EMPTY))
 FILES[] = 
     app
     conf
+    auth
     api
     tools
     test
@@ -35,6 +36,8 @@ FILES[] =
     app
     conf
     api
+    job
+    api2
     tools
     uploads
 

@@ -14,7 +14,7 @@ let xml_parse () =
 
 let auth_file = "ocaml_flickr.auth"
 
-let o = get_oauth auth_file
+let o = Oauth.get_oauth auth_file
 
 (*
 let () =

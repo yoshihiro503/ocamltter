@@ -1,37 +1,54 @@
 open Spotlib.Spot
 
 module M = struct
-
   type ('a, 'error) t = unit -> ('a, ('error * ('a, 'error) t)) Result.t
-    
-  let return res = fun () -> `Ok res
-  
-  let rec bind at f = fun () ->
-    match at () with
-    | `Error (e, _) -> `Error (e, bind at f)
+
+  let return a = fun () -> `Ok a
+
+  let rec bind at f = fun () -> match at () with
     | `Ok v -> f v ()
+    | `Error (e,at') -> `Error (e, bind at' f)
 end
-
+  
+include M
 include Monad.Make2(M)
+  
+type ('a, 'error) job = ('a, 'error) t
 
-type ('a, 'error) t = ('a, 'error) M.t
-    
+let empty = fun () -> `Ok ()
+  
+let rec create f = fun () -> match f () with
+  | (`Ok _ as res) -> res
+  | `Error e -> `Error (e, create f)
+
+let rec retry p st t = fun () -> match t () with
+  | (`Ok _) as res -> res
+  | `Error (e, t') ->
+      match p st e with
+      | `Ok st' -> retry p st' t' ()
+      | `Error e -> `Error (e, t')
+
 let run t = t ()
 
-let rec run_until_success t =
-  match run t with
-  | `Ok v -> v
-  | `Error (_, t) -> run_until_success t
+module Seq = struct
+  type ('a, 'error) t = ( [`None | `Some of 'a * ('a, 'error) t], 'error ) job
 
-let run_with_retry t p max_retry =
-  let rec run_with_retry t p n =
-    match run t with
-    | `Ok v -> `Ok v
-    | `Error (e, t) when p e = `Fail ->
-        `Error (`Failed_by_predicate e, t)
-    | `Error (e, t) when n <= 0 ->
-        `Error (`Retried_but_failed (e, max_retry), t)
-    | `Error (_e, t) -> run_with_retry t p (n-1)
-  in
-  run_with_retry t p max_retry
+  let rec flatten : ('a list, 'error) t -> ('a, 'error) t = fun t ->
+    t >>= function
+      | `None -> return `None
+      | `Some (xs, cont) ->
+          let rec loop = function
+            | [] -> flatten cont
+            | x::xs -> return & `Some (x, loop xs)
+          in
+          loop xs
 
+end
+
+let rec of_seq : ('a, 'error) Seq.t -> ('a list, 'error) t = fun seq ->
+  seq >>= function
+    | `None -> return []
+    | `Some (x, seq) ->
+        of_seq seq >>= fun xs -> return & x::xs
+
+    

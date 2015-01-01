@@ -1,27 +1,28 @@
 open Spotlib.Spot
 open OCamltter_oauth
 
-module Oauth : module type of struct include Oauth_ex.Make(Conf) end
-
 type 'json mc_leftovers = (string * 'json) list [@@deriving conv{ocaml}]
 
-val load_auth     : string -> Oauth.Access_token.t
-val get_acc_token : string -> Oauth.Access_token.t
-val get_oauth     : string -> Oauth.t
+module Oauth : sig
+  include module type of struct include Oauth_ex.Make(Conf) end
 
-module Json : sig
-  include module type of struct include Tiny_json.Json end
+  val load_acc_token : string -> Access_token.t
+  (** Load an access token stored in the specified file.
+      It raises an exception if the loading fails.
+  *)
 
-  type error = 
-    | NotObject of t
-    | InvalidField of string
-    | CastErr of string
-    | UnknownErr of string
-    | NotJsonErr of exn
-    | NoJsonResponse
-  [@@deriving conv{ocaml_of}]
-
-  val parse : string -> [> `Error of [> `Json of error * string ] | `Ok of t ]
+  val get_acc_token  : string -> Access_token.t
+  (** Load an access token stored in the specified file.
+      If the loading fails then it interactively authorize the access
+      using CLI then save the new access token to the file, then returns it.
+  *)
+    
+  val get_oauth      : string -> t
+  (** Load the access token in the file then returns the OAuth info.
+      If the loading fails then it interactively authorize the access
+      using CLI then save the new access token to the file, then returns
+      the OAuth info of it 
+  *)
 end
 
 val raw_api :
@@ -30,6 +31,22 @@ val raw_api :
   string ->
   (string * string) list ->
   (string, [> Http.error ]) Result.t
+(** The raw API caller *)
+
+module Json : sig
+  include module type of struct include Tiny_json.Json end
+
+  type error = 
+    | NotObject    of t
+    | InvalidField of string
+    | CastErr      of string
+    | UnknownErr   of string
+    | NotJsonErr   of exn
+    | NoJsonResponse
+  [@@deriving conv{ocaml_of}]
+
+  val parse : string -> (t, [> `Json of error * string ]) Result.t
+end
 
 module Fail : sig
   type t = < code : int;
@@ -38,6 +55,30 @@ module Fail : sig
   [@@deriving conv{ocaml; json}]
   val format : Format.formatter -> t -> unit
   val check : Json.t -> [> `Error of [> `API of t ] | `Ok of Json.t ]
+end
+
+(** We see lots of records with only one field "content". 
+    [Content.t] provides a wrapper of these records and OCaml string.
+*)
+module Content : sig
+  type raw_content = < content : string > [@@deriving conv{json}]
+  type t = string [@@deriving conv{ocaml; json}]
+end
+    
+module EmptyResp : sig
+  val check
+    : Json.t
+    -> (unit, [> `Json_conv of Json.t Meta_conv.Error.t ]) Result.t
+  (** Check the JSON is a simple record {stat=x} where x <> "fail" *)
+end
+
+module Error : sig
+  type t = [ `API of Fail.t
+           | `Curl of Curl.curlCode * int * string
+           | `Http of int * string
+           | `Json of Json.error * string
+           | `Json_conv of Json.t Meta_conv.Error.t ]
+  (** Common errors *)
 end
 
 val json_api :
@@ -52,27 +93,13 @@ val json_api :
     | `Json of Json.error * string ])
   Result.t
 
-type content = < content : string > [@@deriving conv{ocaml; json}]
-
-module EmptyResp : sig
-  type resp = < stat : string > [@@deriving conv{ocaml; json}] 
-  val check :
-    Json.t ->
-    (unit, [> `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
-end
+type ('a, 'error) result = ('a, ([> Error.t] as 'error)) Result.t
+(** Common result *)
 
 module Auth : sig
   module Oauth : sig
-    val checkToken :
-      (* 'a -> *)
-      Oauth.t ->
-      (Json.t,
-       [> `API of Fail.t
-       | `Curl of Curl.curlCode * int * string
-       | `Http of int * string
-       | `Json of Json.error * string ])
-        Result.t
+    val checkToken : Oauth.t -> (Json.t, 'error) result
+    (** flickr.auth.oauth.checkToen *)
   end
 end
 
@@ -111,13 +138,7 @@ module Photos : sig
       page:int ->
       ?tags:bool ->
       Oauth.t ->
-      (GetNotInSet.photos,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (GetNotInSet.photos, 'error) result
 
     val getNotInSet :
       ?per_page:int ->
@@ -125,20 +146,11 @@ module Photos : sig
       Oauth.t ->
       (< pages : int
        ; perpage : int
-       ; stream : ([> `Error of
-                      ([> `API of Fail.t
-                       | `Curl of Curl.curlCode * int * string
-                       | `Http of int * string
-                       | `Json of Json.error * string
-                       | `Json_conv of Json.t Meta_conv.Error.t ]
-                          as 'b) *
-                        (int -> 'a Stream.t) * int
-                   | `Ok of GetNotInSet.photo ]
-                      as 'a) Stream.t
+       ; stream : ((GetNotInSet.photo,
+                    ([> Error.t] as 'error) * (int -> 'a Stream.t) * int) Result.t as 'a) Stream.t
        ; total : int 
        >,
-       'b)
-      Result.t
+       'error) Result.t
 
     module GetInfo : sig
         type owner =
@@ -160,10 +172,10 @@ module Photos : sig
           ; type_ : string 
           >
         and photo =
-          < comments : content
+          < comments : Content.t
           ; dates : dates
           ; dateuploaded : int64
-          ; description : content
+          ; description : Content.t
           ; farm : int
           ; id : string
           ; isfavorite : bool
@@ -176,7 +188,7 @@ module Photos : sig
           ; safety_level : int
           ; secret : string
           ; server : string
-          ; title : content
+          ; title : Content.t
           ; unknowns : Json.t mc_leftovers
           ; urls : urls
           ; views : int
@@ -193,19 +205,13 @@ module Photos : sig
     val getInfo :
       string ->
       Oauth.t ->
-      (GetInfo.photo,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (GetInfo.photo, 'error) result
 
     module GetExif :  sig
       type exif =
         < clean : string option
         ; label : string
-        ; raw : content
+        ; raw : Content.t
         ; tag : string
         ; tagspace : string
         ; tagspaceid : int >
@@ -221,48 +227,24 @@ module Photos : sig
     val getExif :
       string ->
       Oauth.t ->
-      (GetExif.photo,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (GetExif.photo, 'error) result
 
     val addTags :
       string ->
       string list ->
       Oauth.t ->
-      (unit,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (unit, 'error) result
 
     val setTags :
       string ->
       string list ->
       Oauth.t ->
-      (unit,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (unit, 'error) result
 
     val delete :
       string ->
       Oauth.t ->
-      (unit,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (unit, 'error) result
 
     module Search :
       sig
@@ -293,13 +275,7 @@ module Photos : sig
       ?per_page:int ->
       ?page:int ->
       Oauth.t ->
-      (Search.photos,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (Search.photos, 'error) result
   end
 
 module Photosets :
@@ -316,13 +292,7 @@ module Photosets :
       title:string ->
       primary_photo_id:string ->
       Oauth.t ->
-      (Create.photoset,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (Create.photoset, 'error) result
 
     module GetList : sig
       type set =
@@ -331,7 +301,7 @@ module Photosets :
         ; count_views : int
         ; date_create : string
         ; date_update : string
-        ; description : content
+        ; description : Content.t
         ; farm : int
         ; id : string
         ; needs_interstitial : bool
@@ -339,7 +309,7 @@ module Photosets :
         ; primary : string
         ; secret : string
         ; server : string
-        ; title : content
+        ; title : Content.t
         ; videos : int
         ; visibility_can_see_set : bool 
         >
@@ -362,25 +332,14 @@ module Photosets :
     val raw_getList :
       ?page:int ->
       Oauth.t ->
-      (GetList.photoset,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (GetList.photoset, 'error) result
 
     val getList :
       Oauth.t ->
       (< cancreate : bool
        ; photoset : GetList.set list
        ; total : int >,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+       'error) result
 
     module GetPhotos : sig
       type photoset =
@@ -413,13 +372,7 @@ module Photosets :
       string ->
       ?page:int ->
       Oauth.t ->
-      (GetPhotos.photoset,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (GetPhotos.photoset, 'error) result
 
     val getPhotos :
       string ->
@@ -430,37 +383,19 @@ module Photosets :
        ; photo : GetPhotos.photo list
        ; primary : string
        ; title : string
-       ; total : int >,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+       ; total : int >, 'error) result
 
     val removePhotos :
       string ->
       string list ->
       Oauth.t ->
-      (unit,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (unit, 'error) result
 
     val addPhoto :
       string ->
       photo_id:string ->
       Oauth.t ->
-      (unit,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (unit, 'error) result
   end
 
 module People :
@@ -499,7 +434,7 @@ module People :
           ; id : string
           ; ispro : bool
           ; sets : sets
-          ; username : content
+          ; username : Content.t
           ; videos : videos
           ; videosize : videosize 
           >
@@ -508,13 +443,7 @@ module People :
 
     val getUploadStatus :
       Oauth.t ->
-      (GetUploadStatus.user,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (GetUploadStatus.user, 'error) result
   end
 
 module Tags :
@@ -539,32 +468,20 @@ module Tags :
     val getListPhoto :
       string ->
       Oauth.t ->
-      (GetListPhoto.t,
-       [> `API of Fail.t
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `Json of Json.error * string
-        | `Json_conv of Json.t Meta_conv.Error.t ])
-      Result.t
+      (GetListPhoto.t, 'error) result
   end
 module Test : sig
 
   module Login : sig
     type t = 
       < id : string
-      ; username : content >
+      ; username : Content.t >
     [@@deriving conv{ocaml; json}]
   end
 
   val login :
     Oauth.t ->
-    (Login.t,
-     [> `API of Fail.t
-      | `Curl of Curl.curlCode * int * string
-      | `Http of int * string
-      | `Json of Json.error * string
-      | `Json_conv of Json.t Meta_conv.Error.t ])
-    Result.t
+    (Login.t, 'error) result
 end
     
 module Upload : sig
@@ -579,8 +496,8 @@ module Upload : sig
     Xml.xml -> 
     ( (string, 
        [> `API of < code : int
-; message : string
-; stat : string > ]) Result.t
+                  ; message : string
+                  ; stat : string > ]) Result.t
     , string * Xml.xml) Result.t
 
   val upload :

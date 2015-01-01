@@ -115,7 +115,7 @@ module Fail = struct
     message : string 
   > [@@deriving conv{ocaml; json}]
 
-  let format = Ocaml.format_with ocaml_of_t
+  let format x = Ocaml.format_with ocaml_of_t x
 
   let check j =
     match lift_error t_of_json j with
@@ -158,18 +158,18 @@ end
 let json_api o meth m fields =
   raw_api o meth m fields
   >>= fun s ->
-      (* jsonFlickrApi(JSON) *)
-      let len = String.length s in
-      match 
-        String.sub s 0 14,
-        String.sub s 14 (len - 15),
-        s.[len-1]
-      with
-      | "jsonFlickrApi(", s, ')' -> 
-          (* Result has always the top field "stat" *)
-          Json.parse s >>= Fail.check
-      | exception _ -> `Error (`Json (Json.NoJsonResponse, s))
-      | _ -> `Error (`Json (Json.NoJsonResponse, s))
+    (* jsonFlickrApi(JSON) *)
+    let len = String.length s in
+    match 
+      String.sub s 0 14,
+      String.sub s 14 (len - 15),
+      s.[len-1]
+    with
+    | "jsonFlickrApi(", s, ')' -> 
+        (* Result has always the top field "stat" *)
+        Json.parse s >>= Fail.check
+    | exception _ -> `Error (`Json (Json.NoJsonResponse, s))
+    | _ -> `Error (`Json (Json.NoJsonResponse, s))
 
 type ('a, 'error) result = ('a, ([> Error.t] as 'error)) Result.t 
     
@@ -192,31 +192,38 @@ module Page = struct
 
   (** Page to stream interface *)
 
-  let to_stream f ~per_page get_list maker =
-    f ~per_page ~page:1 >>= fun res ->
-        return & maker 
-          ~total: res#total
-          ~pages: res#pages
-          ~perpage: res#perpage
-          (let open Spotlib.Spot.Stream in
-           let get_ok_stream res =
-             of_list & List.map (fun x -> `Ok x) & get_list res
-           in
-           if res#perpage >= res#total then get_ok_stream res
-           else begin
-             let rec loop page = lazy begin
-               match f ~per_page ~page with
-               | `Error e -> Cons (`Error (e, loop, page), null)
-               | `Ok res ->
-                   Lazy.force &
-                     if res#perpage * res#page >= res#total then
-                       get_ok_stream res
-                     else
-                       append (get_ok_stream res) & loop & page + 1
-             end in
-             append (get_ok_stream res) & loop 2
-           end)
+  let to_seq
+      : (per_page: int -> page: int -> ('res, 'error) Job.t)
+      -> per_page:int
+      -> ('res -> 'info)
+      -> ('res -> 'a list)
+      -> (('info * ('a, 'error) Job.Seq.t), 'error) Job.t
+    = fun f ~per_page get_info get_list ->
+    let open Job in
+    let info = ref None in
+    let rec loop page : ('a list, 'error) Job.Seq.t =
+      f ~per_page ~page >>= fun res ->
+      begin match !info with
+        | Some _ -> ()
+        | None -> info := Some (get_info res)
+      end;
+      assert (res#perpage = per_page);
+      let final = res#perpage * res#page >= res#total in
+      let next =
+        if final then Job.return `None
+        else loop (page+1)
+      in
+      Job.return & `Some (get_list res, next)
+    in
+    loop 1 >>= fun seq ->
+    match !info with
+    | None -> assert false
+    | Some info -> Job.return (info, Job.Seq.flatten & Job.return seq)
 
+  let to_list x =
+    let open Job in
+    x >>= fun (info, seq) ->
+    Job.of_seq seq >>= fun xs -> Job.return (info, xs)
 end
 
 module TagList = struct
@@ -289,28 +296,25 @@ module Photos = struct
       | [] -> None
       | xs -> Some (String.concat "," xs)
     in
-    json_api o `GET "flickr.photos.getNotInSet"
-      ([ "api_key", App.app.Oauth.Consumer.key
-       ; "per_page", string_of_int per_page
-       ; "page", string_of_int page
-       ]
-       @ List.filter_map id
-         [ opt id "extras" extras ]
-      )
-    >>= lift_error GetNotInSet.resp_of_json
-    >>| fun x -> x#photos
+    Job.create & fun () ->
+      json_api o `GET "flickr.photos.getNotInSet"
+        ([ "api_key", App.app.Oauth.Consumer.key
+         ; "per_page", string_of_int per_page
+         ; "page", string_of_int page
+         ]
+         @ List.filter_map id
+           [ opt id "extras" extras ]
+        )
+      >>= lift_error GetNotInSet.resp_of_json
+      >>| fun x -> x#photos
 
   let getNotInSet ?(per_page=100) ?tags o =
-    Page.to_stream (raw_getNotInSet ?tags o) ~per_page 
-      (fun xs -> xs#photo)
-      (fun ~total ~pages ~perpage stream ->
-       object
-         method total = total
-         method pages = pages
-         method perpage = perpage
-         method stream = stream
-       end
-      )
+    Page.to_seq (raw_getNotInSet ?tags o) ~per_page
+      (fun res -> res#total)
+      (fun res -> res#photo)
+
+  let getNotInSet' ?per_page ?tags o =
+    getNotInSet ?per_page ?tags o |> Page.to_list
 
 (*
 max_upload_date (Optional)
@@ -384,12 +388,13 @@ The page of results to return. If this argument is omitted, it defaults to 1.
       
 
   let getInfo photo_id o =
-    json_api o `GET "flickr.photos.getInfo"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
-      ]
-    >>= lift_error GetInfo.resp_of_json
-    >>| fun x -> x#photo
+    Job.create & fun () ->
+      json_api o `GET "flickr.photos.getInfo"
+        [ "api_key", App.app.Oauth.Consumer.key
+        ; "photo_id", photo_id
+        ]
+      >>= lift_error GetInfo.resp_of_json
+      >>| fun x -> x#photo
     
 (*
 secret (Optional)
@@ -425,12 +430,13 @@ The <date> element's lastupdate attribute is a Unix timestamp indicating the las
   end
                   
   let getExif photo_id o =
-    json_api o `GET "flickr.photos.getExif"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
-      ]
-    >>= lift_error GetExif.resp_of_json
-    >>| fun x -> x#photo  
+    Job.create & fun () ->
+      json_api o `GET "flickr.photos.getExif"
+        [ "api_key", App.app.Oauth.Consumer.key
+        ; "photo_id", photo_id
+        ]
+      >>= lift_error GetExif.resp_of_json
+      >>| fun x -> x#photo  
 
 (*
 secret (Optional)
@@ -438,27 +444,30 @@ The secret for the photo. If the correct secret is passed then permissions check
 *)
 
   let addTags photo_id tags o =
-    json_api o `GET "flickr.photos.addTags"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
-      ; "tags", String.concat " " tags
-      ]
-    >>= EmptyResp.check
+    Job.create & fun () ->
+      json_api o `GET "flickr.photos.addTags"
+        [ "api_key", App.app.Oauth.Consumer.key
+        ; "photo_id", photo_id
+        ; "tags", String.concat " " tags
+        ]
+      >>= EmptyResp.check
 
   let setTags photo_id tags o =
-    json_api o `GET "flickr.photos.setTags"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
-      ; "tags", String.concat " " tags
-      ]
-    >>= EmptyResp.check
+    Job.create & fun () ->
+      json_api o `GET "flickr.photos.setTags"
+        [ "api_key", App.app.Oauth.Consumer.key
+        ; "photo_id", photo_id
+        ; "tags", String.concat " " tags
+        ]
+      >>= EmptyResp.check
 
-  let delete photo_id o = 
-    json_api o `POST "flickr.photos.delete"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
-      ]
-    >>= EmptyResp.check
+  let delete photo_id o =
+    Job.create & fun () ->
+      json_api o `POST "flickr.photos.delete"
+        [ "api_key", App.app.Oauth.Consumer.key
+        ; "photo_id", photo_id
+        ]
+      >>= EmptyResp.check
 
 (*
 { "photos": { "page": 1, "pages": 34, "perpage": 100, "total": "3343",
@@ -505,19 +514,20 @@ The secret for the photo. If the correct secret is passed then permissions check
       | Some (`Any ts) -> Some (String.concat "," ts), Some "any"
       | Some (`All ts) -> Some (String.concat "," ts), Some "all"
     in
-    json_api o `POST "flickr.photos.search"
-    ( [ "api_key", App.app.Oauth.Consumer.key ]
-    @ List.filter_map id 
-      [ opt id "user_id" user_id 
-      ; opt id "tags" tags
-      ; opt id "tag_mode" tag_mode
-      ; opt id "text" text
-      ; opt string_of_int "per_page" per_page (* <= 500 *)
-      ; opt string_of_int "page" page
-      ]
-    )
-    >>= lift_error Search.resp_of_json
-    >>| fun x -> x#photos
+    Job.create & fun () ->
+      json_api o `POST "flickr.photos.search"
+      ( [ "api_key", App.app.Oauth.Consumer.key ]
+      @ List.filter_map id 
+        [ opt id "user_id" user_id 
+        ; opt id "tags" tags
+        ; opt id "tag_mode" tag_mode
+        ; opt id "text" text
+        ; opt string_of_int "per_page" per_page (* <= 500 *)
+        ; opt string_of_int "page" page
+        ]
+      )
+      >>= lift_error Search.resp_of_json
+      >>| fun x -> x#photos
 
 (*
 min_upload_date (Optional)
@@ -663,13 +673,14 @@ module Photosets = struct
   end
 
   let create ~title ~primary_photo_id o =
-    json_api o `GET "flickr.photosets.create"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "title", title
-      ; "primary_photo_id", primary_photo_id
-      ]
-    >>= lift_error Create.resp_of_json
-    >>| fun x -> x#photoset
+    Job.create & fun () ->
+      json_api o `GET "flickr.photosets.create"
+        [ "api_key", App.app.Oauth.Consumer.key
+        ; "title", title
+        ; "primary_photo_id", primary_photo_id
+        ]
+      >>= lift_error Create.resp_of_json
+      >>| fun x -> x#photoset
     
 (*
 description (Optional)
@@ -733,14 +744,16 @@ No title parameter was passed in the request.
 
   end
 
-  let raw_getList ?(page=1) o = 
+  let raw_getList ~per_page ~page o = 
     assert (page > 0);
-    json_api o `GET "flickr.photosets.getList"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "page", string_of_int page
-      ]
-    >>= lift_error GetList.resp_of_json
-    >>| fun x -> x#photosets
+    Job.create & fun () ->
+      json_api o `GET "flickr.photosets.getList"
+        [ "api_key", App.app.Oauth.Consumer.key
+        ; "page", string_of_int page
+        ; "per_page", string_of_int per_page
+        ]
+      >>= lift_error GetList.resp_of_json
+      >>| fun x -> x#photosets
 
 (*
 user_id (Optional)
@@ -751,21 +764,14 @@ primary_photo_extras (Optional)
 A comma-delimited list of extra information to fetch for the primary photo. Currently supported fields are: license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_m, url_o
 *)
 
-  (* CRv2 jfuruse: todo: Fancy lazy loading *)
-  let getList o =
-    let rec f n st =
-      raw_getList o ~page:n 
-      >>= fun psets ->
-        if psets#perpage * n > psets#total then
-          (* last page *)
-          `Ok (object
-            method cancreate = psets#cancreate
-            method total = psets#total
-            method photoset = st @ psets#photoset; 
-          end)
-        else f (n+1) (st @ psets#photoset)
-    in
-    f 1 []
+  let getList ?(per_page=500) o =
+    Page.to_seq (raw_getList o) ~per_page
+      (fun psets -> List.map (fun p ->
+                          object
+                            method cancreate = psets#cancreate
+                            method total = psets#total
+                            method photoset = p
+                          end) psets#photoset)
 
   module GetPhotos = struct
 
