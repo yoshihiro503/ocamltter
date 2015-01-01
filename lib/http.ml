@@ -129,7 +129,7 @@ let string_of_error = function
 let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_params =
   let open Curl in
   let h = new Curl.handle in
-  h#set_verbose true;
+  (* h#set_verbose true; *)
   let proto_string = match proto with `HTTP -> "http" | `HTTPS -> "https" in
   let url = !% "%s://%s%s%s" 
     proto_string 
@@ -141,13 +141,11 @@ let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_
   (* DEBUG List.iter (fun (k,v) -> Printf.eprintf "%s: %s\n%!" k v) headers; *)
   begin match meth_params with
   | `GET params ->
-      prerr_endline "GET";
       let url = if params <> [] then url ^ "?" ^ params2string params else url in
       h#set_url url;
       h#set_post false;
       h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
   | `POST params ->
-      prerr_endline "POST";
       h#set_url url;
       h#set_post true;
       let s = params2string params in
@@ -158,7 +156,6 @@ let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_
       h#set_postfieldsize (String.length s);
       h#set_httpheader (List.map (fun (k,v) -> !% "%s: %s" k v) headers);
   | `POST_MULTIPART params ->
-      prerr_endline "POST MULTI";
       h#set_url url;
       h#set_post true;
       h#set_httppost 
@@ -169,11 +166,8 @@ let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_
   end;
   
   let buf = Buffer.create 100 in
-prerr_endline "buf";
   assert (h#get_cookielist = []);
-  prerr_endline "set write function...";
   h#set_writefunction (fun s -> Buffer.add_string buf s; String.length s);
-prerr_endline "set write function";
   (* Tweak h by the hanlder *)
   (match handle_tweak with Some f -> f h | None -> ());
   h#perform;
@@ -191,10 +185,3 @@ let by_curl ?handle_tweak ?proto hostname ?port path ~headers meth_params =
   with
   | Curl.CurlException (curlCode, int, mes) ->
       `Error (`Curl (curlCode, int, mes))
-
-let by_curl ?handle_tweak ?proto hostname ?port path ~headers meth_params =
-  prerr_endline "curl...";
-  let res = by_curl ?handle_tweak ?proto hostname ?port path ~headers meth_params
-  in
-  prerr_endline "curl done";
-  res
