@@ -10,7 +10,7 @@ let fail_at_error = function
 
 let get_current_user o =
   let open Result in
-  Api.Test.login o >>= fun x -> 
+  Api.Test.login o >>= fun x ->
   (* CR jfuruse: we should have a nice embedding of content... *)      
   return (object method id = x#id method username = x#username end)
 

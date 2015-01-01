@@ -1,8 +1,8 @@
 open OCamltter_oauth
 open OCamltter_twitter
-open Util;;
-open Http;;
-open Api11;;
+open Util
+open Http
+open Api11
 open Ocamltter;;
 
 (* Surpress String escaping of OCaml toplevel printer to see UTF-8 string in console *)

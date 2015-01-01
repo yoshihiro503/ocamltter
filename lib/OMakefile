@@ -1,5 +1,4 @@
 LIBFILES[] = 
-    curl
     base64
     parserMonad
     xml
