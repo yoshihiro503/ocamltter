@@ -766,13 +766,15 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
 
   let getList ?(per_page=500) o =
     Page.to_seq (raw_getList o) ~per_page
-      (fun psets -> List.map (fun p ->
-                          object
-                            method cancreate = psets#cancreate
-                            method total = psets#total
-                            method photoset = p
-                          end) psets#photoset)
+      (fun psets -> object
+        method cancreate = psets#cancreate
+        method total = psets#total
+      end)
+      (fun psets -> psets#photoset)
 
+  let getList' ?per_page o =
+    getList ?per_page o |> Page.to_list
+        
   module GetPhotos = struct
 
     type resp = < photoset : photoset; stat : string; >
@@ -807,15 +809,17 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
   end
 
 
-  let raw_getPhotos photoset_id ?(page=1) o =
+  let raw_getPhotos photoset_id ~per_page ~page o =
     assert (page > 0);
-    json_api o `GET "flickr.photosets.getPhotos"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photoset_id", photoset_id
-      ; "page", string_of_int page
-      ]
-    >>= lift_error GetPhotos.resp_of_json
-    >>| fun x -> x#photoset
+    Job.create & fun () ->
+      json_api o `GET "flickr.photosets.getPhotos"
+        [ "api_key", App.app.Oauth.Consumer.key
+        ; "photoset_id", photoset_id
+        ; "page", string_of_int page
+        ; "per_page", string_of_int per_page
+        ]
+      >>= lift_error GetPhotos.resp_of_json
+      >>| fun x -> x#photoset
 
 (*
 extras (Optional)
@@ -834,25 +838,20 @@ Filter results by media type. Possible values are all (default), photos or video
 *)
 
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
-  let getPhotos photoset_id o =
-    let rec f n st =
-      raw_getPhotos photoset_id o ~page:n 
-      >>= fun pset ->
-        if pset#per_page * n > pset#total then
-          (* last page *)
-          `Ok (object
-            method id        = pset#id
-            method primary   = pset#primary
-            method owner     = pset#owner
-            method ownername = pset#ownername
-            method photo     = st @ pset#photo
-            method total     = pset#total
-            method title     = pset#title
-          end)
-        else f (n+1) (st @ pset#photo)
-    in
-    f 1 []
+  let getPhotos ?(per_page=500) photoset_id o =
+    Page.to_seq (raw_getPhotos photoset_id o) ~per_page
+      (fun pset -> object
+        method id        = pset#id
+        method primary   = pset#primary
+        method owner     = pset#owner
+        method ownername = pset#ownername
+        method total     = pset#total
+        method title     = pset#title
+      end)
+      (fun pset -> pset#photo)
 
+  let getPhotos' ?per_page photoset_id o =
+    getPhotos ?per_page photoset_id o |> Page.to_list
 
   let removePhotos photoset_id photo_ids o =
     json_api o `POST "flickr.photosets.removePhotos"
@@ -990,6 +989,7 @@ module Test = struct
     [@@deriving conv{ocaml; json}]
   end
   let login o =
+    Job.create & fun () ->
     json_api o `GET "flickr.test.login"
       [ "api_key", App.app.Oauth.Consumer.key
       ]

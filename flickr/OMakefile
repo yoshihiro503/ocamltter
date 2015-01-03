@@ -35,9 +35,20 @@ MyOCamlProgram(flickr_test, $(FILES))
 FILES[] = 
     app
     conf
-    api
+    auth
     job
     api2
+    tools2
+    test2
+
+NO_INSTALL=true
+MyOCamlProgram(flickr_test2, $(FILES))
+
+FILES[] = 
+    app
+    conf
+    api
+    api
     tools
     uploads
 

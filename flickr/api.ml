@@ -158,7 +158,6 @@ end
 let json_api o meth m fields =
   raw_api o meth m fields
   >>= fun s ->
-      prerr_endline "raw api done";
       (* jsonFlickrApi(JSON) *)
       let len = String.length s in
       match 
@@ -985,11 +984,10 @@ module Test = struct
     [@@deriving conv{ocaml; json}]
   end
   let login o =
-    prerr_endline "flicker.test.login...";
     json_api o `GET "flickr.test.login"
       [ "api_key", App.app.Oauth.Consumer.key
       ]
-    >>= fun x -> prerr_endline "json_api done"; return x >>= lift_error Login.resp_of_json
+    >>= lift_error Login.resp_of_json
     >>| fun x -> x#user
 end
 
