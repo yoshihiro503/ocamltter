@@ -181,10 +181,11 @@ let opt f k = function
 module Auth = struct
   module Oauth = struct
     let checkToken (* _oauth_token *) o =
-      json_api o `GET "flickr.auth.oauth.checkToken"
-      [ "api_key", App.app.Oauth.Consumer.key
-      (* ; "oauth_token", oauth_token *)
-      ]
+      Job.create & fun () ->
+        json_api o `GET "flickr.auth.oauth.checkToken"
+          [ "api_key", App.app.Oauth.Consumer.key
+          (* ; "oauth_token", oauth_token *)
+          ]
   end
 end
 
@@ -236,6 +237,8 @@ module TagList = struct
   let t_of_json_exn = Json_conv.exn t_of_json
 end
 
+(* ************************* APIs ***********************)
+  
 module Photos = struct  
 
 (*
@@ -517,14 +520,14 @@ The secret for the photo. If the correct secret is passed then permissions check
     Job.create & fun () ->
       json_api o `POST "flickr.photos.search"
       ( [ "api_key", App.app.Oauth.Consumer.key ]
-      @ List.filter_map id 
-        [ opt id "user_id" user_id 
-        ; opt id "tags" tags
-        ; opt id "tag_mode" tag_mode
-        ; opt id "text" text
-        ; opt string_of_int "per_page" per_page (* <= 500 *)
-        ; opt string_of_int "page" page
-        ]
+        @ List.filter_map id 
+          [ opt id "user_id" user_id 
+          ; opt id "tags" tags
+          ; opt id "tag_mode" tag_mode
+          ; opt id "text" text
+          ; opt string_of_int "per_page" per_page (* <= 500 *)
+          ; opt string_of_int "page" page
+          ]
       )
       >>= lift_error Search.resp_of_json
       >>| fun x -> x#photos
@@ -854,6 +857,7 @@ Filter results by media type. Possible values are all (default), photos or video
     getPhotos ?per_page photoset_id o |> Page.to_list
 
   let removePhotos photoset_id photo_ids o =
+    Job.create & fun () ->
     json_api o `POST "flickr.photosets.removePhotos"
       [ "api_key", App.app.Oauth.Consumer.key
       ; "photoset_id", photoset_id
@@ -863,6 +867,7 @@ Filter results by media type. Possible values are all (default), photos or video
 
 
   let addPhoto photoset_id ~photo_id o =
+    Job.create & fun () ->
     json_api o `GET "flickr.photosets.addPhoto"
       [ "api_key", App.app.Oauth.Consumer.key
       ; "photoset_id", photoset_id
@@ -929,6 +934,7 @@ module People = struct
   end
 
   let getUploadStatus o =
+    Job.create & fun () ->
     json_api o `GET "flickr.people.getUploadStatus"
       [ "api_key", App.app.Oauth.Consumer.key
       ]
@@ -971,6 +977,7 @@ module Tags = struct
   end
 
   let getListPhoto photo_id o =
+    Job.create & fun () ->
     json_api o `GET "flickr.tags.getListPhoto"
       [ "api_key", App.app.Oauth.Consumer.key
       ; "photo_id", photo_id
@@ -1079,7 +1086,7 @@ module Upload = struct
       ?(hidden=true)
       ?title
       ?description
-      ?tags (** Must not contain white speca chars, but not check performed yet *) 
+      ?tags (** Must not contain white space chars, but not check performed yet *) 
       img_file o =
         let title = Option.default title & fun () ->
           Filename.(basename *> split_extension *> fst) img_file
@@ -1104,6 +1111,26 @@ module Upload = struct
         | `Error (mes, xml) -> `Error (`XML_conv (mes, xml))
 
         
+  let upload 
+      ?is_public
+      ?is_friend
+      ?is_family
+      ?hidden
+      ?title
+      ?description
+      ?tags (** Must not contain white space chars, but not check performed yet *) 
+      img_file o =
+    Job.create & fun () ->
+      upload 
+        ?is_public
+        ?is_friend
+        ?is_family
+        ?hidden
+        ?title
+        ?description
+        ?tags
+        img_file o
+    
 (*
 safety_level (optional)
 Set to 1 for Safe, 2 for Moderate, or 3 for Restricted.
