@@ -6,11 +6,10 @@ OCamlRequire(../lib/oCamltter_oauth.cmo)
 OCAMLWARNING_IGNORE[]    += 29
 OCAMLWARNING_NON_ERROR[] += 29
 
-# OCAMLPACKS[]  += xmlm
-# CAMLP4PACKS[] += xmlm
+OCAMLPACKS[]  += ppx_monadic
 
-# OCAMLDEPFLAGS= -syntax camlp4o -package meta_conv.syntax
-# OCAMLPPFLAGS = -syntax camlp4o -package meta_conv.syntax
+OCAMLDEPFLAGS+= -package ppx_monadic
+OCAMLPPFLAGS += -package ppx_monadic
 
 FILES[] =
     app

@@ -98,7 +98,6 @@ let delete_dups_in_sets o =
      fails, the medium remains in the photoset with the tag. It is not critical
      but the function should clean the tag in later trials.
 *)
-(*
 let uploads ~photoset img_files o =
   let open Job in
   Photosets.getList' o >>= fun (_info, psets) ->
@@ -110,93 +109,46 @@ let uploads ~photoset img_files o =
       |> Option.map (fun pset -> pset#id)
     )
   in
-  let photos =
-    ref (
-      match !psid_opt with
-      | None -> []
-      | Some psid ->
-          !!% "Getting photos of photoset %s (id=%s)@." photoset psid;
-          let ps = (Photosets.getPhotos psid o |> fail_at_error)#photo in
-          List.map (fun p -> (p#title, p#id)) ps
-    )
-  in
+  begin match !psid_opt with
+  | None -> return []
+  | Some psid ->
+      !!% "Getting photos of photoset %s (id=%s)@." photoset psid;
+      Photosets.getPhotos' psid o >>| fun (_, ps) ->
+      List.map (fun p -> (p#title, p#id)) ps
+  end >>= fun photos ->
+  let photos = ref photos in
 
   let up ~title img_file =
-    let rec upload () =
-      !!% "Uploading %s@." img_file;
-      match 
-        Upload.upload 
-          ~title img_file 
-          ~tags:["uploading"; "photoset_" ^ photoset] 
-          o
-      with
-      | `Error e -> `Error (e, upload)
-      | `Ok photo_id -> 
-          photos := (title, photo_id) :: !photos;
-          add_to_photoset photo_id
+    !!% "Uploading %s@." img_file;
+    Upload.upload 
+      ~title img_file 
+      ~tags:["uploading"; "photoset_" ^ photoset] 
+      o >>= fun photo_id ->
+    photos := (title, photo_id) :: !photos;
 
-    and add_to_photoset photo_id =
-      (* moving to the photoset *)
-      match !psid_opt with
-      | None ->
-          !!% "Creating new photoset %s with photo %s@." photoset img_file;
-          begin match 
-            Photosets.create ~title:photoset ~primary_photo_id: photo_id o
-          with
-          | `Error e -> `Error (e, fun () -> add_to_photoset photo_id)
-          | `Ok res -> 
-              psid_opt := Some res#id;
-              clean_uploading_tag photo_id
-          end
-      | Some psid ->
-          !!% "Adding %s to photoset %s@." img_file photoset;
-          begin match 
-              Photosets.addPhoto psid ~photo_id o 
-          with
-          | `Error e -> `Error (e, fun () -> add_to_photoset photo_id)
-          | `Ok () -> 
-              clean_uploading_tag photo_id
-          end              
-
-    and clean_uploading_tag photo_id =
-      (* remove "uploading" tag *)
-      match
-        Photos.setTags photo_id ["photoset_" ^ photoset] o 
-      with
-      | `Error e -> `Error (e, fun () -> clean_uploading_tag photo_id)
-      | `Ok () -> `Ok photo_id
-    in
-
-    let trial = 2 in
-    let wait = 30 in
-
-    let rec try_ left f =
-      match f () with
-      | `Error (e, _) when left = 0 -> 
-          format_error Format.stderr e;
-          !!% "No more retry@.";
-          `Error e
-      | `Error (e, retry) ->
-          format_error Format.stderr e;
-          !!% "Retrying (left=%d) after %d secs...@." left wait;
-          Unix.sleep wait;
-          try_ (left-1) retry
-      | (`Ok _ as ok) -> ok
-    in
-    try_ trial upload
+    (* moving to the photoset *)
+    begin match !psid_opt with
+    | None ->
+        !!% "Creating new photoset %s with photo %s@." photoset img_file;
+        Photosets.create ~title:photoset ~primary_photo_id: photo_id o
+        >>= fun res ->
+        psid_opt := Some res#id;
+        return ()
+    | Some psid ->
+        !!% "Adding %s to photoset %s@." img_file photoset;
+        Photosets.addPhoto psid ~photo_id o
+    end >>= fun () ->
+    
+    (* remove "uploading" tag *)
+    Photos.setTags photo_id ["photoset_" ^ photoset] o >>= fun () ->
+    return photo_id
   in
 
-  flip List.iter img_files & fun img_file ->
+  flip mapM_ img_files & fun img_file ->
     let title = Filename.(basename *> split_extension *> fst) img_file in
     if List.mem_assoc title !photos then begin
       (* !!% "%s is already in the photoset@." img_file; *)
-      ()
-    end else 
-      match up ~title img_file with
-      | `Ok pid -> 
-          !!% "Uploaded as id = %s@." pid
-      | `Error _e ->
-          !!% "Errors reached critical level. Aborting.@.";
-          exit 1
-*)
+      return ()
+    end else
+      up ~title img_file >>| !!% "Uploaded as id = %s@."
             

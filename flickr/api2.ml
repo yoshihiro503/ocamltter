@@ -94,8 +94,9 @@ module Json = struct
 
   type ibool = bool [@@deriving conv{ocaml}]
 
-  let ibool_of_json ?trace j = 
-    sint_of_json ?trace j >>= fun n -> `Ok (n <> 0)
+  let ibool_of_json ?trace j = do_;
+    n <-- sint_of_json ?trace j;
+    return & n <> 0
 
   let json_of_ibool b = Number (if b then "1" else "0")
 
@@ -130,8 +131,10 @@ module Content = struct
   type t = string [@@deriving conv{ocaml}]
 
   let json_of_t x = json_of_raw_content (object method content = x end)
-  let t_of_json ?trace x =
-    raw_content_of_json ?trace x >>= fun o -> return (o#content : string)
+  let t_of_json ?trace x = do_;
+    o <-- raw_content_of_json ?trace x;
+    return (o#content : string)
+      
   let t_of_json_exn = exn t_of_json
 end
 
@@ -155,21 +158,20 @@ end
      jsonFlickrApi({ stats: <ok/fail>
                    ; k = ... })
 *)
-let json_api o meth m fields =
-  raw_api o meth m fields
-  >>= fun s ->
-    (* jsonFlickrApi(JSON) *)
-    let len = String.length s in
-    match 
-      String.sub s 0 14,
-      String.sub s 14 (len - 15),
-      s.[len-1]
-    with
-    | "jsonFlickrApi(", s, ')' -> 
-        (* Result has always the top field "stat" *)
-        Json.parse s >>= Fail.check
-    | exception _ -> `Error (`Json (Json.NoJsonResponse, s))
-    | _ -> `Error (`Json (Json.NoJsonResponse, s))
+let json_api o meth m fields = do_;
+  s <-- raw_api o meth m fields;
+  (* jsonFlickrApi(JSON) *)
+  let len = String.length s in
+  match 
+    String.sub s 0 14,
+    String.sub s 14 (len - 15),
+    s.[len-1]
+  with
+  | "jsonFlickrApi(", s, ')' ->
+      (* Result has always the top field "stat" *)
+      Json.parse s >>= Fail.check
+  | exception _ -> `Error (`Json (Json.NoJsonResponse, s))
+  | _ -> `Error (`Json (Json.NoJsonResponse, s))
 
 type ('a, 'error) result = ('a, ([> Error.t] as 'error)) Result.t 
     
@@ -178,12 +180,14 @@ let opt f k = function
   | None -> None
   | Some v -> Some (k, f v)
 
+let api_key = ("api_key", App.app.Oauth.Consumer.key)
+    
 module Auth = struct
   module Oauth = struct
     let checkToken (* _oauth_token *) o =
       Job.create & fun () ->
         json_api o `GET "flickr.auth.oauth.checkToken"
-          [ "api_key", App.app.Oauth.Consumer.key
+          [ api_key
           (* ; "oauth_token", oauth_token *)
           ]
   end
@@ -202,29 +206,31 @@ module Page = struct
     = fun f ~per_page get_info get_list ->
     let open Job in
     let info = ref None in
-    let rec loop page : ('a list, 'error) Job.Seq.t =
-      f ~per_page ~page >>= fun res ->
-      begin match !info with
-        | Some _ -> ()
-        | None -> info := Some (get_info res)
-      end;
-      assert (res#perpage = per_page);
+    let rec loop page : ('a list, 'error) Job.Seq.t = do_;
+      res <-- f ~per_page ~page;
+      (); begin match !info with
+          | Some _ -> ()
+          | None -> info := Some (get_info res)
+          end;
+      (); assert (res#perpage = per_page);
       let final = res#perpage * res#page >= res#total in
       let next =
         if final then Job.return `None
         else loop (page+1)
       in
-      Job.return & `Some (get_list res, next)
+      return & `Some (get_list res, next)
     in
-    loop 1 >>= fun seq ->
-    match !info with
-    | None -> assert false
-    | Some info -> Job.return (info, Job.Seq.flatten & Job.return seq)
+    do_
+    ; seq <-- loop 1
+    ; match !info with
+      | None -> assert false
+      | Some info -> return (info, Seq.flatten & return seq)
 
-  let to_list x =
-    let open Job in
-    x >>= fun (info, seq) ->
-    Job.of_seq seq >>= fun xs -> Job.return (info, xs)
+  let to_list x = Job.do_
+    ; (info, seq) <-- x
+    ; xs <-- Job.of_seq seq;
+    return (info, xs)
+
 end
 
 module TagList = struct
@@ -301,7 +307,7 @@ module Photos = struct
     in
     Job.create & fun () ->
       json_api o `GET "flickr.photos.getNotInSet"
-        ([ "api_key", App.app.Oauth.Consumer.key
+        ([ api_key
          ; "per_page", string_of_int per_page
          ; "page", string_of_int page
          ]
@@ -318,21 +324,6 @@ module Photos = struct
 
   let getNotInSet' ?per_page ?tags o =
     getNotInSet ?per_page ?tags o |> Page.to_list
-
-(*
-max_upload_date (Optional)
-Maximum upload date. Photos with an upload date less than or equal to this value will be returned. The date can be in the form of a unix timestamp or mysql datetime.
-min_taken_date (Optional)
-Minimum taken date. Photos with an taken date greater than or equal to this value will be returned. The date can be in the form of a mysql datetime or unix timestamp.
-max_taken_date (Optional)
-Maximum taken date. Photos with an taken date less than or equal to this value will be returned. The date can be in the form of a mysql datetime or unix timestamp.
-min_upload_date (Optional)
-Minimum upload date. Photos with an upload date greater than or equal to this value will be returned. The date can be in the form of a unix timestamp or mysql datetime.
-extras (Optional)
-A comma-delimited list of extra information to fetch for each returned record. Currently supported fields are: description, license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_q, url_m, url_n, url_z, url_c, url_l, url_o
-page (Optional)
-The page of results to return. If this argument is omitted, it defaults to 1.
-*)
 
   module GetInfo = struct
 
@@ -393,21 +384,12 @@ The page of results to return. If this argument is omitted, it defaults to 1.
   let getInfo photo_id o =
     Job.create & fun () ->
       json_api o `GET "flickr.photos.getInfo"
-        [ "api_key", App.app.Oauth.Consumer.key
+        [ api_key
         ; "photo_id", photo_id
         ]
       >>= lift_error GetInfo.resp_of_json
       >>| fun x -> x#photo
     
-(*
-secret (Optional)
-The secret for the photo. If the correct secret is passed then permissions checking is skipped. This enables the 'sharing' of individual photos by passing around the id and secret.
-
-The <permissions> element is only returned for photos owned by the calling user. The isfavorite attribute only makes sense for logged in users who don't own the photo. The rotation attribute is the current clockwise rotation, in degrees, by which the smaller image sizes differ from the original image.
-
-The <date> element's lastupdate attribute is a Unix timestamp indicating the last time the photo, or any of its metadata (tags, comments, etc.) was modified.
-*)
-
   module GetExif = struct
 
     type exif = <
@@ -435,21 +417,16 @@ The <date> element's lastupdate attribute is a Unix timestamp indicating the las
   let getExif photo_id o =
     Job.create & fun () ->
       json_api o `GET "flickr.photos.getExif"
-        [ "api_key", App.app.Oauth.Consumer.key
+        [ api_key
         ; "photo_id", photo_id
         ]
       >>= lift_error GetExif.resp_of_json
       >>| fun x -> x#photo  
 
-(*
-secret (Optional)
-The secret for the photo. If the correct secret is passed then permissions checking is skipped. This enables the 'sharing' of individual photos by passing around the id and secret.
-*)
-
   let addTags photo_id tags o =
     Job.create & fun () ->
       json_api o `GET "flickr.photos.addTags"
-        [ "api_key", App.app.Oauth.Consumer.key
+        [ api_key
         ; "photo_id", photo_id
         ; "tags", String.concat " " tags
         ]
@@ -458,7 +435,7 @@ The secret for the photo. If the correct secret is passed then permissions check
   let setTags photo_id tags o =
     Job.create & fun () ->
       json_api o `GET "flickr.photos.setTags"
-        [ "api_key", App.app.Oauth.Consumer.key
+        [ api_key
         ; "photo_id", photo_id
         ; "tags", String.concat " " tags
         ]
@@ -467,7 +444,7 @@ The secret for the photo. If the correct secret is passed then permissions check
   let delete photo_id o =
     Job.create & fun () ->
       json_api o `POST "flickr.photos.delete"
-        [ "api_key", App.app.Oauth.Consumer.key
+        [ api_key
         ; "photo_id", photo_id
         ]
       >>= EmptyResp.check
@@ -519,7 +496,7 @@ The secret for the photo. If the correct secret is passed then permissions check
     in
     Job.create & fun () ->
       json_api o `POST "flickr.photos.search"
-      ( [ "api_key", App.app.Oauth.Consumer.key ]
+      ( [ api_key ]
         @ List.filter_map id 
           [ opt id "user_id" user_id 
           ; opt id "tags" tags
@@ -531,137 +508,6 @@ The secret for the photo. If the correct secret is passed then permissions check
       )
       >>= lift_error Search.resp_of_json
       >>| fun x -> x#photos
-
-(*
-min_upload_date (Optional)
-Minimum upload date. Photos with an upload date greater than or equal to this value will be returned. The date can be in the form of a unix timestamp or mysql datetime.
-max_upload_date (Optional)
-Maximum upload date. Photos with an upload date less than or equal to this value will be returned. The date can be in the form of a unix timestamp or mysql datetime.
-min_taken_date (Optional)
-Minimum taken date. Photos with an taken date greater than or equal to this value will be returned. The date can be in the form of a mysql datetime or unix timestamp.
-max_taken_date (Optional)
-Maximum taken date. Photos with an taken date less than or equal to this value will be returned. The date can be in the form of a mysql datetime or unix timestamp.
-license (Optional)
-The license id for photos (for possible values see the flickr.photos.licenses.getInfo method). Multiple licenses may be comma-separated.
-sort (Optional)
-The order in which to sort returned photos. Deafults to date-posted-desc (unless you are doing a radial geo query, in which case the default sorting is by ascending distance from the point specified). The possible values are: date-posted-asc, date-posted-desc, date-taken-asc, date-taken-desc, interestingness-desc, interestingness-asc, and relevance.
-privacy_filter (Optional)
-Return photos only matching a certain privacy level. This only applies when making an authenticated call to view photos you own. Valid values are:
-1 public photos
-2 private photos visible to friends
-3 private photos visible to family
-4 private photos visible to friends & family
-5 completely private photos
-bbox (Optional)
-A comma-delimited list of 4 values defining the Bounding Box of the area that will be searched. 
-
-The 4 values represent the bottom-left corner of the box and the top-right corner, minimum_longitude, minimum_latitude, maximum_longitude, maximum_latitude. 
-
-Longitude has a range of -180 to 180 , latitude of -90 to 90. Defaults to -180, -90, 180, 90 if not specified. 
-
-Unlike standard photo queries, geo (or bounding box) queries will only return 250 results per page. 
-
-Geo queries require some sort of limiting agent in order to prevent the database from crying. This is basically like the check against "parameterless searches" for queries without a geo component. 
-
-A tag, for instance, is considered a limiting agent as are user defined min_date_taken and min_date_upload parameters — If no limiting factor is passed we return only photos added in the last 12 hours (though we may extend the limit in the future).
-accuracy (Optional)
-Recorded accuracy level of the location information. Current range is 1-16 :
-World level is 1
-Country is ~3
-Region is ~6
-City is ~11
-Street is ~16
-Defaults to maximum value if not specified.
-safe_search (Optional)
-Safe search setting:
-1 for safe.
-2 for moderate.
-3 for restricted.
-(Please note: Un-authed calls can only see Safe content.)
-content_type (Optional)
-Content Type setting:
-1 for photos only.
-2 for screenshots only.
-3 for 'other' only.
-4 for photos and screenshots.
-5 for screenshots and 'other'.
-6 for photos and 'other'.
-7 for photos, screenshots, and 'other' (all).
-machine_tags (Optional)
-Aside from passing in a fully formed machine tag, there is a special syntax for searching on specific properties :
-Find photos using the 'dc' namespace : "machine_tags" => "dc:"
-Find photos with a title in the 'dc' namespace : "machine_tags" => "dc:title="
-Find photos titled "mr. camera" in the 'dc' namespace : "machine_tags" => "dc:title=\"mr. camera\"
-Find photos whose value is "mr. camera" : "machine_tags" => "*:*=\"mr. camera\""
-Find photos that have a title, in any namespace : "machine_tags" => "*:title="
-Find photos that have a title, in any namespace, whose value is "mr. camera" : "machine_tags" => "*:title=\"mr. camera\""
-Find photos, in the 'dc' namespace whose value is "mr. camera" : "machine_tags" => "dc:*=\"mr. camera\""
-Multiple machine tags may be queried by passing a comma-separated list. The number of machine tags you can pass in a single query depends on the tag mode (AND or OR) that you are querying with. "AND" queries are limited to (16) machine tags. "OR" queries are limited to (8).
-machine_tag_mode (Optional)
-Either 'any' for an OR combination of tags, or 'all' for an AND combination. Defaults to 'any' if not specified.
-group_id (Optional)
-The id of a group who's pool to search. If specified, only matching photos posted to the group's pool will be returned.
-contacts (Optional)
-Search your contacts. Either 'all' or 'ff' for just friends and family. (Experimental)
-woe_id (Optional)
-A 32-bit identifier that uniquely represents spatial entities. (not used if bbox argument is present). 
-
-Geo queries require some sort of limiting agent in order to prevent the database from crying. This is basically like the check against "parameterless searches" for queries without a geo component. 
-
-A tag, for instance, is considered a limiting agent as are user defined min_date_taken and min_date_upload parameters — If no limiting factor is passed we return only photos added in the last 12 hours (though we may extend the limit in the future).
-place_id (Optional)
-A Flickr place id. (not used if bbox argument is present). 
-
-Geo queries require some sort of limiting agent in order to prevent the database from crying. This is basically like the check against "parameterless searches" for queries without a geo component. 
-
-A tag, for instance, is considered a limiting agent as are user defined min_date_taken and min_date_upload parameters — If no limiting factor is passed we return only photos added in the last 12 hours (though we may extend the limit in the future).
-media (Optional)
-Filter results by media type. Possible values are all (default), photos or videos
-has_geo (Optional)
-Any photo that has been geotagged, or if the value is "0" any photo that has not been geotagged. 
-
-Geo queries require some sort of limiting agent in order to prevent the database from crying. This is basically like the check against "parameterless searches" for queries without a geo component. 
-
-A tag, for instance, is considered a limiting agent as are user defined min_date_taken and min_date_upload parameters — If no limiting factor is passed we return only photos added in the last 12 hours (though we may extend the limit in the future).
-geo_context (Optional)
-Geo context is a numeric value representing the photo's geotagginess beyond latitude and longitude. For example, you may wish to search for photos that were taken "indoors" or "outdoors". 
-
-The current list of context IDs is :
-
-0, not defined.
-1, indoors.
-2, outdoors.
-
-
-Geo queries require some sort of limiting agent in order to prevent the database from crying. This is basically like the check against "parameterless searches" for queries without a geo component. 
-
-A tag, for instance, is considered a limiting agent as are user defined min_date_taken and min_date_upload parameters — If no limiting factor is passed we return only photos added in the last 12 hours (though we may extend the limit in the future).
-lat (Optional)
-A valid latitude, in decimal format, for doing radial geo queries. 
-
-Geo queries require some sort of limiting agent in order to prevent the database from crying. This is basically like the check against "parameterless searches" for queries without a geo component. 
-
-A tag, for instance, is considered a limiting agent as are user defined min_date_taken and min_date_upload parameters — If no limiting factor is passed we return only photos added in the last 12 hours (though we may extend the limit in the future).
-lon (Optional)
-A valid longitude, in decimal format, for doing radial geo queries. 
-
-Geo queries require some sort of limiting agent in order to prevent the database from crying. This is basically like the check against "parameterless searches" for queries without a geo component. 
-
-A tag, for instance, is considered a limiting agent as are user defined min_date_taken and min_date_upload parameters — If no limiting factor is passed we return only photos added in the last 12 hours (though we may extend the limit in the future).
-radius (Optional)
-A valid radius used for geo queries, greater than zero and less than 20 miles (or 32 kilometers), for use with point-based geo queries. The default value is 5 (km).
-radius_units (Optional)
-The unit of measure when doing radial geo queries. Valid options are "mi" (miles) and "km" (kilometers). The default is "km".
-is_commons (Optional)
-Limit the scope of the search to only photos that are part of the Flickr Commons project. Default is false.
-in_gallery (Optional)
-Limit the scope of the search to only photos that are in a gallery? Default is false, search all photos.
-is_getty (Optional)
-Limit the scope of the search to only photos that are for sale on Getty. Default is false.
-extras (Optional)
-A comma-delimited list of extra information to fetch for each returned record. Currently supported fields are: description, license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_q, url_m, url_n, url_z, url_c, url_l, url_o
-*)
-
 
 end
 
@@ -678,31 +524,13 @@ module Photosets = struct
   let create ~title ~primary_photo_id o =
     Job.create & fun () ->
       json_api o `GET "flickr.photosets.create"
-        [ "api_key", App.app.Oauth.Consumer.key
+        [ api_key
         ; "title", title
         ; "primary_photo_id", primary_photo_id
         ]
       >>= lift_error Create.resp_of_json
       >>| fun x -> x#photoset
     
-(*
-description (Optional)
-A description of the photoset. May contain limited html.
-primary_photo_id (Required)
-The id of the photo to represent this set. The photo must belong to the calling user.
-Example Response
-
-<photoset id="1234" url="http://www.flickr.com/photos/bees/sets/1234/" />
-New photosets are automatically put first in the photoset ordering for the user. Use flickr.photosets.orderSets if you don't want the new set to appear first on the user's photoset list.
-
-Error Codes
-
-1: No title specified
-No title parameter was passed in the request.
-2: Photo not found
-*)
-
-
   module GetList = struct
 
     type set = < 
@@ -751,21 +579,12 @@ No title parameter was passed in the request.
     assert (page > 0);
     Job.create & fun () ->
       json_api o `GET "flickr.photosets.getList"
-        [ "api_key", App.app.Oauth.Consumer.key
+        [ api_key
         ; "page", string_of_int page
         ; "per_page", string_of_int per_page
         ]
       >>= lift_error GetList.resp_of_json
       >>| fun x -> x#photosets
-
-(*
-user_id (Optional)
-The NSID of the user to get a photoset list for. If none is specified, the calling user is assumed.
-per_page (Optional)
-The number of sets to get per page. If paging is enabled, the maximum number of sets per page is 500.
-primary_photo_extras (Optional)
-A comma-delimited list of extra information to fetch for the primary photo. Currently supported fields are: license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_m, url_o
-*)
 
   let getList ?(per_page=500) o =
     Page.to_seq (raw_getList o) ~per_page
@@ -816,29 +635,13 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
     assert (page > 0);
     Job.create & fun () ->
       json_api o `GET "flickr.photosets.getPhotos"
-        [ "api_key", App.app.Oauth.Consumer.key
+        [ api_key
         ; "photoset_id", photoset_id
         ; "page", string_of_int page
         ; "per_page", string_of_int per_page
         ]
       >>= lift_error GetPhotos.resp_of_json
       >>| fun x -> x#photoset
-
-(*
-extras (Optional)
-A comma-delimited list of extra information to fetch for each returned record. Currently supported fields are: license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_m, url_o
-privacy_filter (Optional)
-Return photos only matching a certain privacy level. This only applies when making an authenticated call to view a photoset you own. Valid values are:
-1 public photos
-2 private photos visible to friends
-3 private photos visible to family
-4 private photos visible to friends & family
-5 completely private photos
-per_page (Optional)
-Number of photos to return per page. If this argument is omitted, it defaults to 500. The maximum allowed value is 500.
-media (Optional)
-Filter results by media type. Possible values are all (default), photos or videos
-*)
 
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
   let getPhotos ?(per_page=500) photoset_id o =
@@ -859,7 +662,7 @@ Filter results by media type. Possible values are all (default), photos or video
   let removePhotos photoset_id photo_ids o =
     Job.create & fun () ->
     json_api o `POST "flickr.photosets.removePhotos"
-      [ "api_key", App.app.Oauth.Consumer.key
+      [ api_key
       ; "photoset_id", photoset_id
       ; "photo_ids", String.concat "," photo_ids
       ]
@@ -869,7 +672,7 @@ Filter results by media type. Possible values are all (default), photos or video
   let addPhoto photoset_id ~photo_id o =
     Job.create & fun () ->
     json_api o `GET "flickr.photosets.addPhoto"
-      [ "api_key", App.app.Oauth.Consumer.key
+      [ api_key
       ; "photoset_id", photoset_id
       ; "photo_id", photo_id
       ]
@@ -936,7 +739,7 @@ module People = struct
   let getUploadStatus o =
     Job.create & fun () ->
     json_api o `GET "flickr.people.getUploadStatus"
-      [ "api_key", App.app.Oauth.Consumer.key
+      [ api_key
       ]
     >>= lift_error GetUploadStatus.resp_of_json
     >>| fun x -> x#user
@@ -979,7 +782,7 @@ module Tags = struct
   let getListPhoto photo_id o =
     Job.create & fun () ->
     json_api o `GET "flickr.tags.getListPhoto"
-      [ "api_key", App.app.Oauth.Consumer.key
+      [ api_key
       ; "photo_id", photo_id
       ]
     >>= lift_error GetListPhoto.resp_of_json
@@ -998,7 +801,7 @@ module Test = struct
   let login o =
     Job.create & fun () ->
     json_api o `GET "flickr.test.login"
-      [ "api_key", App.app.Oauth.Consumer.key
+      [ api_key
       ]
     >>= lift_error Login.resp_of_json
     >>| fun x -> x#user
