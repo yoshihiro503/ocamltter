@@ -99,9 +99,11 @@ let delete_dups_in_sets o =
      but the function should clean the tag in later trials.
 *)
 let uploads ~photoset img_files o =
-  let open Job in
-  Photosets.getList' o >>= fun (_info, psets) ->
-  !!% "Got existing photosets (%d)@." & List.length psets;
+  let open Job in do_;
+  (_info, psets) <-- Photosets.getList' o;
+
+  (); !!% "Got existing photosets (%d)@." & List.length psets;
+
   let psid_opt = 
     (* maybe overridden later *)
     ref (
@@ -109,38 +111,40 @@ let uploads ~photoset img_files o =
       |> Option.map (fun pset -> pset#id)
     )
   in
-  begin match !psid_opt with
-  | None -> return []
-  | Some psid ->
-      !!% "Getting photos of photoset %s (id=%s)@." photoset psid;
-      Photosets.getPhotos' psid o >>| fun (_, ps) ->
-      List.map (fun p -> (p#title, p#id)) ps
-  end >>= fun photos ->
+
+  photos <-- begin match !psid_opt with
+    | None -> return []
+    | Some psid -> do_;
+        (); !!% "Getting photos of photoset %s (id=%s)@." photoset psid;
+        [%p? (_, ps) ] <-- Photosets.getPhotos' psid o;
+        return & List.map (fun p -> (p#title, p#id)) ps
+    end;
+  
   let photos = ref photos in
 
-  let up ~title img_file =
-    !!% "Uploading %s@." img_file;
-    Upload.upload 
+  let up ~title img_file = do_;
+    (); !!% "Uploading %s@." img_file;
+    photo_id <-- Upload.upload 
       ~title img_file 
       ~tags:["uploading"; "photoset_" ^ photoset] 
-      o >>= fun photo_id ->
-    photos := (title, photo_id) :: !photos;
+      o;
+    
+    (); photos := (title, photo_id) :: !photos;
 
     (* moving to the photoset *)
     begin match !psid_opt with
-    | None ->
-        !!% "Creating new photoset %s with photo %s@." photoset img_file;
-        Photosets.create ~title:photoset ~primary_photo_id: photo_id o
-        >>= fun res ->
-        psid_opt := Some res#id;
+    | None -> do_;
+        (); !!% "Creating new photoset %s with photo %s@." photoset img_file;
+        res <-- Photosets.create ~title:photoset ~primary_photo_id: photo_id o;
+        (); psid_opt := Some res#id;
         return ()
     | Some psid ->
         !!% "Adding %s to photoset %s@." img_file photoset;
         Photosets.addPhoto psid ~photo_id o
-    end >>= fun () ->
+    end;
     
     (* remove "uploading" tag *)
-    Photos.setTags photo_id ["photoset_" ^ photoset] o >>= fun () ->
+    Photos.setTags photo_id ["photoset_" ^ photoset] o;
     return photo_id
   in
 
