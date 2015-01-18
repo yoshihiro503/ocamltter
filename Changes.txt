@@ -1,3 +1,9 @@
+4.0.0
+----------------
+
+* Moved from CamlP4 to PPX based auto-code generation
+- Retriable job monad for Flickr
+
 3.0.0
 ----------------
 

@@ -1,6 +1,6 @@
 OASISFormat: 0.2
 Name:        ocamltter
-Version:     3.0.0
+Version:     4.0.0
 Synopsis:    The OCAMLTTER twitter client
 Authors:     Jun FURUSE
 License:     LGPL-2.0 with OCaml linking exception
