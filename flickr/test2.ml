@@ -23,7 +23,7 @@ let () = !!% "OAuth: %a@." (Ocaml.format_with Oauth.ocaml_of_t) o
 let getInfo pid o =
   match Job.run & Photos.getInfo pid o with
   | `Error (e, _) -> error e
-  | `Ok j -> ocaml_format_with Photos.GetInfo.ocaml_of_photo j
+  | `Ok j -> ocaml_format_with Api.Photos.GetInfo.ocaml_of_photo j
 
 let () =
   let open Job in
@@ -31,7 +31,7 @@ let () =
   get_current_user o >>= fun user ->
   !!% "id=%s username=%s@." user#id user#username;
   Photos.search ~user_id:user#id o >>= fun photos ->
-  ocaml_format_with Photos.Search.ocaml_of_photos photos;
+  ocaml_format_with Api.Photos.Search.ocaml_of_photos photos;
   match photos#photo with
   | [] -> assert false
   | p::_ ->

@@ -17,6 +17,9 @@ FILES[] =
     auth
     api
     tools
+    job
+    api2
+    tools2
 
 MyOCamlPackage(oCamltter_flickr, $(FILES), $(EMPTY), $(EMPTY))
 
@@ -35,6 +38,7 @@ FILES[] =
     app
     conf
     auth
+    api
     job
     api2
     tools2
@@ -58,6 +62,7 @@ FILES[] =
     app
     conf
     auth
+    api
     job
     api2
     tools2

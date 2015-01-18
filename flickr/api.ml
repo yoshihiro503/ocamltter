@@ -130,8 +130,10 @@ module Content = struct
   type t = string [@@deriving conv{ocaml}]
 
   let json_of_t x = json_of_raw_content (object method content = x end)
-  let t_of_json ?trace x =
-    raw_content_of_json ?trace x >>= fun o -> return (o#content : string)
+  let t_of_json ?trace x = do_;
+    o <-- raw_content_of_json ?trace x;
+    return (o#content : string)
+
   let t_of_json_exn = exn t_of_json
 end
 
@@ -300,8 +302,8 @@ module Photos = struct
     >>= lift_error GetNotInSet.resp_of_json
     >>| fun x -> x#photos
 
-  let getNotInSet ?(per_page=100) ?tags o =
-    Page.to_stream (raw_getNotInSet ?tags o) ~per_page 
+  let getNotInSet ?tags o =
+    Page.to_stream (raw_getNotInSet ?tags o) ~per_page:100 
       (fun xs -> xs#photo)
       (fun ~total ~pages ~perpage stream ->
        object
@@ -733,10 +735,11 @@ No title parameter was passed in the request.
 
   end
 
-  let raw_getList ?(page=1) o = 
+  let raw_getList ~per_page ~page o = 
     assert (page > 0);
     json_api o `GET "flickr.photosets.getList"
       [ "api_key", App.app.Oauth.Consumer.key
+      ; "per_page", string_of_int per_page
       ; "page", string_of_int page
       ]
     >>= lift_error GetList.resp_of_json
@@ -754,7 +757,7 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
   let getList o =
     let rec f n st =
-      raw_getList o ~page:n 
+      raw_getList o ~per_page:500 ~page:n 
       >>= fun psets ->
         if psets#perpage * n > psets#total then
           (* last page *)
@@ -801,11 +804,12 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
   end
 
 
-  let raw_getPhotos photoset_id ?(page=1) o =
+  let raw_getPhotos photoset_id ~per_page ~page o =
     assert (page > 0);
     json_api o `GET "flickr.photosets.getPhotos"
       [ "api_key", App.app.Oauth.Consumer.key
       ; "photoset_id", photoset_id
+      ; "per_page", string_of_int per_page
       ; "page", string_of_int page
       ]
     >>= lift_error GetPhotos.resp_of_json
@@ -830,7 +834,7 @@ Filter results by media type. Possible values are all (default), photos or video
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
   let getPhotos photoset_id o =
     let rec f n st =
-      raw_getPhotos photoset_id o ~page:n 
+      raw_getPhotos photoset_id o ~per_page:500 ~page:n 
       >>= fun pset ->
         if pset#per_page * n > pset#total then
           (* last page *)

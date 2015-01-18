@@ -22,7 +22,7 @@ let rec create f = fun () -> match f () with
   | `Error e -> `Error (e, create f)
 
 let rec retry p st t = fun () -> match t () with
-  | (`Ok _) as res -> res
+  | `Ok _ as res -> res
   | `Error (e, t') ->
       match p st e with
       | `Ok st' -> retry p st' t' ()
