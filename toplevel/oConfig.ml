@@ -14,5 +14,5 @@ let coffee_break = ref 61.0 (* seconds *)
    (search is 180/15mins)
 *)
 
-let talk = ref true
-
+let talk = ref false (* Turn on if you want to hear Twitter time line in Japanese *)
+  

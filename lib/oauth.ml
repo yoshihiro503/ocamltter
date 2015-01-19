@@ -1,4 +1,3 @@
-open Ocaml_conv
 open Spotlib.Spot
 open Util
 
@@ -280,7 +279,7 @@ type t = {
   consumer_secret:string;
   access_token:string; 
   access_token_secret:string;
-} with conv(ocaml)
+} [@@deriving conv{ocaml}]
 
 let access ?proto ~host ?port ~path ~meth:method_params ~oauth_other_params oauth =
   gen_access ?proto ~host ~path ?port

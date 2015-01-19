@@ -4,7 +4,6 @@ open OCamltter_oauth
 open Oauth_ex
 
 module Auth = struct
-  open Ocaml_conv 
 
   type ('a, 'b) hashtbl = ('a, 'b) Hashtbl.t
   let ocaml_of_hashtbl = Ocaml_conv.ocaml_of_hashtbl
@@ -13,7 +12,7 @@ module Auth = struct
   type t = (string, app) hashtbl 
   and app = { consumer : Consumer.t;
               users : (string, Access_token.t) hashtbl }
-  with conv(ocaml)
+  [@@deriving conv{ocaml}]
 
   let dummy = 
     Hashtbl.of_list 17

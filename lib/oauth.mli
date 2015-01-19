@@ -57,7 +57,7 @@ type t = {
   consumer_secret     : string;
   access_token        : string;
   access_token_secret : string;
-} with conv(ocaml)
+} [@@deriving conv{ocaml}]
 
 val access :
   ?proto: [ `HTTP | `HTTPS ]

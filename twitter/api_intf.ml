@@ -1,6 +1,5 @@
 open Spotlib.Spot
 open Meta_conv.Open
-open Json_conv
 open Ocaml_conv
 open OCamltter_oauth
 
@@ -15,12 +14,12 @@ module Json = struct
     | _ -> failwith "Ocaml.String expected")
 end
 
-type 'json mc_leftovers = (string * 'json) list with conv(ocaml)
+type 'json mc_leftovers = (string * 'json) list [@@deriving conv{ocaml}]
 
-type status_id = int64 with conv(json, ocaml)
+type status_id = int64 [@@deriving conv{ocaml; json}]
 
 module Time : sig
-  type t with conv(json, ocaml)
+  type t [@@deriving conv{ocaml; json}]
   include Mtypes.Comparable with type t := t  
 
   val from_unix   : float -> t
@@ -57,7 +56,7 @@ end = struct
   type t = { 
     printable : string lazy_t;
     tick      : float lazy_t 
-  } with conv(ocaml)
+  } [@@deriving conv{ocaml}]
     
   type _t = t
 
@@ -91,9 +90,9 @@ end
 
 module Text : sig 
   (* HTML encoded text *)
-  type t = string with conv(json, ocaml)
+  type t = string [@@deriving conv{ocaml; json}]
 end = struct
-  type t = string with conv(ocaml)
+  type t = string [@@deriving conv{ocaml}]
 
   open Json
 
@@ -107,7 +106,7 @@ end = struct
 end
 
 module Client : sig
-  type t = string * [`Ok of Xml.xml | `Error of exn] with conv(json, ocaml)
+  type t = string * [`Ok of Xml.xml | `Error of exn] [@@deriving conv{ocaml; json}]
   val name : t -> string
 end = struct
   type t = string * [`Ok of Xml.xml | `Error of exn]
@@ -176,24 +175,24 @@ module User = struct
       follow_request_sent                   : bool option;
       friends_count                         : int64;
       favourites_count                      : int64 
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 
   type t = <
     unknowns : Json.t mc_leftovers;
     id       : int64;
     details  : details mc_option_embeded;
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 
-  type ts = t list with conv(json, ocaml)
+  type ts = t list [@@deriving conv{ocaml; json}]
 
-  let format =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
+  let format x =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
 end
 
 module Hashtag = struct
   type t = <
     text    : string;
     indices : (int * int) (** location in the tweet string *)
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 end
 
 module URL = struct
@@ -203,7 +202,7 @@ module URL = struct
     url          : string;
     expanded_url : string;
     display_url  : string;
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 end
  
 module UserMention = struct
@@ -214,7 +213,7 @@ module UserMention = struct
       name        : string;
       id          : int64;
       indices     : int * int;
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
       
 end
 
@@ -225,7 +224,7 @@ module Entities = struct
       hashtags      : Hashtag.t list; 
       urls          : URL.t list;
       user_mentions : UserMention.t list;
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 end
 
 module Tweet = struct
@@ -264,12 +263,12 @@ module Tweet = struct
 
     entities : Entities.t mc_option;
 
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 
-  type ts = t list with conv(json, ocaml)
+  type ts = t list [@@deriving conv{ocaml; json}]
 
-  let format    = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
-  let format_ts = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_ts
+  let format    x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
+  let format_ts x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_ts x
 
 end
 
@@ -286,7 +285,7 @@ module Search_tweets = struct
       max_id       : int64;
       since_id     : int64;
       completed_in : float;
-    > with conv(json, ocaml)
+    > [@@deriving conv{ocaml; json}]
   end
 
   type t = <
@@ -294,9 +293,9 @@ module Search_tweets = struct
 
     statuses : Tweet.t list;
     search_metadata : Search_metadata.t;
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 
-  let format = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
+  let format x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
 
 end
 
@@ -306,122 +305,122 @@ module Rate_limit_status = struct
       limit     : float;
       remaining : float;
       reset     : float (** unix epoch *)
-    > with conv(json,ocaml)
+    > [@@deriving conv{ocaml; json}]
 
   type t = <
     rate_limit_context : < access_token : string >;
     resources : < 
       lists : <
-          subscribers         as "/lists/subscribers"                 : limit;
-          list                as "/lists/list"                        : limit;
-          memberships         as "/lists/memberships"                 : limit;
-          ownerships          as "/lists/ownerships"                  : limit;
-          subscriptions       as "/lists/subscriptions"               : limit;
-          members             as "/lists/members"                     : limit;
-          subscribers_show    as "/lists/subscribers/show"            : limit;
-          statuses            as "/lists/statuses"                    : limit;
-          members_show        as "/lists/members/show"                : limit;
-          show                as "/lists/show"                        : limit;
+          subscribers         [@conv.as {json="/lists/subscribers"}]                 : limit;
+          list                [@conv.as {json="/lists/list"}]                        : limit;
+          memberships         [@conv.as {json="/lists/memberships"}]                 : limit;
+          ownerships          [@conv.as {json="/lists/ownerships"}]                  : limit;
+          subscriptions       [@conv.as {json="/lists/subscriptions"}]               : limit;
+          members             [@conv.as {json="/lists/members"}]                     : limit;
+          subscribers_show    [@conv.as {json="/lists/subscribers/show"}]            : limit;
+          statuses            [@conv.as {json="/lists/statuses"}]                    : limit;
+          members_show        [@conv.as {json="/lists/members/show"}]                : limit;
+          show                [@conv.as {json="/lists/show"}]                        : limit;
         >;
       application : <
-          rate_limit_status   as "/application/rate_limit_status"     : limit;
+          rate_limit_status   [@conv.as {json="/application/rate_limit_status"}]     : limit;
         >;
       friendships : <
-	  incoming            as "/friendships/incoming"              : limit;
-	  lookup              as "/friendships/lookup"                : limit;
-	  outgoing            as "/friendships/outgoing"              : limit;
-          no_retweets_ids     as "/friendships/no_retweets/ids"       : limit;
-	  show                as "/friendships/show"                  : limit;
+	  incoming            [@conv.as {json="/friendships/incoming"}]              : limit;
+	  lookup              [@conv.as {json="/friendships/lookup"}]                : limit;
+	  outgoing            [@conv.as {json="/friendships/outgoing"}]              : limit;
+          no_retweets_ids     [@conv.as {json="/friendships/no_retweets/ids"}]       : limit;
+	  show                [@conv.as {json="/friendships/show"}]                  : limit;
         >;
 
       blocks : <
-	  ids                 as "/blocks/ids"                        : limit;
-          list                as "/blocks/list"                       : limit;
+	  ids                 [@conv.as {json="/blocks/ids"}]                        : limit;
+          list                [@conv.as {json="/blocks/list"}]                       : limit;
         >;
       geo : <
-	  similar_places      as "/geo/similar_places"                : limit;
-          search              as "/geo/search"                        : limit;
-	  reverse_geocode     as "/geo/reverse_geocode"               : limit;
-	  place_id            as "/geo/id/:place_id"                  : limit;
+	  similar_places      [@conv.as {json="/geo/similar_places"}]                : limit;
+          search              [@conv.as {json="/geo/search"}]                        : limit;
+	  reverse_geocode     [@conv.as {json="/geo/reverse_geocode"}]               : limit;
+	  place_id            [@conv.as {json="/geo/id/:place_id"}]                  : limit;
         >;
       users : <
-	  profile_banner      as "/users/profile_banner"              : limit;
-          suggestions_members as "/users/suggestions/:slug/members"   : limit;
-	  show                as "/users/show/:id"                    : limit;
-	  suggestions         as "/users/suggestions"                 : limit;
-	  lookup              as "/users/lookup"                      : limit;
-	  search              as "/users/search"                      : limit;
-	  suggestions_slug    as "/users/suggestions/:slug"           : limit;
-          report_spam         as "/users/report_spam"                 : limit;
-          derived_info        as "/users/derived_info"                : limit;
+	  profile_banner      [@conv.as {json="/users/profile_banner"}]              : limit;
+          suggestions_members [@conv.as {json="/users/suggestions/:slug/members"}]   : limit;
+	  show                [@conv.as {json="/users/show/:id"}]                    : limit;
+	  suggestions         [@conv.as {json="/users/suggestions"}]                 : limit;
+	  lookup              [@conv.as {json="/users/lookup"}]                      : limit;
+	  search              [@conv.as {json="/users/search"}]                      : limit;
+	  suggestions_slug    [@conv.as {json="/users/suggestions/:slug"}]           : limit;
+          report_spam         [@conv.as {json="/users/report_spam"}]                 : limit;
+          derived_info        [@conv.as {json="/users/derived_info"}]                : limit;
         >;
       followers : <
-	  list                as "/followers/list"                    : limit;
-	  ids                 as "/followers/ids"                     : limit;
+	  list                [@conv.as {json="/followers/list"}]                    : limit;
+	  ids                 [@conv.as {json="/followers/ids"}]                     : limit;
         >;
       statuses : <
-	  mentions_timeline   as "/statuses/mentions_timeline"        : limit;
-          show                as "/statuses/show/:id"                 : limit;
-	  oembed              as "/statuses/oembed"                   : limit;
-	  retweeters_ids      as "/statuses/retweeters/ids"           : limit;
-	  home_timeline       as "/statuses/home_timeline"            : limit;
-	  user_timeline       as "/statuses/user_timeline"            : limit;
-	  retweets            as "/statuses/retweets/:id"             : limit;
-	  retweets_of_me      as "/statuses/retweets_of_me"           : limit;
-          friends             as "/statuses/friends"                  : limit;
-          lookup              as "/statuses/lookup"                   : limit;
+	  mentions_timeline   [@conv.as {json="/statuses/mentions_timeline"}]        : limit;
+          show                [@conv.as {json="/statuses/show/:id"}]                 : limit;
+	  oembed              [@conv.as {json="/statuses/oembed"}]                   : limit;
+	  retweeters_ids      [@conv.as {json="/statuses/retweeters/ids"}]           : limit;
+	  home_timeline       [@conv.as {json="/statuses/home_timeline"}]            : limit;
+	  user_timeline       [@conv.as {json="/statuses/user_timeline"}]            : limit;
+	  retweets            [@conv.as {json="/statuses/retweets/:id"}]             : limit;
+	  retweets_of_me      [@conv.as {json="/statuses/retweets_of_me"}]           : limit;
+          friends             [@conv.as {json="/statuses/friends"}]                  : limit;
+          lookup              [@conv.as {json="/statuses/lookup"}]                   : limit;
         >;
       help : <
-	  privacy             as "/help/privacy"                      : limit;
-          tos                 as "/help/tos"                          : limit;
-	  configuration       as "/help/configuration"                : limit;
-	  languages           as "/help/languages"                    : limit;
-          settings            as "/help/settings"                     : limit;
+	  privacy             [@conv.as {json="/help/privacy"}]                      : limit;
+          tos                 [@conv.as {json="/help/tos"}]                          : limit;
+	  configuration       [@conv.as {json="/help/configuration"}]                : limit;
+	  languages           [@conv.as {json="/help/languages"}]                    : limit;
+          settings            [@conv.as {json="/help/settings"}]                     : limit;
         >;
       friends : <
-	  ids                 as "/friends/ids"                       : limit;
-	  list                as "/friends/list"                      : limit;
-	  following_ids                 as "/friends/following/ids"                       : limit;
-	  following_list                as "/friends/following/list"                      : limit;
+	  ids                 [@conv.as {json="/friends/ids"}]                       : limit;
+	  list                [@conv.as {json="/friends/list"}]                      : limit;
+	  following_ids                 [@conv.as {json="/friends/following/ids"}]                       : limit;
+	  following_list                [@conv.as {json="/friends/following/list"}]                      : limit;
         >;
       direct_messages : <
-	  show                as "/direct_messages/show"              : limit;
-          sent_and_received   as "/direct_messages/sent_and_received" : limit;
-	  sent                as "/direct_messages/sent"              : limit;
-	  direct_messages     as "/direct_messages"                   : limit;
+	  show                [@conv.as {json="/direct_messages/show"}]              : limit;
+          sent_and_received   [@conv.as {json="/direct_messages/sent_and_received"}] : limit;
+	  sent                [@conv.as {json="/direct_messages/sent"}]              : limit;
+	  direct_messages     [@conv.as {json="/direct_messages"}]                   : limit;
         >;
       account : <
-	  verify_credentials  as "/account/verify_credentials"        : limit;
-          settings            as "/account/settings"                  : limit;
-          login_verification_enrollment as "/account/login_verification_enrollment" : limit;
-          update_profile as "/account/update_profile" : limit;
+	  verify_credentials  [@conv.as {json="/account/verify_credentials"}]        : limit;
+          settings            [@conv.as {json="/account/settings"}]                  : limit;
+          login_verification_enrollment [@conv.as {json="/account/login_verification_enrollment"}] : limit;
+          update_profile [@conv.as {json="/account/update_profile"}] : limit;
         >;
       favorites : <
-	  list                as "/favorites/list"                    : limit;
+	  list                [@conv.as {json="/favorites/list"}]                    : limit;
         >;
       saved_searches : <
-	  destroy             as "/saved_searches/destroy/:id"        : limit;
-          list                as "/saved_searches/list"               : limit;
-	  show                as "/saved_searches/show/:id"           : limit;
+	  destroy             [@conv.as {json="/saved_searches/destroy/:id"}]        : limit;
+          list                [@conv.as {json="/saved_searches/list"}]               : limit;
+	  show                [@conv.as {json="/saved_searches/show/:id"}]           : limit;
         >;
       search : <
-	  tweets              as "/search/tweets"                     : limit;
+	  tweets              [@conv.as {json="/search/tweets"}]                     : limit;
         >;
       trends : <
-	  available           as "/trends/available"                  : limit;
-          place               as "/trends/place"                      : limit;
-	  closest             as "/trends/closest"                    : limit;
+	  available           [@conv.as {json="/trends/available"}]                  : limit;
+          place               [@conv.as {json="/trends/place"}]                      : limit;
+	  closest             [@conv.as {json="/trends/closest"}]                    : limit;
         >;
       mutes : <
-          users_list as "/mutes/users/list" : limit;
-          users_ids as "/mutes/users/ids" : limit;
+          users_list [@conv.as {json="/mutes/users/list"}] : limit;
+          users_ids [@conv.as {json="/mutes/users/ids"}] : limit;
         >;
       device : <
-          token as "/device/token" : limit;
+          token [@conv.as {json="/device/token"}] : limit;
         >;
      >
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 
-  let format =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t
+  let format x =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
 
 end

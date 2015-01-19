@@ -3,23 +3,30 @@ OCAMLINCLUDES = $(dir . ../lib)
 OCAML_LIBS= ../lib/oCamltter_oauth
 OCamlRequire(../lib/oCamltter_oauth.cmo)
 
-# OCAMLPACKS[]  += xmlm
-# CAMLP4PACKS[] += xmlm
+OCAMLWARNING_IGNORE[]    += 29
+OCAMLWARNING_NON_ERROR[] += 29
 
-OCAMLDEPFLAGS= -syntax camlp4o -package meta_conv.syntax
-OCAMLPPFLAGS = -syntax camlp4o -package meta_conv.syntax
+OCAMLPACKS[]  += ppx_monadic
 
-FILES[] = 
+OCAMLDEPFLAGS+= -package ppx_monadic
+OCAMLPPFLAGS += -package ppx_monadic
+
+FILES[] =
     app
     conf
+    auth
     api
     tools
+    job
+    api2
+    tools2
 
 MyOCamlPackage(oCamltter_flickr, $(FILES), $(EMPTY), $(EMPTY))
 
 FILES[] = 
     app
     conf
+    auth
     api
     tools
     test
@@ -30,9 +37,36 @@ MyOCamlProgram(flickr_test, $(FILES))
 FILES[] = 
     app
     conf
+    auth
+    api
+    job
+    api2
+    tools2
+    test2
+
+NO_INSTALL=true
+MyOCamlProgram(flickr_test2, $(FILES))
+
+FILES[] = 
+    app
+    conf
+    auth
     api
     tools
     uploads
 
 NO_INSTALL=true
 MyOCamlProgram(uploads, $(FILES))
+
+FILES[] = 
+    app
+    conf
+    auth
+    api
+    job
+    api2
+    tools2
+    uploads2
+
+NO_INSTALL=true
+MyOCamlProgram(uploads2, $(FILES))

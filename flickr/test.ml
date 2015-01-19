@@ -11,11 +11,15 @@ let xml_parse () =
 " in
   Xml.parse_string xml
 
+let () = ignore & xml_parse (); prerr_endline "xml parse done"
+  
 
 let auth_file = "ocaml_flickr.auth"
 
-let o = get_oauth auth_file
+let o = Oauth.get_oauth auth_file
 
+let () = !!% "OAuth: %a@." (Ocaml.format_with Oauth.ocaml_of_t) o
+  
 (*
 let () =
   let pid = Upload.upload ~tags:["tags"] "test.jpg" o |> fail_at_error in

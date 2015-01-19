@@ -1,5 +1,5 @@
-The OCAMLTTER twitter client
-============================
+The OCAMLTTER OAuth, Twitter and Flickr library
+====================================================
 
 License
 -------
@@ -10,13 +10,12 @@ License
 Requirements
 ------------
 	
-* [OCaml](http://caml.inria.fr/) >= 4.01.0
-* [Cryptokit](http://pauillac.inria.fr/~xleroy/software.html) >= 1.9
-* OCurl(known also as ocaml-curl or curl for OCaml) >= 0.6.0
-* Spotlib >= 2.4.0
-* Type_conv >= 109.60.00
-* Meta_conv >= 1.1.3
-* Tiny_json_conv >= 1.4.0
+* [OCaml](http://caml.inria.fr/) >= 4.02.1
+* [Cryptokit](http://pauillac.inria.fr/~xleroy/software.html) >= 1.10
+* OCurl(known also as ocaml-curl or curl for OCaml) >= 0.7.2
+* Spotlib >= 2.5.1
+* ppx_meta_conv >= 2.0.0
+* ppx_orakuda >= 2.0.0 (OPAM package name is orakuda) 
 * OMake
 
 Installation
@@ -25,46 +24,15 @@ Installation
 * Install required libraries. OPAM is an easy and highly recommended way to install them semi-automatically.
 * omake
 
-How to use
-----------
+It installs the following packages:
 
-#### Run
-
-           $ ./ocamltter
-
-#### You can use following commands:
-
-           - l();;                 list timeline
-           - lc COUNT;;            list timeline (COUNT lines)
-           - lu "NAME";;           list NAME's timeline
-           - m();;                 list mentions (tweet containing @YOU)
-           - u "TEXT";;            post a new message
-           - re ID "TEXT";;        reply to ID
-           - del ID;;              delete tweet of ID
-           - rt ID;;               retweet ID
-           - qt ID "TEXT";;        qt ID
-           - follow "NAME";;       follow NAME
-           - unfollow "NAME";;     unfollow NAME
-           - fav ID;;              mark ID as favorites
-           - report_spam "NAME"    report NAME as a spam user
-           - s "WORD";;            search tweets by a WORD
-           - setup ();;            (re)authorize ocamltter
-           - let CMD = ...;;       define a your own command CMD
-           - help;;                print the help
-	   
-#### You may modify the config.ml
-* You can set your twitter id
-* You can set your interesting keywords
-* You can set ignored users
-
-#### Quit
-
-            #quit;;  or  ^D
-
+* ocamltter : a Twitter client
+* ocamltter_oauth : OAuth library
+* ocamltter_twitter : Twitter API in OCaml
+* ocamltter_flickr : Flickr API in OCaml
 
 Bugs report
 -----------
 
-* y.imai at ocaml.jp
-* [@yoshihiro503](http://twitter.com/yoshihiro503)
-	
+* https://github.com/yoshihiro503/ocamltter/issues
+

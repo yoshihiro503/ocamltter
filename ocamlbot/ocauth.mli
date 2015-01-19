@@ -8,7 +8,7 @@ module Auth : sig
   type t = (string, app) Hashtbl.t
   and app = { consumer : Oauth_ex.Consumer.t;
               users : (string, Oauth_ex.Access_token.t) Hashtbl.t }
-  with conv(ocaml)
+  (* with conv(ocaml) *)
 
   val dummy : t
 

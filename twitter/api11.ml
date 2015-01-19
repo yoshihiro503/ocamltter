@@ -1,6 +1,4 @@
 open Meta_conv.Open
-open Ocaml_conv
-open Json_conv
 
 open Spotlib.Spot
 open Spotlib.Result.Open (* Monads are Result *)
@@ -273,7 +271,7 @@ end = struct
     next_cursor_str : string;
     previous_cursor_str : string;
     contents : 'a mc_embeded;
-  } with conv(json, ocaml)
+  } [@@deriving conv{ocaml; json}]
 
   let streaming meth k dec acc s optf =
     optf (fun params oauth ->
@@ -460,7 +458,7 @@ end) = struct
 
   type ids = {
     ids : int64 list;
-  } with conv(json, ocaml)
+  } [@@deriving conv{ocaml; json}]
 
   let ids_stream, ids = 
     let f k = 
@@ -476,7 +474,7 @@ end) = struct
 
   type users = {
     users : User.t list
-  } with conv(json, ocaml)
+  } [@@deriving conv{ocaml; json}]
 
   let list_stream, list =
     let f k =
@@ -500,11 +498,11 @@ module Followers = FriendsAndFollowers(struct let dir = "followers" end)
 
 module Friendships = struct
 
-  type connection = [ `Following          as "following"
-                    | `Follwing_requested as "following_requested"
-                    | `Followed_by        as "followed_by"
-                    | `None               as "none" 
-                    ] with conv(json, ocaml)
+  type connection = [ `Following          [@conv.as {json="following"}]
+                    | `Follwing_requested [@conv.as {json="following_requested"}]
+                    | `Followed_by        [@conv.as {json="followed_by"}]
+                    | `None               [@conv.as {json="none"}] 
+                    ] [@@deriving conv{ocaml; json}]
 
   type t = <
       name : string;
@@ -512,9 +510,9 @@ module Friendships = struct
       id : int64;
       id_str : string;
       connections : connection list
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 
-  type ts = t list with conv(json, ocaml)
+  type ts = t list [@@deriving conv{ocaml; json}]
 
   let lookup ?screen_name ?user_id oauth =
     api ts_of_json `GET "friendships/lookup.json"
@@ -528,7 +526,7 @@ module Friendships = struct
 
   type ids = {
     ids : int64 list;
-  } with conv(json, ocaml)
+  } [@@deriving conv{ocaml; json}]
 
   let gen_io name k = 
     Cursor.streaming `GET k
@@ -562,7 +560,7 @@ end
 module Blocks = struct
   type users = {
     users : User.t list
-  } with conv(json, ocaml)
+  } [@@deriving conv{ocaml; json}]
 
   let list_stream, list = 
     let f k = 
@@ -578,7 +576,7 @@ module Blocks = struct
 
   type ids = {
     ids : int64 list;
-  } with conv(json, ocaml)
+  } [@@deriving conv{ocaml; json}]
 
   let ids_stream, ids = 
     let f k = 

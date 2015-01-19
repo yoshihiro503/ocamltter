@@ -5,38 +5,46 @@ open Result
 
 open OCamltter_oauth
 
-module Oauth = Oauth_ex.Make(Conf)
+module Oauth = struct
+  include Oauth_ex.Make(Conf)
 
-type 'json mc_leftovers = (string * 'json) list with conv(ocaml)
-type 'a mc_option = 'a option with conv(ocaml)
+  let load_acc_token auth_file =
+    match Ocaml.load_with_exn Access_token.t_of_ocaml auth_file with
+    | [a] -> a
+    | _ -> assert false
+  
+  let get_acc_token auth_file =
+    try load_acc_token auth_file with
+    | _ -> 
+        let _res, acc_token = authorize_cli_interactive () in
+        Ocaml.save_with Access_token.ocaml_of_t ~perm:0o600 auth_file [acc_token];
+        acc_token
+  
+  let get_oauth auth_file =
+    let acc_token = get_acc_token auth_file in
+    oauth Conf.app acc_token
+end
 
-let load_auth auth_file =
-  match Ocaml.load_with_exn Oauth.Access_token.t_of_ocaml auth_file with
-  | [a] -> a
-  | _ -> assert false
 
-let get_acc_token auth_file =
-  try load_auth auth_file with
-  | _ -> 
-      let _res, acc_token = Oauth.authorize_cli_interactive () in
-      Ocaml.save_with Oauth.Access_token.ocaml_of_t ~perm:0o600 auth_file [acc_token];
-      acc_token
+let raw_api o meth m fields = 
+  Oauth.access o
+    ~host: "api.flickr.com"
+    ~path: "/services/rest"
+    ~meth: (match meth with `POST -> `POST [] | `GET -> `GET [])
+    ~oauth_other_params: 
+      ( [ "method", m
+        ; "format", "json" ]
+        @ fields )
 
-let get_oauth auth_file =
-  let acc_token = get_acc_token auth_file in
-  Oauth.oauth Oauth.Conf.app acc_token
+type 'json mc_leftovers = (string * 'json) list [@@deriving conv{ocaml}]
+type 'a mc_option = 'a option [@@deriving conv{ocaml}]
 
 module Json = struct
   include Tiny_json.Json
-(*
-  let json_of_t x = x
-  let t_of_json ?trace:_ x = `Ok x
-*)
   let ocaml_of_t t = Ocaml.String (show t)
   let t_of_ocaml = Ocaml_conv.Helper.of_deconstr (function
     | Ocaml.String s -> parse s
     | _ -> failwith "Ocaml.String expected")
-  (* let t_of_ocaml_exn = Ocaml_conv.exn t_of_ocaml *)
  
   let ocaml_of_exn = ocaml_of_string *< Exn.to_string
 
@@ -47,7 +55,7 @@ module Json = struct
     | UnknownErr of string
     | NotJsonErr of exn
     | NoJsonResponse
-  with conv(ocaml_of)
+  [@@deriving conv{ocaml_of}]
 
   let format_error = Ocaml.format_with ocaml_of_error
 
@@ -60,58 +68,44 @@ module Json = struct
 
   let parse s = try `Ok (parse s) with exn -> `Error (`Json (of_exn exn, s))
 
-  type sint = int with conv(ocaml)
+  type sint = int [@@deriving conv{ocaml}]
 
   let sint_of_json ?(trace=[]) = function
     | (Number _ as j) -> int_of_json ~trace j
     | (String s as t) -> 
         begin try `Ok (int_of_string s) with
-        | e -> `Error (Meta_conv.Error.Exception e, t, `Node t :: trace)
+        | e -> `Error (`Exception e, t, `Node t :: trace)
         end
-    | t -> `Error (Meta_conv.Error.Exception (Failure "Number or String expected"), t, `Node t :: trace)
+    | t -> `Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
 
   let json_of_sint = json_of_int
 
-  type sint64 = int64 with conv(ocaml)
+  type sint64 = int64 [@@deriving conv{ocaml}]
 
   let sint64_of_json ?(trace=[]) = function
     | (Number _ as j) -> int64_of_json ~trace j
     | (String s as t) -> 
         begin try `Ok (Int64.of_string s) with
-        | e -> `Error (Meta_conv.Error.Exception e, t, `Node t :: trace)
+        | e -> `Error (`Exception e, t, `Node t :: trace)
         end
-    | t -> `Error (Meta_conv.Error.Exception (Failure "Number or String expected"), t, `Node t :: trace)
+    | t -> `Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
 
   let json_of_sint64 = json_of_int64
 
-  type ibool = bool with conv(ocaml)
+  type ibool = bool [@@deriving conv{ocaml}]
 
   let ibool_of_json ?trace j = 
     sint_of_json ?trace j >>= fun n -> `Ok (n <> 0)
 
   let json_of_ibool b = Number (if b then "1" else "0")
+
+  (** Lift x_of_json errors *)
+  let lift_error f s = match f s with
+    | (`Ok _ as v) -> v
+    | `Error e -> `Error (`Json_conv e)
 end
 
 open Json
-
-let raw_api o meth m fields = 
-  Oauth.access o
-    ~host: "api.flickr.com"
-    ~path: "/services/rest"
-    ~meth: (
-      match meth with `POST -> `POST [] | `GET -> `GET []
-    )
-    ~oauth_other_params: 
-      ( [ "method", m
-        ; "format", "json" ] @ fields )
-
-let lift_error f s = match f s with
-  | (`Ok _ as v) -> v
-  | `Error e -> `Error (`Json_conv e)
-    
-let opt f k = function
-  | None -> None
-  | Some v -> Some (k, f v)
 
 module Fail = struct
 
@@ -119,7 +113,7 @@ module Fail = struct
     stat : string (** "fail" *);
     code : sint;
     message : string 
-  > with conv(json, ocaml)
+  > [@@deriving conv{ocaml; json}]
 
   let format = Ocaml.format_with ocaml_of_t
 
@@ -129,13 +123,42 @@ module Fail = struct
     | _ -> `Ok j
 end
 
+module Content = struct
+  type raw_content = < content [@conv.as {json="_content"}] : string >
+    [@@deriving conv{json}]
+
+  type t = string [@@deriving conv{ocaml}]
+
+  let json_of_t x = json_of_raw_content (object method content = x end)
+  let t_of_json ?trace x = do_;
+    o <-- raw_content_of_json ?trace x;
+    return (o#content : string)
+
+  let t_of_json_exn = exn t_of_json
+end
+
+module EmptyResp = struct
+  type t = < stat : string > [@@deriving conv{ocaml; json}]
+
+  let check j = lift_error t_of_json j >>| fun _ -> ()
+end
+
+module Error = struct
+  type t =
+    [ `API of Fail.t
+    | `Curl of Curl.curlCode * int * string
+    | `Http of int * string
+    | `Json of Json.error * string
+    | `Json_conv of Json.t Meta_conv.Error.t ]
+end
+
 (* Flickr's JSON response is always surrounded by
 
      jsonFlickrApi({ stats: <ok/fail>
                    ; k = ... })
 *)
 let json_api o meth m fields =
-  raw_api o meth m (( "api_key", App.app.Oauth.Consumer.key) :: fields)
+  raw_api o meth m fields
   >>= fun s ->
       (* jsonFlickrApi(JSON) *)
       let len = String.length s in
@@ -150,30 +173,20 @@ let json_api o meth m fields =
       | exception _ -> `Error (`Json (Json.NoJsonResponse, s))
       | _ -> `Error (`Json (Json.NoJsonResponse, s))
 
-type raw_content = < content as "_content" : string > with conv(json)
-
-type content = string with conv(ocaml)
-let json_of_content (s : string) = json_of_raw_content & object method content = s end
-let content_of_json ?trace j = 
-  let open Result in
-  raw_content_of_json ?trace j >>= fun o -> return o#content
-let content_of_json_exn = exn content_of_json
-  
-module EmptyResp = struct
-  type resp = < stat : string > with conv(ocaml, json)
-
-  let check j = lift_error resp_of_json j >>| fun _ -> ()
-end
+type ('a, 'error) result = ('a, ([> Error.t] as 'error)) Result.t 
+    
+(** Option field constructor *)
+let opt f k = function
+  | None -> None
+  | Some v -> Some (k, f v)
 
 module Auth = struct
   module Oauth = struct
     let checkToken (* _oauth_token *) o =
       json_api o `GET "flickr.auth.oauth.checkToken"
-      [ (* ; "oauth_token", oauth_token *) ]
-(*
-    >>= lift_error GetNotInSet.resp_of_json
-    >>| fun x -> x#photos
-*)      
+      [ "api_key", App.app.Oauth.Consumer.key
+      (* ; "oauth_token", oauth_token *)
+      ]
   end
 end
 
@@ -183,8 +196,7 @@ module Page = struct
 
   let to_stream f ~per_page get_list maker =
     f ~per_page ~page:1 >>= fun res ->
-      `Ok (
-        maker 
+        return & maker 
           ~total: res#total
           ~pages: res#pages
           ~perpage: res#perpage
@@ -206,11 +218,11 @@ module Page = struct
              end in
              append (get_ok_stream res) & loop 2
            end)
-      )
+
 end
 
 module TagList = struct
-  type t = string list with conv(ocaml)
+  type t = string list [@@deriving conv{ocaml}]
 
   let json_of_t xs = json_of_string (String.concat " " xs)
   let t_of_json ?trace j =
@@ -219,7 +231,7 @@ module TagList = struct
   let t_of_json_exn = Json_conv.exn t_of_json
 end
 
-module Photos = struct (* Photo *)
+module Photos = struct  
 
 (*
   let int_of_privacy_filter = function
@@ -233,7 +245,7 @@ module Photos = struct (* Photo *)
     type t = [`All     as "all"
              | `Photos as "photos"
              | `Videos as "videos" ] 
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
   end
 *)
 
@@ -267,7 +279,7 @@ module Photos = struct (* Photo *)
 
       tags : TagList.t mc_option;
     >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
   end
 
   let raw_getNotInSet ~per_page ~page (* ?privacy_filter ?media *) 
@@ -280,7 +292,8 @@ module Photos = struct (* Photo *)
       | xs -> Some (String.concat "," xs)
     in
     json_api o `GET "flickr.photos.getNotInSet"
-      ([ "per_page", string_of_int per_page
+      ([ "api_key", App.app.Oauth.Consumer.key
+       ; "per_page", string_of_int per_page
        ; "page", string_of_int page
        ]
        @ List.filter_map id
@@ -289,8 +302,8 @@ module Photos = struct (* Photo *)
     >>= lift_error GetNotInSet.resp_of_json
     >>| fun x -> x#photos
 
-  let getNotInSet ?(per_page=100) ?tags o =
-    Page.to_stream (raw_getNotInSet ?tags o) ~per_page 
+  let getNotInSet ?tags o =
+    Page.to_stream (raw_getNotInSet ?tags o) ~per_page:100 
       (fun xs -> xs#photo)
       (fun ~total ~pages ~perpage stream ->
        object
@@ -335,8 +348,8 @@ The page of results to return. If this argument is omitted, it defaults to 1.
     and urls = < url: type_content list >
 
     and type_content = < 
-        type_ as "type"       : string; (* "photopage", *)
-        content as "_content" : string 
+        type_   [@conv.as {json="type"}]     : string; (* "photopage", *)
+        content [@conv.as {json="_content"}] : string 
       >
 
     and resp = < photo: photo; stat: string >
@@ -354,12 +367,12 @@ The page of results to return. If this argument is omitted, it defaults to 1.
         originalsecret : string; (* "edf076f1f2" *)
         originalformat : string; (* "jpg" *)
         owner          : owner;
-        title          : content;
-        description    : content;
+        title          : Content.t;
+        description    : Content.t;
         visibility     : visibility;
         dates          : dates;
         views          : sint;
-        comments       : content;
+        comments       : Content.t;
         urls           : urls;
         media          : string; (* "photo" *)
         unknowns       : Json.t mc_leftovers;
@@ -367,14 +380,15 @@ The page of results to return. If this argument is omitted, it defaults to 1.
 
     and visibility = < ispublic: ibool; isfriend: ibool; isfamily: ibool >
 
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
 
   end
       
 
   let getInfo photo_id o =
     json_api o `GET "flickr.photos.getInfo"
-      [ "photo_id", photo_id
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photo_id", photo_id
       ]
     >>= lift_error GetInfo.resp_of_json
     >>| fun x -> x#photo
@@ -395,7 +409,7 @@ The <date> element's lastupdate attribute is a Unix timestamp indicating the las
         tagspaceid : sint;
         tag        : string;
         label      : string;
-        raw        : content;
+        raw        : Content.t;
         clean      : string mc_option
       >
 
@@ -408,13 +422,14 @@ The <date> element's lastupdate attribute is a Unix timestamp indicating the las
         exif    : exif list;
         unknown : Json.t mc_leftovers 
       >
-    with conv(json,ocaml)
+    [@@deriving conv{ocaml; json}]
 
   end
                   
   let getExif photo_id o =
     json_api o `GET "flickr.photos.getExif"
-      [ "photo_id", photo_id
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photo_id", photo_id
       ]
     >>= lift_error GetExif.resp_of_json
     >>| fun x -> x#photo  
@@ -426,21 +441,24 @@ The secret for the photo. If the correct secret is passed then permissions check
 
   let addTags photo_id tags o =
     json_api o `GET "flickr.photos.addTags"
-      [ "photo_id", photo_id
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photo_id", photo_id
       ; "tags", String.concat " " tags
       ]
     >>= EmptyResp.check
 
   let setTags photo_id tags o =
     json_api o `GET "flickr.photos.setTags"
-      [ "photo_id", photo_id
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photo_id", photo_id
       ; "tags", String.concat " " tags
       ]
     >>= EmptyResp.check
 
   let delete photo_id o = 
     json_api o `POST "flickr.photos.delete"
-      [ "photo_id", photo_id
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photo_id", photo_id
       ]
     >>= EmptyResp.check
 
@@ -479,7 +497,7 @@ The secret for the photo. If the correct secret is passed then permissions check
         isfriend : ibool;
         isfamily : ibool
       >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
       
   end
 
@@ -490,7 +508,8 @@ The secret for the photo. If the correct secret is passed then permissions check
       | Some (`All ts) -> Some (String.concat "," ts), Some "all"
     in
     json_api o `POST "flickr.photos.search"
-    ( List.filter_map id 
+    ( [ "api_key", App.app.Oauth.Consumer.key ]
+    @ List.filter_map id 
       [ opt id "user_id" user_id 
       ; opt id "tags" tags
       ; opt id "tag_mode" tag_mode
@@ -642,12 +661,13 @@ module Photosets = struct
     type resp = < photoset: photoset; stat : string >
 
     and photoset = < id : string; url : string >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
   end
 
   let create ~title ~primary_photo_id o =
     json_api o `GET "flickr.photosets.create"
-      [ "title", title
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "title", title
       ; "primary_photo_id", primary_photo_id
       ]
     >>= lift_error Create.resp_of_json
@@ -681,8 +701,8 @@ No title parameter was passed in the request.
         farm                   : sint;
         photos                 : Json.sint;
         videos                 : Json.sint;
-        title                  : content;
-        description            : content;
+        title                  : Content.t;
+        description            : Content.t;
         needs_interstitial     : ibool;
         visibility_can_see_set : ibool;
         count_views            : sint;
@@ -711,15 +731,16 @@ No title parameter was passed in the request.
         photosets : photoset;
         stat      : string; 
       >
-
-    with conv(json, ocaml_of )
+    [@@deriving conv{ocaml_of; json}]
 
   end
 
-  let raw_getList ?(page=1) o = 
+  let raw_getList ~per_page ~page o = 
     assert (page > 0);
     json_api o `GET "flickr.photosets.getList"
-      [ "page", string_of_int page
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "per_page", string_of_int per_page
+      ; "page", string_of_int page
       ]
     >>= lift_error GetList.resp_of_json
     >>| fun x -> x#photosets
@@ -736,7 +757,7 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
   let getList o =
     let rec f n st =
-      raw_getList o ~page:n 
+      raw_getList o ~per_page:500 ~page:n 
       >>= fun psets ->
         if psets#perpage * n > psets#total then
           (* last page *)
@@ -778,15 +799,17 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
       isfriend  : ibool;
       isfamily  : ibool 
     >
-    with conv(json,ocaml)
+    [@@deriving conv{ocaml; json}]
 
   end
 
 
-  let raw_getPhotos photoset_id ?(page=1) o =
+  let raw_getPhotos photoset_id ~per_page ~page o =
     assert (page > 0);
     json_api o `GET "flickr.photosets.getPhotos"
-      [ "photoset_id", photoset_id
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photoset_id", photoset_id
+      ; "per_page", string_of_int per_page
       ; "page", string_of_int page
       ]
     >>= lift_error GetPhotos.resp_of_json
@@ -811,7 +834,7 @@ Filter results by media type. Possible values are all (default), photos or video
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
   let getPhotos photoset_id o =
     let rec f n st =
-      raw_getPhotos photoset_id o ~page:n 
+      raw_getPhotos photoset_id o ~per_page:500 ~page:n 
       >>= fun pset ->
         if pset#per_page * n > pset#total then
           (* last page *)
@@ -831,7 +854,8 @@ Filter results by media type. Possible values are all (default), photos or video
 
   let removePhotos photoset_id photo_ids o =
     json_api o `POST "flickr.photosets.removePhotos"
-      [ "photoset_id", photoset_id
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photoset_id", photoset_id
       ; "photo_ids", String.concat "," photo_ids
       ]
     >>= EmptyResp.check
@@ -839,7 +863,8 @@ Filter results by media type. Possible values are all (default), photos or video
 
   let addPhoto photoset_id ~photo_id o =
     json_api o `GET "flickr.photosets.addPhoto"
-      [ "photoset_id", photoset_id
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photoset_id", photoset_id
       ; "photo_id", photo_id
       ]
     >>= EmptyResp.check
@@ -893,18 +918,19 @@ module People = struct
     and user = < 
       id        : string;
       ispro     : ibool;
-      username  : content;
+      username  : Content.t;
       bandwidth : bandwidth;
       filesize  : filesize;
       sets      : sets;
       videosize : videosize;
       videos    : videos;
-    > with conv(json,ocaml)
+    > [@@deriving conv{ocaml; json}]
   end
 
   let getUploadStatus o =
     json_api o `GET "flickr.people.getUploadStatus"
-      [ ]
+      [ "api_key", App.app.Oauth.Consumer.key
+      ]
     >>= lift_error GetUploadStatus.resp_of_json
     >>| fun x -> x#user
 
@@ -936,16 +962,17 @@ module Tags = struct
         author : string;
         authorname : string;
         raw : string;
-        tag as "_content" : string;
+        tag [@conv.as {json="_content"}] : string;
         machine_tag : ibool
       >
-    with conv(json, ocaml)
+    [@@deriving conv{ocaml; json}]
 
   end
 
   let getListPhoto photo_id o =
     json_api o `GET "flickr.tags.getListPhoto"
-      [ "photo_id", photo_id
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photo_id", photo_id
       ]
     >>= lift_error GetListPhoto.resp_of_json
     >>| fun x -> x#photo#tags#tag
@@ -957,12 +984,13 @@ module Test = struct
   module Login = struct
     type resp = < user : t; stat : string >
     and t = < id : string;
-              username : content >
-    with conv(json, ocaml)
+              username : Content.t >
+    [@@deriving conv{ocaml; json}]
   end
   let login o =
     json_api o `GET "flickr.test.login"
-      [ ]
+      [ "api_key", App.app.Oauth.Consumer.key
+      ]
     >>= lift_error Login.resp_of_json
     >>| fun x -> x#user
 end
@@ -1104,3 +1132,8 @@ let format_error ppf =
 let error e = 
   format_error Format.stderr e;
   assert false
+
+let fail_at_error = function
+  | `Ok v -> v
+  | `Error e -> error e
+
