@@ -1132,3 +1132,8 @@ let format_error ppf =
 let error e = 
   format_error Format.stderr e;
   assert false
+
+let fail_at_error = function
+  | `Ok v -> v
+  | `Error e -> error e
+

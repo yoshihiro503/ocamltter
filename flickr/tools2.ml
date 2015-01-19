@@ -4,13 +4,9 @@ open Api2
 let json_format = !!% "%a@." Tiny_json.Json.format
 let ocaml_format_with f = !!% "%a@." (Ocaml.format_with ~no_poly:true f)
 
-let run_and_fail_at_error t = match Job.run t with
-  | `Ok v -> v
-  | `Error (e, _) -> error e
-
 let get_current_user o =
-  let open Job in
-  Api2.Test.login o >>= fun x ->
+  let open Job in do_;
+  x <-- Test.login o;
   (* CR jfuruse: we should have a nice embedding of content... *)      
   return (object method id = x#id method username = x#username end)
 
@@ -27,15 +23,15 @@ let uploadable_by_name s =
    Note that there is no real comparison of photos/videos.
 *)
 let delete_dups_in_sets o =
-  let open Job in
-  Photosets.getList' o >>= fun (_info, psets) ->
-  flip mapM_ psets & fun set ->
+  let open Job in do_;
+  (_info, psets) <-- Photosets.getList' o;
+  flip mapM_ psets & fun set -> do_;
     let set_id = set#id in
     let set_title = set#title in
-    Photosets.getPhotos' set_id o >>= fun (_, photos) ->
+    [%p? (_, photos)] <-- Photosets.getPhotos' set_id o;
     let photos = List.map (fun x -> (x#title, x#id)) photos in
     let tbl = Hashtbl.create 107 in
-    List.iter (fun (title, id) ->
+    (); List.iter (fun (title, id) ->
       Hashtbl.alter tbl title (function
         | None -> Some [id]
         | Some ids -> Some (id :: ids))) photos;

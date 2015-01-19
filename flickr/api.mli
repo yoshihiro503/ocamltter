@@ -564,3 +564,14 @@ val error :
    | `XML_conv of string * Xml.xml
    | `XML_parse of string * exn ] ->
   'raise_exception
+
+val fail_at_error :
+  ('a,
+   [< `API of Fail.t
+   | `Curl of Curl.curlCode * int * string
+   | `Http of int * string
+   | `Json of Json.error * string
+   | `Json_conv of Json.t Meta_conv.Error.t
+   | `Load of string * exn
+   | `XML_conv of string * Xml.xml
+   | `XML_parse of string * exn ]) Result.t -> 'a

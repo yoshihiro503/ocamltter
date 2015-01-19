@@ -4,10 +4,6 @@ open Api
 let json_format = !!% "%a@." Tiny_json.Json.format
 let ocaml_format_with f = !!% "%a@." (Ocaml.format_with ~no_poly:true f)
 
-let fail_at_error = function
-  | `Ok v -> v
-  | `Error e -> error e
-
 let get_current_user o =
   let open Result in
   Api.Test.login o >>= fun x ->
