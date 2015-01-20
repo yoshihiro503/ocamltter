@@ -10,6 +10,8 @@ module Auth = struct
   end
 end
 
+module Error = Api.Error
+  
 module Page = struct
 
   (** Page to stream interface *)
@@ -213,11 +215,7 @@ Set to 1 for Photo, 2 for Screenshot, or 3 for Other.
     
 end
 
-let format_error = Api.format_error
-
-let error = Api.error
-
 let run_and_fail_at_error t = match Job.run t with
   | `Ok v -> v
-  | `Error (e, _) -> error e
+  | `Error (e, _) -> Api.Error.fail e
 

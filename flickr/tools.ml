@@ -48,7 +48,7 @@ let delete_dups_in_sets o =
             flip List.iter (List.tl xs) & fun photo_id ->
               !!% "Deleting %s : %s@." title photo_id;
               match Photos.delete photo_id o with
-              | `Error e -> error e
+              | `Error e -> Error.fail e
               | `Ok () -> !!% "Deleted@."
 (* 
 
@@ -168,11 +168,11 @@ let uploads ~photoset img_files o =
     let rec try_ left f =
       match f () with
       | `Error (e, _) when left = 0 -> 
-          format_error Format.stderr e;
+          Error.format Format.stderr e;
           !!% "No more retry@.";
           `Error e
       | `Error (e, retry) ->
-          format_error Format.stderr e;
+          Error.format Format.stderr e;
           !!% "Retrying (left=%d) after %d secs...@." left wait;
           Unix.sleep wait;
           try_ (left-1) retry

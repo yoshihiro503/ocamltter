@@ -22,7 +22,7 @@ let () = !!% "OAuth: %a@." (Ocaml.format_with Oauth.ocaml_of_t) o
   
 let getInfo pid o =
   match Job.run & Photos.getInfo pid o with
-  | `Error (e, _) -> error e
+  | `Error (e, _) -> Error.fail e
   | `Ok j -> ocaml_format_with Api.Photos.GetInfo.ocaml_of_photo j
 
 let () =

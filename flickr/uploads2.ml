@@ -38,7 +38,7 @@ let () =
         Job.run & Job.retry (fun conseq_fails e ->
           match e with
           | `Http ( (502 | 504 as n), _ ) ->
-              !!% "Server side error (%d): %a@." n Api2.format_error e;
+              !!% "Server side error (%d): %a@." n Error.format e;
               !!% "Failed. Wait 1 min then retry...@.";
               Unix.sleep 60;
               `Ok conseq_fails
@@ -48,7 +48,7 @@ let () =
               (* CR jfuruse: we have no good way to reset conseq_fails *)
               `Error e
             end else begin
-              !!% "Error: %a@." Api2.format_error e;
+              !!% "Error: %a@." Error.format e;
               !!% "Failed. Wait 1 min then retry...@.";
               Unix.sleep 60;
               `Ok (conseq_fails + 1)
@@ -56,5 +56,5 @@ let () =
         & Tools2.uploads ~photoset photos o 
       with
       | `Ok () -> ()
-      | `Error (desc, _) -> Api2.error desc
+      | `Error (desc, _) -> Error.fail desc
     end

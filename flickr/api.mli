@@ -78,9 +78,17 @@ module Error : sig
            | `Curl of Curl.curlCode * int * string
            | `Http of int * string
            | `Json of Json.error * string
-           | `Json_conv of Json.t Meta_conv.Error.t ]
+           | `Json_conv of Json.t Meta_conv.Error.t
+           | `XML_parse of string * exn
+           | `XML_conv of string * Xml.xml
+           ]
   (** Common errors *)
+
+  val format : Format.t -> t -> unit
+  val fail : t -> 'assert_false
 end
+
+val fail_at_error : ('a, [< Error.t]) Result.t -> 'a
 
 val json_api :
   Oauth.t ->
@@ -541,37 +549,3 @@ module Upload : sig
       Result.t
   (** https://up.flickr.com/services/upload *)
 end
-
-val format_error :
-  Format.formatter ->
-  [< `API of Fail.t
-   | `Curl of Curl.curlCode * int * string
-   | `Http of int * string
-   | `Json of Json.error * string
-   | `Json_conv of Json.t Meta_conv.Error.t
-   | `Load of string * exn
-   | `XML_conv of string * Xml.xml
-   | `XML_parse of string * exn ] ->
-  unit
-
-val error :
-  [< `API of Fail.t
-   | `Curl of Curl.curlCode * int * string
-   | `Http of int * string
-   | `Json of Json.error * string
-   | `Json_conv of Json.t Meta_conv.Error.t
-   | `Load of string * exn
-   | `XML_conv of string * Xml.xml
-   | `XML_parse of string * exn ] ->
-  'raise_exception
-
-val fail_at_error :
-  ('a,
-   [< `API of Fail.t
-   | `Curl of Curl.curlCode * int * string
-   | `Http of int * string
-   | `Json of Json.error * string
-   | `Json_conv of Json.t Meta_conv.Error.t
-   | `Load of string * exn
-   | `XML_conv of string * Xml.xml
-   | `XML_parse of string * exn ]) Result.t -> 'a

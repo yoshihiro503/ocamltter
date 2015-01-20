@@ -149,9 +149,41 @@ module Error = struct
     | `Curl of Curl.curlCode * int * string
     | `Http of int * string
     | `Json of Json.error * string
-    | `Json_conv of Json.t Meta_conv.Error.t ]
+    | `Json_conv of Json.t Meta_conv.Error.t
+    | `XML_parse of string * exn
+    | `XML_conv of string * Xml.xml
+    ]
+
+  open Format
+      
+  let format ppf = function
+    | (`Http _ | `Curl _ as e) -> 
+        fprintf ppf "HTTP: %s@." & Http.string_of_error e;
+    | `Json (e, s) -> 
+        fprintf ppf "Json: %a@." Json.format_error e;
+        fprintf ppf "  %S@." s;
+    | `Json_conv e ->
+        fprintf ppf "Json_conv: %a@." Json_conv.format_full_error e;
+    | `API fail ->
+        fprintf ppf "API: %a@." Fail.format fail;
+  (*
+    | `Load (name, exn) ->
+        fprintf ppf "Local file load failure: %s: %a@." name Exn.format exn;
+  *)
+    | `XML_parse (s, exn) ->
+        fprintf ppf "XML parse failure: %a : %s@." Exn.format exn s;
+    | `XML_conv (mes, xml) ->
+        fprintf ppf "XML conv failure: %s : %s@." mes (Xml.show xml)
+          
+  let fail e =
+    format stderr e;
+    assert false
 end
 
+let fail_at_error = function
+  | `Ok v -> v
+  | `Error e -> Error.fail e
+      
 (* Flickr's JSON response is always surrounded by
 
      jsonFlickrApi({ stats: <ok/fail>
@@ -1110,30 +1142,4 @@ Set to 1 for Photo, 2 for Screenshot, or 3 for Other.
 *)
     
 end
-
-let format_error ppf =
-  function
-  | (`Http _ | `Curl _ as e) -> 
-      Format.fprintf ppf "HTTP: %s@." & Http.string_of_error e;
-  | `Json (e, s) -> 
-      Format.fprintf ppf "Json: %a@." Json.format_error e;
-      Format.fprintf ppf "  %S@." s;
-  | `Json_conv e ->
-      Format.fprintf ppf "Json_conv: %a@." Json_conv.format_full_error e;
-  | `API fail ->
-      Format.fprintf ppf "API: %a@." Fail.format fail;
-  | `Load (name, exn) ->
-      Format.fprintf ppf "Local file load failure: %s: %a@." name Exn.format exn;
-  | `XML_parse (s, exn) ->
-      Format.fprintf ppf "XML parse failure: %a : %s@." Exn.format exn s;
-  | `XML_conv (mes, xml) ->
-      Format.fprintf ppf "XML conv failure: %s : %s@." mes (Xml.show xml)
-
-let error e = 
-  format_error Format.stderr e;
-  assert false
-
-let fail_at_error = function
-  | `Ok v -> v
-  | `Error e -> error e
 

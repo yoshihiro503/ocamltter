@@ -30,7 +30,7 @@ let _ = exit 0
 
 let getInfo pid o =
   match Photos.getInfo pid o with
-  | `Error e -> error e
+  | `Error e -> Error.fail e
   | `Ok j -> ocaml_format_with Photos.GetInfo.ocaml_of_photo j
 
 
