@@ -1,7 +1,7 @@
 name="ocamltter_oauth"
 description="OCamltter Oauth framework"
 
-version="4.0.0"
+version="4.0.1"
 
 requires="cryptokit,str,meta_conv,spotlib,curl,ocaml_conv"
 archive(byte) = "oCamltter_oauth.cmo"
