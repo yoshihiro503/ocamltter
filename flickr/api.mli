@@ -54,16 +54,15 @@ module Fail : sig
              message : string; 
              stat : string >
   [@@deriving conv{ocaml; json}]
-  val format : Format.formatter -> t -> unit
+  val format : Format.t -> t -> unit
   val check : Json.t -> [> `Error of [> `API of t ] | `Ok of Json.t ]
 end
 
-(** We see lots of records with only one field "content". 
-    [Content.t] provides a wrapper of these records and OCaml string.
-*)
 module Content : sig
-  type raw_content = < content : string > [@@deriving conv{json}]
   type t = string [@@deriving conv{ocaml; json}]
+  (** We see lots of records with only one field "content". 
+      [Content.t] provides a wrapper of these records and OCaml string.
+  *)
 end
     
 module EmptyResp : sig
@@ -74,13 +73,13 @@ module EmptyResp : sig
 end
 
 module Error : sig
-  type t = [ `API of Fail.t
-           | `Curl of Curl.curlCode * int * string
-           | `Http of int * string
-           | `Json of Json.error * string
+  type t = [ `API       of Fail.t
+           | `Curl      of Curl.curlCode * int * string
+           | `Http      of int * string
+           | `Json      of Json.error * string
            | `Json_conv of Json.t Meta_conv.Error.t
            | `XML_parse of string * exn
-           | `XML_conv of string * Xml.xml
+           | `XML_conv  of string * Xml.xml
            ]
   (** Common errors *)
 
@@ -90,20 +89,20 @@ end
 
 val fail_at_error : ('a, [< Error.t]) Result.t -> 'a
 
+type ('a, 'error) result = ('a, ([> Error.t] as 'error)) Result.t
+(** Common result *)
+
 val json_api :
   Oauth.t ->
   [< `GET | `POST ] ->
   string ->
   (string * string) list ->
   (Json.t,
-   [> `API of Fail.t
+   [> `API  of Fail.t
     | `Curl of Curl.curlCode * int * string
     | `Http of int * string
     | `Json of Json.error * string ])
   Result.t
-
-type ('a, 'error) result = ('a, ([> Error.t] as 'error)) Result.t
-(** Common result *)
 
 module Auth : sig
   module Oauth : sig
@@ -164,45 +163,45 @@ module Photos : sig
 
   module GetInfo : sig
     type owner =
-        < location : string
-        ; nsid : string
-        ; realname : string
-        ; unknowns : Json.t mc_leftovers
-        ; username : string 
-        >
+      < location : string
+      ; nsid     : string
+      ; realname : string
+      ; unknowns : Json.t mc_leftovers
+      ; username : string 
+      >
     and dates =
-      < posted : int64
-      ; taken : string
+      < posted   : int64
+      ; taken    : string
       ; unknowns : Json.t mc_leftovers 
       >
     and urls = 
       < url : type_content list >
     and type_content = 
       < content : string
-      ; type_ : string 
+      ; type_   : string 
       >
     and photo =
-      < comments : Content.t
-      ; dates : dates
-      ; dateuploaded : int64
-      ; description : Content.t
-      ; farm : int
-      ; id : string
-      ; isfavorite : bool
-      ; license : int
-      ; media : string
+      < comments       : Content.t
+      ; dates          : dates
+      ; dateuploaded   : int64
+      ; description    : Content.t
+      ; farm           : int
+      ; id             : string
+      ; isfavorite     : bool
+      ; license        : int
+      ; media          : string
       ; originalformat : string
       ; originalsecret : string
-      ; owner : owner
-      ; rotation : int
-      ; safety_level : int
-      ; secret : string
-      ; server : string
-      ; title : Content.t
-      ; unknowns : Json.t mc_leftovers
-      ; urls : urls
-      ; views : int
-      ; visibility : visibility 
+      ; owner          : owner
+      ; rotation       : int
+      ; safety_level   : int
+      ; secret         : string
+      ; server         : string
+      ; title          : Content.t
+      ; unknowns       : Json.t mc_leftovers
+      ; urls           : urls
+      ; views          : int
+      ; visibility     : visibility 
       >
     and visibility =
       < isfamily : bool
@@ -220,17 +219,17 @@ module Photos : sig
 
   module GetExif :  sig
     type exif =
-      < clean : string option
-      ; label : string
-      ; raw : Content.t
-      ; tag : string
-      ; tagspace : string
+      < clean      : string option
+      ; label      : string
+      ; raw        : Content.t
+      ; tag        : string
+      ; tagspace   : string
       ; tagspaceid : int >
     and photo =
-      < camera : string
-      ; exif : exif list
-      ; id : string
-      ; secret : string
+      < camera  : string
+      ; exif    : exif list
+      ; id      : string
+      ; secret  : string
       ; unknown : Json.t mc_leftovers >
     [@@deriving conv{ocaml; json}]
   end
@@ -264,21 +263,21 @@ module Photos : sig
   module Search :
     sig
       type photos =
-        < page : int
-        ; pages : int
+        < page    : int
+        ; pages   : int
         ; perpage : int
-        ; photo : photo list
-        ; total : int >
+        ; photo   : photo list
+        ; total   : int >
       and photo =
-        < farm : int
-        ; id : string
+        < farm     : int
+        ; id       : string
         ; isfamily : bool
         ; isfriend : bool
         ; ispublic : bool
-        ; owner : string
-        ; secret : string
-        ; server : string
-        ; title : string 
+        ; owner    : string
+        ; secret   : string
+        ; server   : string
+        ; title    : string 
         >
       [@@deriving conv{ocaml; json}]
     end
@@ -313,35 +312,35 @@ module Photosets : sig
       
   module GetList : sig
     type set =
-      < can_comment : bool
-      ; count_comments : int
-      ; count_views : int
-      ; date_create : string
-      ; date_update : string
-      ; description : Content.t
-      ; farm : int
-      ; id : string
-      ; needs_interstitial : bool
-      ; photos : int
-      ; primary : string
-      ; secret : string
-      ; server : string
-      ; title : Content.t
-      ; videos : int
+      < can_comment            : bool
+      ; count_comments         : int
+      ; count_views            : int
+      ; date_create            : string
+      ; date_update            : string
+      ; description            : Content.t
+      ; farm                   : int
+      ; id                     : string
+      ; needs_interstitial     : bool
+      ; photos                 : int
+      ; primary                : string
+      ; secret                 : string
+      ; server                 : string
+      ; title                  : Content.t
+      ; videos                 : int
       ; visibility_can_see_set : bool 
       >
     and photoset =
       < cancreate : bool
-      ; page : int
-      ; pages : int
-      ; perpage : int
-      ; photoset : set list
-      ; total : int 
+      ; page      : int
+      ; pages     : int
+      ; perpage   : int
+      ; photoset  : set list
+      ; total     : int 
       >
     and t = 
       < cancreate : bool
-      ; photoset : set list
-      ; total : int 
+      ; photoset  : set list
+      ; total     : int 
       >
     [@@deriving conv{ocaml_of; json}]
   end
@@ -356,35 +355,35 @@ module Photosets : sig
   val getList :
     Oauth.t ->
     (< cancreate : bool
-     ; photoset : GetList.set list
-     ; total : int >,
+     ; photoset  : GetList.set list
+     ; total     : int >,
      'error) result
   (** flickr.photosets.getList, in stream api *)
 
   module GetPhotos : sig
     type photoset =
-      < id : string
-      ; owner : string
+      < id        : string
+      ; owner     : string
       ; ownername : string
-      ; page : int
-      ; pages : int
-      ; per_page : int
-      ; perpage : int
-      ; photo : photo list
-      ; primary : string
-      ; title : string
-      ; total : int 
+      ; page      : int
+      ; pages     : int
+      ; per_page  : int
+      ; perpage   : int
+      ; photo     : photo list
+      ; primary   : string
+      ; title     : string
+      ; total     : int 
       >
     and photo =
-      < farm : int
-      ; id : string
-      ; isfamily : bool
-      ; isfriend : bool
+      < farm      : int
+      ; id        : string
+      ; isfamily  : bool
+      ; isfriend  : bool
       ; isprimary : bool
-      ; ispublic : bool
-      ; secret : string
-      ; server : string
-      ; title : string >
+      ; ispublic  : bool
+      ; secret    : string
+      ; server    : string
+      ; title     : string >
     [@@deriving conv{ocaml; json}]
   end
 
@@ -399,13 +398,13 @@ module Photosets : sig
   val getPhotos :
     string ->
     Oauth.t ->
-    (< id : string
-     ; owner : string
+    (< id        : string
+     ; owner     : string
      ; ownername : string
-     ; photo : GetPhotos.photo list
-     ; primary : string
-     ; title : string
-     ; total : int >, 'error) result
+     ; photo     : GetPhotos.photo list
+     ; primary   : string
+     ; title     : string
+     ; total     : int >, 'error) result
   (** flickr.photosets.getPhotos, streamed *)
 
   val removePhotos :
@@ -427,39 +426,39 @@ module People : sig
   module GetUploadStatus :
     sig
       type bandwidth =
-        < max : int64
-        ; maxbytes : int64
-        ; maxkb : int64
+        < max            : int64
+        ; maxbytes       : int64
+        ; maxkb          : int64
         ; remainingbytes : int64
-        ; remainingkb : int64
-        ; unlimited : bool
-        ; used : int64
-        ; usedbytes : int64
-        ; usedkb : int64 >
+        ; remainingkb    : int64
+        ; unlimited      : bool
+        ; used           : int64
+        ; usedbytes      : int64
+        ; usedkb         : int64 >
       and filesize =
-        < max : int64
+        < max      : int64
         ; maxbytes : int64
-        ; maxkb : int64
-        ; maxmb : int64 
+        ; maxkb    : int64
+        ; maxmb    : int64 
         >
       and videosize = 
         < maxbytes : int64
-        ; maxkb : int64
-        ; maxmb : int64 >
+        ; maxkb    : int64
+        ; maxmb    : int64 >
       and sets = 
-        < created : int
+        < created   : int
         ; remaining : string >
       and videos = 
         < remaining : string
-        ; uploaded : int >
+        ; uploaded  : int >
       and user =
         < bandwidth : bandwidth
-        ; filesize : filesize
-        ; id : string
-        ; ispro : bool
-        ; sets : sets
-        ; username : Content.t
-        ; videos : videos
+        ; filesize  : filesize
+        ; id        : string
+        ; ispro     : bool
+        ; sets      : sets
+        ; username  : Content.t
+        ; videos    : videos
         ; videosize : videosize 
         >
       [@@deriving conv{ocaml; json}]
@@ -475,17 +474,17 @@ module Tags : sig
   module GetListPhoto :
     sig
       type photo = 
-        < id : string
+        < id   : string
         ; tags : tags >
       and tags = < tag : t >
       and t = tag list
       and tag =
-        < author : string
-        ; authorname : string
-        ; id : string
+        < author      : string
+        ; authorname  : string
+        ; id          : string
         ; machine_tag : bool
-        ; raw : string
-        ; tag : string >
+        ; raw         : string
+        ; tag         : string >
       [@@deriving conv{ocaml; json}]
     end
 
@@ -500,7 +499,7 @@ module Test : sig
 
   module Login : sig
     type t = 
-      < id : string
+      < id       : string
       ; username : Content.t >
     [@@deriving conv{ocaml; json}]
   end
@@ -520,32 +519,24 @@ module Upload : sig
     (string, [> Http.error ]) Result.t
   (** https://up.flickr.com/services/upload, raw api via XML *)
 
-  val parse_rsp :
-    Xml.xml -> 
-    ( (string, 
-       [> `API of < code : int
-                  ; message : string
-                  ; stat : string > ]) Result.t
-    , string * Xml.xml) Result.t
-
   val upload :
-      ?is_public:bool ->
-      ?is_friend:bool ->
-      ?is_family:bool ->
-      ?hidden:bool ->
-      ?title:string ->
-      ?description:string ->
-      ?tags:string list ->
+      ?is_public:   bool ->
+      ?is_friend:   bool ->
+      ?is_family:   bool ->
+      ?hidden:      bool ->
+      ?title:       string ->
+      ?description: string ->
+      ?tags:        string list ->
       string ->
       Oauth.t ->
       (string,
        [> `API of < code : int
                   ; message : string
                   ; stat : string >
-        | `Curl of Curl.curlCode * int * string
-        | `Http of int * string
-        | `XML_conv of string * Xml.xml
-        | `XML_parse of string * exn ])
+       | `Curl of Curl.curlCode * int * string
+       | `Http of int * string
+       | `XML_conv of string * Xml.xml
+       | `XML_parse of string * exn ])
       Result.t
   (** https://up.flickr.com/services/upload *)
 end
