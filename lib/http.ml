@@ -37,6 +37,17 @@ let html_decode s =
     | [] -> List.rev store
   in
   string_of_chars @@ aux [] @@ chars_of_string s
+
+let html_encode s =
+  let rec aux store = function
+    | '&'::cs -> aux ('&'::'a'::'m'::'p'::';'::store) cs
+    | '\"'::cs -> aux ('&'::'q'::'u'::'o'::'t'::';'::store) cs
+    | '<'::cs -> aux ('&'::'l'::'t'::';'::store) cs
+    | '>'::cs -> aux ('&'::'g'::'t'::';'::store) cs
+    | c :: cs -> aux (c::store) cs
+    | [] -> List.rev store
+  in
+  string_of_chars @@ aux [] @@ chars_of_string s
     
 type header = {
     code : string;
