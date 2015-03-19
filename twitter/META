@@ -3,6 +3,6 @@ description="OCamltter Twitter API"
 
 version="4.0.1"
 
-requires="ocamltter_oauth,tiny_json_conv"
+requires="ocamltter_oauth,ppx_tiny_json_conv"
 archive(byte) = "oCamltter_twitter.cmo"
 archive(native) = "oCamltter_twitter.cmx"
