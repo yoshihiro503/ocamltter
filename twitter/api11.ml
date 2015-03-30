@@ -485,6 +485,7 @@ end) = struct
       &  required_either_user_id_or_screen_name
       ** skip_status
       ** include_user_entities
+      ** count
 
     in
     f id,

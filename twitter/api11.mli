@@ -324,6 +324,7 @@ module FriendsAndFollowers(A : sig val dir : string end) : sig
     ?screen_name:string ->
     ?skip_status:bool ->
     ?include_user_entities:bool ->
+    ?count:int ->
     Oauth.t ->
     User.t result Stream.t
 
@@ -332,6 +333,7 @@ module FriendsAndFollowers(A : sig val dir : string end) : sig
     ?screen_name:string ->
     ?skip_status:bool ->
     ?include_user_entities:bool ->
+    ?count:int ->
     Oauth.t -> User.t result list
 
 end
@@ -353,6 +355,7 @@ module Friends : sig
     ?screen_name:string ->
     ?skip_status:bool ->
     ?include_user_entities:bool ->
+    ?count:int ->
     Oauth.t ->
     User.t result Stream.t
 
@@ -361,6 +364,7 @@ module Friends : sig
     ?screen_name:string ->
     ?skip_status:bool ->
     ?include_user_entities:bool ->
+    ?count:int ->
     Oauth.t -> User.t result list
 end
 
@@ -381,6 +385,7 @@ module Followers : sig
     ?screen_name:string ->
     ?skip_status:bool ->
     ?include_user_entities:bool ->
+    ?count:int ->
     Oauth.t ->
     User.t result Stream.t
 
@@ -389,6 +394,7 @@ module Followers : sig
     ?screen_name:string ->
     ?skip_status:bool ->
     ?include_user_entities:bool ->
+    ?count:int ->
     Oauth.t -> User.t result list
 
 end
