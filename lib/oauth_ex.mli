@@ -111,6 +111,7 @@ module Make(Conf : Conf) : sig
     -> oauth_other_params: Http.params
        (** These parameters are included in the targets for OAuth signature creation *)
     -> t (** Auth *)
+
     -> (string, [> Http.error]) Result.t 
   (** Access the service API. 
 

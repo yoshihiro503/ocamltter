@@ -304,119 +304,119 @@ module Rate_limit_status = struct
   type limit = <
       limit     : float;
       remaining : float;
-      reset     : float (** unix epoch *)
+      reset     : float; (** unix epoch *)
     > [@@deriving conv{ocaml; json}]
 
   type t = <
     rate_limit_context : < access_token : string >;
     resources : < 
       lists : <
-          subscribers         [@conv.as {json="/lists/subscribers"}]                 : limit;
-          list                [@conv.as {json="/lists/list"}]                        : limit;
-          memberships         [@conv.as {json="/lists/memberships"}]                 : limit;
-          ownerships          [@conv.as {json="/lists/ownerships"}]                  : limit;
-          subscriptions       [@conv.as {json="/lists/subscriptions"}]               : limit;
-          members             [@conv.as {json="/lists/members"}]                     : limit;
-          subscribers_show    [@conv.as {json="/lists/subscribers/show"}]            : limit;
-          statuses            [@conv.as {json="/lists/statuses"}]                    : limit;
-          members_show        [@conv.as {json="/lists/members/show"}]                : limit;
-          show                [@conv.as {json="/lists/show"}]                        : limit;
+          subscribers      : limit [@conv.as {json="/lists/subscribers"}];
+          list             : limit [@conv.as {json="/lists/list"}];
+          memberships      : limit [@conv.as {json="/lists/memberships"}];
+          ownerships       : limit [@conv.as {json="/lists/ownerships"}];
+          subscriptions    : limit [@conv.as {json="/lists/subscriptions"}];
+          members          : limit [@conv.as {json="/lists/members"}];
+          subscribers_show : limit [@conv.as {json="/lists/subscribers/show"}];
+          statuses         : limit [@conv.as {json="/lists/statuses"}];
+          members_show     : limit [@conv.as {json="/lists/members/show"}];
+          show             : limit [@conv.as {json="/lists/show"}];
         >;
       application : <
-          rate_limit_status   [@conv.as {json="/application/rate_limit_status"}]     : limit;
+          rate_limit_status : limit [@conv.as {json="/application/rate_limit_status"}];
         >;
       friendships : <
-	  incoming            [@conv.as {json="/friendships/incoming"}]              : limit;
-	  lookup              [@conv.as {json="/friendships/lookup"}]                : limit;
-	  outgoing            [@conv.as {json="/friendships/outgoing"}]              : limit;
-          no_retweets_ids     [@conv.as {json="/friendships/no_retweets/ids"}]       : limit;
-	  show                [@conv.as {json="/friendships/show"}]                  : limit;
+	  incoming        : limit [@conv.as {json="/friendships/incoming"}];
+	  lookup          : limit [@conv.as {json="/friendships/lookup"}];
+	  outgoing        : limit [@conv.as {json="/friendships/outgoing"}];
+          no_retweets_ids : limit [@conv.as {json="/friendships/no_retweets/ids"}];
+	  show            : limit [@conv.as {json="/friendships/show"}];
         >;
 
       blocks : <
-	  ids                 [@conv.as {json="/blocks/ids"}]                        : limit;
-          list                [@conv.as {json="/blocks/list"}]                       : limit;
+	  ids  : limit [@conv.as {json="/blocks/ids"}];
+          list : limit [@conv.as {json="/blocks/list"}];
         >;
       geo : <
-	  similar_places      [@conv.as {json="/geo/similar_places"}]                : limit;
-          search              [@conv.as {json="/geo/search"}]                        : limit;
-	  reverse_geocode     [@conv.as {json="/geo/reverse_geocode"}]               : limit;
-	  place_id            [@conv.as {json="/geo/id/:place_id"}]                  : limit;
+	  similar_places  : limit [@conv.as {json="/geo/similar_places"}];
+          search          : limit [@conv.as {json="/geo/search"}];
+	  reverse_geocode : limit [@conv.as {json="/geo/reverse_geocode"}];
+	  place_id        : limit [@conv.as {json="/geo/id/:place_id"}];
         >;
       users : <
-	  profile_banner      [@conv.as {json="/users/profile_banner"}]              : limit;
-          suggestions_members [@conv.as {json="/users/suggestions/:slug/members"}]   : limit;
-	  show                [@conv.as {json="/users/show/:id"}]                    : limit;
-	  suggestions         [@conv.as {json="/users/suggestions"}]                 : limit;
-	  lookup              [@conv.as {json="/users/lookup"}]                      : limit;
-	  search              [@conv.as {json="/users/search"}]                      : limit;
-	  suggestions_slug    [@conv.as {json="/users/suggestions/:slug"}]           : limit;
-          report_spam         [@conv.as {json="/users/report_spam"}]                 : limit;
-          derived_info        [@conv.as {json="/users/derived_info"}]                : limit;
+	  profile_banner      : limit [@conv.as {json="/users/profile_banner"}];
+          suggestions_members : limit [@conv.as {json="/users/suggestions/:slug/members"}];
+	  show                : limit [@conv.as {json="/users/show/:id"}];
+	  suggestions         : limit [@conv.as {json="/users/suggestions"}];
+	  lookup              : limit [@conv.as {json="/users/lookup"}];
+	  search              : limit [@conv.as {json="/users/search"}];
+	  suggestions_slug    : limit [@conv.as {json="/users/suggestions/:slug"}];
+          report_spam         : limit [@conv.as {json="/users/report_spam"}];
+          derived_info        : limit [@conv.as {json="/users/derived_info"}];
         >;
       followers : <
-	  list                [@conv.as {json="/followers/list"}]                    : limit;
-	  ids                 [@conv.as {json="/followers/ids"}]                     : limit;
+	  list : limit [@conv.as {json="/followers/list"}];
+	  ids  : limit [@conv.as {json="/followers/ids"}];
         >;
       statuses : <
-	  mentions_timeline   [@conv.as {json="/statuses/mentions_timeline"}]        : limit;
-          show                [@conv.as {json="/statuses/show/:id"}]                 : limit;
-	  oembed              [@conv.as {json="/statuses/oembed"}]                   : limit;
-	  retweeters_ids      [@conv.as {json="/statuses/retweeters/ids"}]           : limit;
-	  home_timeline       [@conv.as {json="/statuses/home_timeline"}]            : limit;
-	  user_timeline       [@conv.as {json="/statuses/user_timeline"}]            : limit;
-	  retweets            [@conv.as {json="/statuses/retweets/:id"}]             : limit;
-	  retweets_of_me      [@conv.as {json="/statuses/retweets_of_me"}]           : limit;
-          friends             [@conv.as {json="/statuses/friends"}]                  : limit;
-          lookup              [@conv.as {json="/statuses/lookup"}]                   : limit;
+	  mentions_timeline : limit [@conv.as {json="/statuses/mentions_timeline"}];
+          show              : limit [@conv.as {json="/statuses/show/:id"}];
+	  oembed            : limit [@conv.as {json="/statuses/oembed"}];
+	  retweeters_ids    : limit [@conv.as {json="/statuses/retweeters/ids"}];
+	  home_timeline     : limit [@conv.as {json="/statuses/home_timeline"}];
+	  user_timeline     : limit [@conv.as {json="/statuses/user_timeline"}];
+	  retweets          : limit [@conv.as {json="/statuses/retweets/:id"}];
+	  retweets_of_me    : limit [@conv.as {json="/statuses/retweets_of_me"}];
+          friends           : limit [@conv.as {json="/statuses/friends"}];
+          lookup            : limit [@conv.as {json="/statuses/lookup"}];
         >;
       help : <
-	  privacy             [@conv.as {json="/help/privacy"}]                      : limit;
-          tos                 [@conv.as {json="/help/tos"}]                          : limit;
-	  configuration       [@conv.as {json="/help/configuration"}]                : limit;
-	  languages           [@conv.as {json="/help/languages"}]                    : limit;
-          settings            [@conv.as {json="/help/settings"}]                     : limit;
+	  privacy       : limit [@conv.as {json="/help/privacy"}];
+          tos           : limit [@conv.as {json="/help/tos"}];
+	  configuration : limit [@conv.as {json="/help/configuration"}];
+	  languages     : limit [@conv.as {json="/help/languages"}];
+          settings      : limit [@conv.as {json="/help/settings"}];
         >;
       friends : <
-	  ids                 [@conv.as {json="/friends/ids"}]                       : limit;
-	  list                [@conv.as {json="/friends/list"}]                      : limit;
-	  following_ids                 [@conv.as {json="/friends/following/ids"}]                       : limit;
-	  following_list                [@conv.as {json="/friends/following/list"}]                      : limit;
+	  ids            : limit [@conv.as {json="/friends/ids"}];
+	  list           : limit [@conv.as {json="/friends/list"}];
+	  following_ids  : limit [@conv.as {json="/friends/following/ids"}];
+	  following_list : limit [@conv.as {json="/friends/following/list"}];
         >;
       direct_messages : <
-	  show                [@conv.as {json="/direct_messages/show"}]              : limit;
-          sent_and_received   [@conv.as {json="/direct_messages/sent_and_received"}] : limit;
-	  sent                [@conv.as {json="/direct_messages/sent"}]              : limit;
-	  direct_messages     [@conv.as {json="/direct_messages"}]                   : limit;
+	  show              : limit [@conv.as {json="/direct_messages/show"}];
+          sent_and_received : limit [@conv.as {json="/direct_messages/sent_and_received"}];
+	  sent              : limit [@conv.as {json="/direct_messages/sent"}];
+	  direct_messages   : limit [@conv.as {json="/direct_messages"}];
         >;
       account : <
-	  verify_credentials  [@conv.as {json="/account/verify_credentials"}]        : limit;
-          settings            [@conv.as {json="/account/settings"}]                  : limit;
-          login_verification_enrollment [@conv.as {json="/account/login_verification_enrollment"}] : limit;
-          update_profile [@conv.as {json="/account/update_profile"}] : limit;
+	  verify_credentials            : limit [@conv.as {json="/account/verify_credentials"}];
+          settings                      : limit [@conv.as {json="/account/settings"}];
+          login_verification_enrollment : limit [@conv.as {json="/account/login_verification_enrollment"}];
+          update_profile                : limit [@conv.as {json="/account/update_profile"}];
         >;
-      favorites : <
-	  list                [@conv.as {json="/favorites/list"}]                    : limit;
+      favorites                         : <
+	  list                          : limit [@conv.as {json="/favorites/list"}];
         >;
       saved_searches : <
-	  destroy             [@conv.as {json="/saved_searches/destroy/:id"}]        : limit;
-          list                [@conv.as {json="/saved_searches/list"}]               : limit;
-	  show                [@conv.as {json="/saved_searches/show/:id"}]           : limit;
+	  destroy : limit [@conv.as {json="/saved_searches/destroy/:id"}];
+          list    : limit [@conv.as {json="/saved_searches/list"}];
+	  show    : limit [@conv.as {json="/saved_searches/show/:id"}];
         >;
       search : <
-	  tweets              [@conv.as {json="/search/tweets"}]                     : limit;
+	  tweets : limit [@conv.as {json="/search/tweets"}];
         >;
       trends : <
-	  available           [@conv.as {json="/trends/available"}]                  : limit;
-          place               [@conv.as {json="/trends/place"}]                      : limit;
-	  closest             [@conv.as {json="/trends/closest"}]                    : limit;
+	  available : limit [@conv.as {json="/trends/available"}];
+          place     : limit [@conv.as {json="/trends/place"}];
+	  closest   : limit [@conv.as {json="/trends/closest"}];
         >;
       mutes : <
-          users_list [@conv.as {json="/mutes/users/list"}] : limit;
-          users_ids [@conv.as {json="/mutes/users/ids"}] : limit;
+          users_list : limit [@conv.as {json="/mutes/users/list"}];
+          users_ids  : limit [@conv.as {json="/mutes/users/ids"}];
         >;
       device : <
-          token [@conv.as {json="/device/token"}] : limit;
+          token  : limit [@conv.as {json="/device/token"}];
         >;
      >
   > [@@deriving conv{ocaml; json}]

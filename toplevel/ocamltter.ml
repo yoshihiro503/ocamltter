@@ -56,6 +56,7 @@ type tweet = Api_intf.Tweet.t
 
 module Cache : sig
   type t (** Carries "known tweets" to the system *)
+
   val init : unit -> t
   val is_new : t -> tweet -> bool
   val add : t -> tweet -> unit

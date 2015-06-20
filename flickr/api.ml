@@ -110,7 +110,7 @@ open Json
 module Fail = struct
 
   type t = < 
-    stat : string (** "fail" *);
+    stat : string (** "fail" *); 
     code : sint;
     message : string 
   > [@@deriving conv{ocaml; json}]
@@ -124,7 +124,7 @@ module Fail = struct
 end
 
 module Content = struct
-  type raw_content = < content [@conv.as {json="_content"}] : string >
+  type raw_content = < content : string [@conv.as {json="_content"}] >
     [@@deriving conv{json}]
 
   type t = string [@@deriving conv{ocaml}]
@@ -348,8 +348,8 @@ The page of results to return. If this argument is omitted, it defaults to 1.
     and urls = < url: type_content list >
 
     and type_content = < 
-        type_   [@conv.as {json="type"}]     : string; (* "photopage", *)
-        content [@conv.as {json="_content"}] : string 
+        type_   : string [@conv.as {json="type"}]; (* "photopage", *)
+        content : string [@conv.as {json="_content"}]  
       >
 
     and resp = < photo: photo; stat: string >
@@ -962,7 +962,7 @@ module Tags = struct
         author : string;
         authorname : string;
         raw : string;
-        tag [@conv.as {json="_content"}] : string;
+        tag : string [@conv.as {json="_content"}];
         machine_tag : ibool
       >
     [@@deriving conv{ocaml; json}]
