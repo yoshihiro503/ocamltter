@@ -285,6 +285,21 @@ module Photos : sig
     (Search.photos, 'error) result
   (** flickr.photos.search *)
 
+  val setPerms : string ->
+    ?is_public:bool ->
+    ?is_friend:bool ->
+    ?is_family:bool ->
+    ?perm_comment:[< `Contacts
+                  | `Everybody
+                  | `Friends_and_family
+                  | `Nobody ] ->
+    ?perm_addmeta:[< `Contacts
+                  | `Everybody
+                  | `Friends_and_family
+                  | `Nobody ] ->
+    Oauth.t ->
+    (unit, 'error) result
+  (** flickr.photos.setPerms *)
 end
 
 module Photosets : sig
@@ -376,7 +391,9 @@ module Photosets : sig
       ; ispublic : bool
       ; secret : string
       ; server : string
-      ; title : string >
+      ; title : string 
+      ; extras : Json.t mc_leftovers
+      >
     [@@deriving conv{ocaml; json}]
   end
 
@@ -384,12 +401,17 @@ module Photosets : sig
     string ->
     per_page: int ->
     page:int ->
+    ?extras: string list ->
     Oauth.t ->
     (GetPhotos.photoset, 'error) result
-  (** flickr.photosets.getPhotos *)
+  (** flickr.photosets.getPhotos 
+
+      extras: extra information to fetch for each returned record. Currently supported fields are: license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_m, url_o
+  *)
 
   val getPhotos :
     string ->
+    ?extras: string list ->
     Oauth.t ->
     (< id : string
      ; owner : string
@@ -413,6 +435,12 @@ module Photosets : sig
     Oauth.t ->
     (unit, 'error) result
   (** flickr.photosets.addPhoto *)
+
+  val reorderPhotos : 
+    string ->
+    string list ->
+    Oauth.t ->
+    (unit, 'error) result 
 end
 
 module People : sig

@@ -652,6 +652,36 @@ A comma-delimited list of extra information to fetch for each returned record. C
 *)
 
 
+  let setPerms photo_id 
+      ?(is_public=false) ?(is_friend=false) ?(is_family=false) 
+      ?perm_comment ?perm_addmeta
+      o =
+    let get_perm = function
+      | `Nobody -> 0
+      | `Friends_and_family -> 1
+      | `Contacts -> 2
+      | `Everybody -> 3
+    in
+    let perm_comment = Option.map get_perm perm_comment
+    and perm_addmeta = Option.map get_perm perm_addmeta
+    in
+    let bool k b = k, if b then "1" else "0" in
+    json_api o `POST "flickr.photos.setPerm"
+      ( [ "api_key", App.app.Oauth.Consumer.key
+        ; "photo_id", photo_id
+        ; bool "is_public" is_public
+        ; bool "is_friend" is_friend
+        ; bool "is_family" is_family
+        ]
+        @ List.filter_map id
+          [ opt string_of_int "perm_comment" perm_comment
+          ; opt string_of_int "perm_addmeta" perm_addmeta
+          ]
+      )
+      (* CR jfuruse:
+         <photoid secret="abcdef" originalsecret="abcdef">1234</photoid>
+      *)
+    >>= EmptyResp.check
 end
 
 module Photosets = struct
@@ -797,21 +827,25 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
       isprimary : ibool;
       ispublic  : ibool;
       isfriend  : ibool;
-      isfamily  : ibool 
+      isfamily  : ibool;
+      extras : Json.t mc_leftovers;
     >
     [@@deriving conv{ocaml; json}]
 
   end
 
 
-  let raw_getPhotos photoset_id ~per_page ~page o =
+  let raw_getPhotos photoset_id ~per_page ~page ?(extras=[]) o =
     assert (page > 0);
     json_api o `GET "flickr.photosets.getPhotos"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photoset_id", photoset_id
-      ; "per_page", string_of_int per_page
-      ; "page", string_of_int page
-      ]
+      (let kvs = 
+        [ "api_key", App.app.Oauth.Consumer.key
+        ; "photoset_id", photoset_id
+        ; "per_page", string_of_int per_page
+        ; "page", string_of_int page
+        ]
+       in
+       if extras = [] then kvs else ("extras", String.concat "," extras) :: kvs)
     >>= lift_error GetPhotos.resp_of_json
     >>| fun x -> x#photoset
 
@@ -832,9 +866,9 @@ Filter results by media type. Possible values are all (default), photos or video
 *)
 
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
-  let getPhotos photoset_id o =
+  let getPhotos photoset_id ?extras o =
     let rec f n st =
-      raw_getPhotos photoset_id o ~per_page:500 ~page:n 
+      raw_getPhotos photoset_id ?extras o ~per_page:500 ~page:n 
       >>= fun pset ->
         if pset#per_page * n > pset#total then
           (* last page *)
@@ -869,6 +903,13 @@ Filter results by media type. Possible values are all (default), photos or video
       ]
     >>= EmptyResp.check
 
+  let reorderPhotos photoset_id photo_ids o =
+    json_api o `POST "flickr.photosets.reorderPhotos"
+      [ "api_key", App.app.Oauth.Consumer.key
+      ; "photoset_id", photoset_id
+      ; "photo_ids", String.concat "," photo_ids
+      ]
+    >>= EmptyResp.check
 end
 
 module People = struct

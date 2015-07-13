@@ -135,12 +135,12 @@ module Photosets = struct
   let getList' ?per_page o =
     getList ?per_page o |> Page.to_list
         
-  let raw_getPhotos photoset_id ~per_page ~page o =
-    Job.create & fun () -> Api.Photosets.raw_getPhotos photoset_id ~per_page ~page o
+  let raw_getPhotos photoset_id ~per_page ~page ?extras o =
+    Job.create & fun () -> Api.Photosets.raw_getPhotos photoset_id ~per_page ~page ?extras o
 
   (* CRv2 jfuruse: todo: Fancy lazy loading *)
-  let getPhotos ?(per_page=500) photoset_id o =
-    Page.to_seq (raw_getPhotos photoset_id o) ~per_page
+  let getPhotos ?(per_page=500) photoset_id ?extras o =
+    Page.to_seq (raw_getPhotos photoset_id ?extras o) ~per_page
       (fun pset -> object
         method id        = pset#id
         method primary   = pset#primary
@@ -151,14 +151,17 @@ module Photosets = struct
       end)
       (fun pset -> pset#photo)
 
-  let getPhotos' ?per_page photoset_id o =
-    getPhotos ?per_page photoset_id o |> Page.to_list
+  let getPhotos' ?per_page photoset_id ?extras o =
+    getPhotos ?per_page photoset_id ?extras o |> Page.to_list
 
   let removePhotos photoset_id photo_ids o =
     Job.create & fun () -> Api.Photosets.removePhotos photoset_id photo_ids o
 
   let addPhoto photoset_id ~photo_id o =
     Job.create & fun () -> Api.Photosets.addPhoto photoset_id ~photo_id o
+
+  let reorderPhotos photoset_id photo_ids o =
+    Job.create & fun () -> Api.Photosets.reorderPhotos photoset_id photo_ids o
 
 end
 

@@ -144,11 +144,34 @@ let uploads ~photoset img_files o =
     return photo_id
   in
 
-  flip mapM_ img_files & fun img_file ->
+  flip mapM_ img_files (fun img_file ->
     let title = Filename.(basename *> split_extension *> fst) img_file in
     if List.mem_assoc title !photos then begin
       (* !!% "%s is already in the photoset@." img_file; *)
       return ()
-    end else
+    end else begin
       up ~title img_file >>| !!% "Uploaded as id = %s@."
-            
+    end);
+
+  (* reorder *)
+  match !psid_opt with
+  | None -> return ()
+  | Some psid -> do_;
+      [%p? (_, ps) ] <-- Photosets.getPhotos' psid ~extras:["date_taken"] o;
+      let ps' =
+        let open List in
+        sort (fun (_,t1) (_,t2) -> compare t1 t2)    
+          & filter_map (fun p -> Option.do_;
+              (* Flickr returns "datetaken" for "date_taken" :-< *)
+              dt <-- assoc_opt "datetaken" p#extras;
+              match dt with
+              | Tiny_json.Json.String s -> return (p, s)
+              | _ -> None) ps
+      in
+     (); flip List.iter ps' (fun (p,t) ->
+       Format.eprintf "%s : %s : %s@." p#id p#title t);
+     (); Format.eprintf "Reordering...@.";
+     Photosets.reorderPhotos psid (List.map (fun (p,_) -> p#id) ps') o;
+     (); Format.eprintf "Reordered@.";
+     return ()
+
