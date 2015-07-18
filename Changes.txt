@@ -1,3 +1,16 @@
+4.0.2 (incoming)
+----------------
+
+- Port for OCaml 4.02.2
+- Implemented json_of_t for Text.t (by Dominic Price <dominic.price@nottingham.ac.uk>)
+- Added bunch of Flickr APIs
+
+4.0.1
+----------------
+
+- Flicker error handling
+* Fix of OCamlFind package names
+ 
 4.0.0
 ----------------
 
