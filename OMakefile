@@ -17,18 +17,4 @@ CAMLP4PACKS[] =
 OCAMLDEPFLAGS= -package ppx_meta_conv
 OCAMLPPFLAGS = -package ppx_meta_conv
 
-# SUB_INSTALL=$(dir _install)
-# 
-# $(SUB_INSTALL):
-#     /bin/rm -rf $@
-#     mkdir $@
-# 
-# install: $(SUB_INSTALL) META
-#     cp META $(SUB_INSTALL)
-#     $(OCAMLFIND) remove ocamltter
-#     $(OCAMLFIND) install ocamltter $(SUB_INSTALL)/META $(SUB_INSTALL)/*/*
-# 
-# clean:
-#     /bin/rm -rf $(SUB_INSTALL)
-
 Subdirs()
