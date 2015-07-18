@@ -102,7 +102,7 @@ end = struct
 
   let t_of_json_exn = Json_conv.exn t_of_json
 
-  let json_of_t _t = assert false
+  let json_of_t _t = Json.String(Http.html_encode _t)
 end
 
 module Client : sig

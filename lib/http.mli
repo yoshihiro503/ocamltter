@@ -4,6 +4,7 @@ exception Http_error of string
 
 val url_encode  : string -> string
 val html_decode : string -> string
+val html_encode : string -> string
 
 type header = { code : string; fields : (string, string) Hashtbl.t; }
 type headers = (string * string) list

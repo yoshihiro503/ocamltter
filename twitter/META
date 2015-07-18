@@ -4,5 +4,5 @@ description="OCamltter Twitter API"
 version="4.0.0"
 
 requires="ocamltter_oauth,tiny_json_conv"
-archive(byte) = "ocamltter_twitter.cmo"
-archive(native) = "ocamltter_twitter.cmx"
+archive(byte) = "oCamltter_twitter.cmo"
+archive(native) = "oCamltter_twitter.cmx"

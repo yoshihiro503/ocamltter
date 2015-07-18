@@ -158,7 +158,7 @@ end
                    ; k = ... })
 *)
 let json_api o meth m fields =
-  raw_api o meth m fields
+  raw_api o meth m (( "api_key", App.app.Oauth.Consumer.key) :: fields)
   >>= fun s ->
       (* jsonFlickrApi(JSON) *)
       let len = String.length s in
@@ -231,7 +231,7 @@ module TagList = struct
   let t_of_json_exn = Json_conv.exn t_of_json
 end
 
-module Photos = struct  
+module Photos = struct (* Photo *)
 
 (*
   let int_of_privacy_filter = function
@@ -292,8 +292,7 @@ module Photos = struct
       | xs -> Some (String.concat "," xs)
     in
     json_api o `GET "flickr.photos.getNotInSet"
-      ([ "api_key", App.app.Oauth.Consumer.key
-       ; "per_page", string_of_int per_page
+      ([ "per_page", string_of_int per_page
        ; "page", string_of_int page
        ]
        @ List.filter_map id
@@ -387,8 +386,7 @@ The page of results to return. If this argument is omitted, it defaults to 1.
 
   let getInfo photo_id o =
     json_api o `GET "flickr.photos.getInfo"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
+      [ "photo_id", photo_id
       ]
     >>= lift_error GetInfo.resp_of_json
     >>| fun x -> x#photo
@@ -428,8 +426,7 @@ The <date> element's lastupdate attribute is a Unix timestamp indicating the las
                   
   let getExif photo_id o =
     json_api o `GET "flickr.photos.getExif"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
+      [ "photo_id", photo_id
       ]
     >>= lift_error GetExif.resp_of_json
     >>| fun x -> x#photo  
@@ -441,24 +438,21 @@ The secret for the photo. If the correct secret is passed then permissions check
 
   let addTags photo_id tags o =
     json_api o `GET "flickr.photos.addTags"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
+      [ "photo_id", photo_id
       ; "tags", String.concat " " tags
       ]
     >>= EmptyResp.check
 
   let setTags photo_id tags o =
     json_api o `GET "flickr.photos.setTags"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
+      [ "photo_id", photo_id
       ; "tags", String.concat " " tags
       ]
     >>= EmptyResp.check
 
   let delete photo_id o = 
     json_api o `POST "flickr.photos.delete"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
+      [ "photo_id", photo_id
       ]
     >>= EmptyResp.check
 
@@ -508,8 +502,7 @@ The secret for the photo. If the correct secret is passed then permissions check
       | Some (`All ts) -> Some (String.concat "," ts), Some "all"
     in
     json_api o `POST "flickr.photos.search"
-    ( [ "api_key", App.app.Oauth.Consumer.key ]
-    @ List.filter_map id 
+    ( List.filter_map id 
       [ opt id "user_id" user_id 
       ; opt id "tags" tags
       ; opt id "tag_mode" tag_mode
@@ -696,8 +689,7 @@ module Photosets = struct
 
   let create ~title ~primary_photo_id o =
     json_api o `GET "flickr.photosets.create"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "title", title
+      [ "title", title
       ; "primary_photo_id", primary_photo_id
       ]
     >>= lift_error Create.resp_of_json
@@ -888,8 +880,7 @@ Filter results by media type. Possible values are all (default), photos or video
 
   let removePhotos photoset_id photo_ids o =
     json_api o `POST "flickr.photosets.removePhotos"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photoset_id", photoset_id
+      [ "photoset_id", photoset_id
       ; "photo_ids", String.concat "," photo_ids
       ]
     >>= EmptyResp.check
@@ -897,8 +888,7 @@ Filter results by media type. Possible values are all (default), photos or video
 
   let addPhoto photoset_id ~photo_id o =
     json_api o `GET "flickr.photosets.addPhoto"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photoset_id", photoset_id
+      [ "photoset_id", photoset_id
       ; "photo_id", photo_id
       ]
     >>= EmptyResp.check
@@ -970,8 +960,7 @@ module People = struct
 
   let getUploadStatus o =
     json_api o `GET "flickr.people.getUploadStatus"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ]
+      [ ]
     >>= lift_error GetUploadStatus.resp_of_json
     >>| fun x -> x#user
 
@@ -1012,8 +1001,7 @@ module Tags = struct
 
   let getListPhoto photo_id o =
     json_api o `GET "flickr.tags.getListPhoto"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ; "photo_id", photo_id
+      [ "photo_id", photo_id
       ]
     >>= lift_error GetListPhoto.resp_of_json
     >>| fun x -> x#photo#tags#tag
@@ -1030,8 +1018,7 @@ module Test = struct
   end
   let login o =
     json_api o `GET "flickr.test.login"
-      [ "api_key", App.app.Oauth.Consumer.key
-      ]
+      [ ]
     >>= lift_error Login.resp_of_json
     >>| fun x -> x#user
 end
