@@ -1,8 +1,8 @@
 name="ocamltter_oauth"
 description="OCamltter Oauth framework"
 
-version="4.0.0"
+version="4.0.2"
 
-requires="cryptokit,str,meta_conv,spotlib,curl,ocaml_conv"
+requires="cryptokit,str,meta_conv,spotlib,curl,ppx_ocaml_conv"
 archive(byte) = "oCamltter_oauth.cmo"
 archive(native) = "oCamltter_oauth.cmx"
