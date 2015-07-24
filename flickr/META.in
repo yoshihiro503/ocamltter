@@ -3,6 +3,6 @@ description="OCamltter Flickr API"
 
 version="@version@"
 
-requires="ocamltter_oauth,tiny_json_conv"
+requires="ocamltter_oauth,ppx_tiny_json_conv"
 archive(byte) = "oCamltter_flickr.cmo"
 archive(native) = "oCamltter_flickr.cmx"
