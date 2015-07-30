@@ -1,3 +1,4 @@
+authors: [ "Yoshihiro Imai" ]
 depends: [
   "ocamlfind"
   "omake"
