@@ -9,4 +9,4 @@ depends: [
   "orakuda" {>="2.0.0"}
   "ppx_meta_conv" {>="2.0.2"}
 ]
-available: [ ocaml-version >= "4.02.1" ]
+available: [ ocaml-version >= "4.02.2" & ocaml-version < "4.03.0" ]
