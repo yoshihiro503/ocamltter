@@ -11,7 +11,7 @@ OCAMLFLAGS = -thread
 
 ####################################################### 
 
-OCAMLPACKS[] = cryptokit str spotlib ppx_tiny_json_conv ppx_ocaml_conv curl
+OCAMLPACKS[] = cryptokit str spotlib ppx_tiny_json_conv ppx_ocaml_conv curl base64
 CAMLP4PACKS[] =
 
 OCAMLDEPFLAGS= -package ppx_meta_conv

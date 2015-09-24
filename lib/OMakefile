@@ -1,5 +1,4 @@
 LIBFILES[] = 
-    base64
     parserMonad
     xml
     googleTTS

@@ -40,7 +40,7 @@ let make_nonce () =
 let hmac_sha1_hash text key =
   text 
   |> Cryptokit.hash_string (Cryptokit.MAC.hmac_sha1 key) 
-  |> Base64.encode
+  |> B64.encode
 
 let sha1_digest_info h =
   "\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14" ^ h
@@ -60,7 +60,7 @@ let rsa_sha1_hash' text rsa_key =
 let rsa_sha1_hash text rsa_key =
   rsa_sha1_hash' text rsa_key
   |> Cryptokit.RSA.sign rsa_key 
-  |> Base64.encode
+  |> B64.encode
 
 let check_rsa_sha1_hash text rsa_key signature =
   try
@@ -69,7 +69,7 @@ let check_rsa_sha1_hash text rsa_key signature =
      |> sha1_digest_info 
      |> pkcs1_pad rsa_key) 
     = (signature 
-       |> Base64.decode 
+       |> B64.decode 
        |> Cryptokit.RSA.unwrap_signature rsa_key)
   with _ -> false
 
