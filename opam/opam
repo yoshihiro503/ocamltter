@@ -1,0 +1,30 @@
+opam-version: "1.2"
+version: "4.0.2"
+authors: [
+  "Yoshihiro Imai"
+]
+maintainer: "jun.furuse@gmail.com"
+build: [
+  [ "ocaml" "setup.ml" "-configure" "--prefix" prefix ]
+  [ "ocaml" "setup.ml" "-build" ]
+]
+install: [
+  [ "ocaml" "setup.ml" "-install" ]
+]
+remove: [
+  [ "ocaml" "setup.ml" "-configure" "--prefix" prefix ]
+  [ "ocaml" "setup.ml" "-uninstall" ]
+]
+homepage: "https://github.com/yoshihiro503/ocamltter"
+depends: [
+  "ocamlfind"
+  "omake"
+  "cryptokit"
+  "ocurl" { >= "0.5.3" }
+  "spotlib" { >= "2.5.3" }
+  "orakuda" { >= "2.0.0" }
+  "ppx_meta_conv" { >= "2.0.2" }
+]
+available: [
+  ocaml-version >= "4.02.1"
+]
