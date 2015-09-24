@@ -1,6 +1,7 @@
-authors: [ "Yoshihiro Imai" ]
+authors: [ "Yoshihiro Imai", "Jun Furuse" ]
 homepage: "https://github.com/yoshihiro503/ocamltter"
 depends: [
+  "base64"
   "ocamlfind"
   "omake"
   "cryptokit"
