@@ -6,6 +6,11 @@ let auth_file = "ocaml_flickr.auth"
 
 let o = Oauth.get_oauth auth_file
 
+let () =
+  Format.eprintf "%a@."
+    (Ocaml.format_with Api.People.GetUploadStatus.ocaml_of_user )
+    (Result.from_Ok & Job.run & People.getUploadStatus o)
+
 let rev_dirs = ref []
 
 let remove_non_local = ref false
