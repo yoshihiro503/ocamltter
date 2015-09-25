@@ -1,5 +1,6 @@
 open Spotlib.Spot
 open Api2
+open List
 
 let json_format = !!% "%a@." Tiny_json.Json.format
 let ocaml_format_with f = !!% "%a@." (Ocaml.format_with ~no_poly:true f)
@@ -94,7 +95,7 @@ let delete_dups_in_sets o =
      fails, the medium remains in the photoset with the tag. It is not critical
      but the function should clean the tag in later trials.
 *)
-let uploads ~photoset img_files o =
+let uploads ?(remove_non_local=false) ~photoset img_files o =
   let open Job in do_;
   (_info, psets) <-- Photosets.getList' o;
 
@@ -153,6 +154,27 @@ let uploads ~photoset img_files o =
       up ~title img_file >>| !!% "Uploaded as id = %s@."
     end);
 
+  let img_file_tbl = 
+    let tbl = Hashtbl.create 107 in
+    flip iter img_files (fun img_file ->
+      let title = Filename.(basename *> split_extension *> fst) img_file in
+      Hashtbl.replace tbl title img_file);
+    tbl
+  in
+
+  let gone = flip filter !photos (fun (title, _phid) -> not & Hashtbl.mem img_file_tbl title) in
+  (); flip iter gone (fun (title, phid) ->
+    !!% "Photo %s (%s) is gone from the local dir@." title phid);
+  (); if gone <> [] && not remove_non_local then
+      !!% "You can remove these %d not-in-local photos with -remove-non-local@." (length gone);
+  if gone <> [] && remove_non_local then begin
+    !!% "Removing those %d not-in-local photos from the photoset...@." (length gone);
+    match !psid_opt with
+    | None -> assert false
+    | Some psid -> Photosets.removePhotos psid (List.map snd gone) o
+  end else return ();
+
+(*
   (* reorder *)
   match !psid_opt with
   | None -> return ()
@@ -173,5 +195,6 @@ let uploads ~photoset img_files o =
      (); Format.eprintf "Reordering...@.";
      Photosets.reorderPhotos psid (List.map (fun (p,_) -> p#id) ps') o;
      (); Format.eprintf "Reordered@.";
+*)
      return ()
 
