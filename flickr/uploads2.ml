@@ -6,9 +6,20 @@ let auth_file = "ocaml_flickr.auth"
 
 let o = Oauth.get_oauth auth_file
 
+let () =
+  Format.eprintf "%a@."
+    (Ocaml.format_with Api.People.GetUploadStatus.ocaml_of_user )
+    (Result.from_Ok & Job.run & People.getUploadStatus o)
+
 let rev_dirs = ref []
 
-let () = Arg.parse [] (fun x -> rev_dirs := x :: !rev_dirs) "uploads dirs.."
+let remove_non_local = ref false
+
+let () = Arg.parse 
+  [ "-remove-non-local", Arg.Set remove_non_local, "remove photos not in local directory from photoset (the photo still exists in the flickr)"
+  ] 
+  (fun x -> rev_dirs := x :: !rev_dirs) "uploads dirs.."
+
 let dirs = List.rev !rev_dirs
 
 let () = 
@@ -53,7 +64,8 @@ let () =
               Unix.sleep 60;
               `Ok (conseq_fails + 1)
             end) 0 
-        & Tools2.uploads ~photoset photos o 
+        & Tools2.uploads ~remove_non_local:!remove_non_local 
+          ~photoset photos o 
       with
       | `Ok () -> ()
       | `Error (desc, _) -> Api2.error desc

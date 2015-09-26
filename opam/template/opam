@@ -1,4 +1,4 @@
-authors: [ "Yoshihiro Imai", "Jun Furuse" ]
+authors: [ "Yoshihiro Imai" "Jun Furuse" ]
 homepage: "https://github.com/yoshihiro503/ocamltter"
 depends: [
   "base64"
