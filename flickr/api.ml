@@ -146,7 +146,6 @@ end
 module Error = struct
   type t =
     [ `API of Fail.t
-    | `Curl of Curl.curlCode * int * string
     | `Http of int * string
     | `Json of Json.error * string
     | `Json_conv of Json.t Meta_conv.Error.t ]
@@ -1141,7 +1140,7 @@ end
 
 let format_error ppf =
   function
-  | (`Http _ | `Curl _ as e) -> 
+  | (`Http _ as e) -> 
       Format.fprintf ppf "HTTP: %s@." & Http.string_of_error e;
   | `Json (e, s) -> 
       Format.fprintf ppf "Json: %a@." Json.format_error e;
