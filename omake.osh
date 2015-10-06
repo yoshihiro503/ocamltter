@@ -1,9 +1,0 @@
-# bind variables in arguments
-DefineCommandVars()
-
-# copy
-cp(OMakeroot.in OMakeroot)
-
-eprintln("omake.osh: PREFIX=$(PREFIX) COMMAND=$(COMMAND)")
-omake PREFIX=$(PREFIX) $(COMMAND)
-
