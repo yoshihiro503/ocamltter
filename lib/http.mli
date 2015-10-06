@@ -35,8 +35,7 @@ val string_of_error : error -> string
 
 (** http/https access via cURL *)
 val by_curl : 
-  ?handle_tweak: (Curl.handle -> unit) (** Final direct tweak against the Curl header *)
-  -> ?proto : [`HTTP | `HTTPS ] (** protocol. The default is HTTPS *)
+  ?proto : [`HTTP | `HTTPS ] (** protocol. The default is HTTPS *)
   -> string            (** hostname *)
   -> ?port: int        (** port: the default is the default port of the protocol *)
   -> string            (** path *)

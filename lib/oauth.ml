@@ -217,7 +217,6 @@ let string_of_protocol = function
 (* CR jfuruse: 
    The distinction of oauth_other_params and non_oauth_params is not meaningful. *)
 let gen_access
-    ?handle_tweak
     ?(proto=`HTTPS)
     ~host ?port ~path
     ~meth: method_non_oauth_params
@@ -254,7 +253,6 @@ let gen_access
   in
   (* begin let k,v = header in !!% "HEADER %s : %s@." k v; end; *)
   Http.by_curl 
-    ?handle_tweak
     ~proto host ?port path 
     ~headers:[header] 
     method_params

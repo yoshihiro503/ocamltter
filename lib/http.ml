@@ -137,7 +137,7 @@ let string_of_error = function
   | `Http (n, s) -> !%"Http error %d: %s" n s
   | `Curl (cc, n, s) -> !%"Curl (%s) %d: %s" (Curl.strerror cc) n s
 
-let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_params =
+let by_curl_gen ?(proto=`HTTPS) hostname ?port path ~headers meth_params =
   let open Curl in
   let h = new Curl.handle in
   (* h#set_verbose true; *)
@@ -179,8 +179,6 @@ let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_
   let buf = Buffer.create 100 in
   assert (h#get_cookielist = []);
   h#set_writefunction (fun s -> Buffer.add_string buf s; String.length s);
-  (* Tweak h by the hanlder *)
-  (match handle_tweak with Some f -> f h | None -> ());
   h#perform;
   let code = h#get_httpcode in
   h#cleanup; (* Need to flush out cookies *)
@@ -190,9 +188,9 @@ let by_curl_gen ?handle_tweak ?(proto=`HTTPS) hostname ?port path ~headers meth_
   in	
   ok200 (code, Buffer.contents buf)
 
-let by_curl ?handle_tweak ?proto hostname ?port path ~headers meth_params =
+let by_curl ?proto hostname ?port path ~headers meth_params =
   try 
-    by_curl_gen ?handle_tweak ?proto hostname ?port path ~headers meth_params
+    by_curl_gen ?proto hostname ?port path ~headers meth_params
   with
   | Curl.CurlException (curlCode, int, mes) ->
       `Error (`Curl (curlCode, int, mes))
