@@ -1,4 +1,9 @@
-4.0.2 (incoming)
+4.1.0 (incoming)
+----------------
+
+* Replaced ocurl by cohttp
+
+4.0.2
 ----------------
 
 - Port for OCaml 4.02.2

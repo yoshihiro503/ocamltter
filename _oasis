@@ -1,14 +1,14 @@
 OASISFormat: 0.2
 Name:        ocamltter
-Version:     4.0.2
+Version:     4.1.0
 Synopsis:    The OCAMLTTER twitter client
-Authors:     Jun FURUSE
-License:     LGPL-2.0 with OCaml linking exception
+Authors:     Yoshihiro Imai
+License:     MIT
 Plugins:     StdFiles (0.2)
 BuildType:   Custom (0.2)
 InstallType: Custom (0.2)
-XCustomBuild:      osh omake.osh PREFIX= COMMAND=
-XCustomInstall:    osh omake.osh PREFIX= COMMAND=install
-XCustomUninstall:  osh omake.osh PREFIX= COMMAND=uninstall
-XCustomBuildClean: osh omake.osh PREFIX= COMMAND=clean
+XCustomBuild:      sh -c "cp OMakeroot.in OMakeroot; omake PREFIX="
+XCustomInstall:    sh -c "cp OMakeroot.in OMakeroot; omake PREFIX= install"
+XCustomUninstall:  sh -c "cp OMakeroot.in OMakeroot; omake PREFIX= uninstall"
+XCustomBuildClean: sh -c "cp OMakeroot.in OMakeroot; omake PREFIX= clean"
 BuildTools: omake
