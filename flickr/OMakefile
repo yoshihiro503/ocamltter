@@ -70,3 +70,14 @@ FILES[] =
 
 NO_INSTALL=true
 MyOCamlProgram(uploads2, $(FILES))
+
+
+FILES[] = 
+    app
+    conf
+    auth
+    api
+    simple_upload
+
+NO_INSTALL=true
+MyOCamlProgram(simple_upload, $(FILES))
