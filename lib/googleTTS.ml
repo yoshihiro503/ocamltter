@@ -21,38 +21,25 @@ let play file =
   cmd (!% "%s %s >> log 2>> log" play_command file)
 
 let say lang s =
-  let open Lwt in
-  let stream_to_file dst s =
-    let open Lwt_stream in
-    let oc = open_out_bin dst in
-    let rec f () =
-      get s >>= function
-        | None -> return `Ok
-        | Some s -> output_string oc s; f ()
-    in
-    catch f (fun _e -> return `Error) >>= fun res -> close_out oc; return res
+  let save fname ch =
+    open_out_with fname (fun out ->
+      let rec iter () =
+        try output_char out (input_char ch); iter() with
+        | End_of_file -> ()
+      in
+      iter ())
   in
-  let download =
-    let open Cohttp in
-    let open Cohttp_lwt_unix in
-    let headers = Header.of_list [("User-Agent", agent)] in
-    let uri = Uri.make ~scheme:"http" ~host:"translate.google.com" ~path:"/translate_tts" ~query:[("tl", [slang lang]); ("q",[s])] () in
-    Client.get ~headers uri >>= fun (resp, body) ->
-    let open Response in
-    match Code.code_of_status resp.status with
-    | 200 ->
-        prerr_endline "ok";
-        stream_to_file "say.mp3" (Cohttp_lwt_body.to_stream body)
-    | code ->
-        Format.eprintf "error code=%d@." code;
-        return `Error (* we ignore the error boldly *)
+  let () = Http.conn "translate.google.com" `GET
+      ~headers:[("User-Agent", agent)]
+      "/translate_tts"
+    [("tl", slang lang); ("q",s)]
+    (fun _ ch -> save "say.mp3" ch)
   in
-  Lwt_main.run (download >>= fun res ->
-    begin match res with
-    | `Ok -> play "say.mp3"
-    | `Error -> ()
-    end;
-    return ())
+(*  let url =
+    !%"http://translate.google.com/translate_tts?tl=%s&q=%s" (slang lang) s
+  in
+  wget "say.mp3" url;*)
+  play "say.mp3"
 
 let tr = [
   ("ttlweb","TTLウェブ");

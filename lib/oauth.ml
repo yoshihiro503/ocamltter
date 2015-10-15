@@ -252,7 +252,7 @@ let gen_access
     | `POST_MULTIPART psx -> `POST_MULTIPART (psx @ List.map (fun (k,v) -> k, `String v) oauth_other_params)
   in
   (* begin let k,v = header in !!% "HEADER %s : %s@." k v; end; *)
-  Http.by_cohttp
+  Http.by_curl 
     ~proto host ?port path 
     ~headers:[header] 
     method_params
