@@ -249,18 +249,18 @@ module Cursor : sig
     Http.meth 
 
     -> ( ('elem, Error.t) Result.t Stream.t -> 'final_result) 
-    (** final kontinuation *)
+    (*+ final kontinuation *)
 
     -> 'sublist_record Json_conv.decoder 
-    (** how to decode the raw result of sublist records *)
+    (*+ how to decode the raw result of sublist records *)
 
     -> ('sublist_record -> 'elem list) 
-    (** how to get a sublist from a sublist record *)
+    (*+ how to get a sublist from a sublist record *)
 
-    -> string  (** url piece. CR jfuruse: no printf interface? *)
+    -> string  (*+ url piece. CR jfuruse: no printf interface? *)
 
     -> ((params -> Oauth.t -> 'final_result) -> params -> 'the_function_type)
-    (** argument accumulator *)
+    (*+ argument accumulator *)
 
     -> 'the_function_type
 

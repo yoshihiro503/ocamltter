@@ -110,7 +110,7 @@ open Json
 module Fail = struct
 
   type t = < 
-    stat : string (** "fail" *); 
+    stat : string (*+ "fail" *); 
     code : sint;
     message : string 
   > [@@deriving conv{ocaml; json}]
@@ -1105,7 +1105,7 @@ module Upload = struct
       ?(hidden=true)
       ?title
       ?description
-      ?tags (** Must not contain white speca chars, but not check performed yet *) 
+      ?tags (*+ Must not contain white speca chars, but not check performed yet *) 
       img_file o =
         let title = Option.default title & fun () ->
           Filename.(basename *> split_extension *> fst) img_file

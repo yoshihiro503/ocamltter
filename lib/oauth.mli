@@ -19,7 +19,7 @@ val fetch_request_token :
   -> path:string 
 
   -> ?oauth_version:string 
-  -> ?oauth_signature_method:signature_method (** default is `Hmac_sha1 *)
+  -> ?oauth_signature_method:signature_method (*+ default is `Hmac_sha1 *)
   -> ?oauth_timestamp:float 
   -> ?oauth_nonce:string 
   -> ?oauth_other_params:(string * string) list
@@ -41,7 +41,7 @@ val fetch_access_token :
   -> path:string 
 
   -> ?oauth_version:string 
-  -> ?oauth_signature_method:signature_method  (** default is `Hmac_sha1 *)
+  -> ?oauth_signature_method:signature_method  (*+ default is `Hmac_sha1 *)
   -> ?oauth_timestamp:float 
   -> ?oauth_nonce:string 
   -> oauth_consumer_key:string 
@@ -59,13 +59,13 @@ type t = {
 
 val access :
   ?proto: [ `HTTP | `HTTPS ]
-  -> host: string (** host *)
-  -> ?port: int (** port *)
-  -> path:string (** path *) 
+  -> host: string (*+ host *)
+  -> ?port: int (*+ port *)
+  -> path:string (*+ path *) 
   -> meth:[< `GET of Http.params
           | `POST of Http.params
           | `POST_MULTIPART of Http.params2 ]
-     (** These parameters are outside of OAuth signature creation *)
+     (*+ These parameters are outside of OAuth signature creation *)
   -> oauth_other_params: Http.params
   -> t 
   -> (string, [> Http.error]) Result.t 

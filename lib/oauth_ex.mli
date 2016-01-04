@@ -100,17 +100,17 @@ module Make(Conf : Conf) : sig
   *)
 
   val access 
-    : ?proto: [ `HTTP | `HTTPS ] (** default is `HTTPS *)
-    -> host: string (** host *)
-    -> ?port: int   (** port *)
-    -> path:string  (** path *) 
+    : ?proto: [ `HTTP | `HTTPS ] (*+ default is `HTTPS *)
+    -> host: string (*+ host *)
+    -> ?port: int   (*+ port *)
+    -> path:string  (*+ path *) 
     -> meth:[< `GET of Http.params
             | `POST of Http.params
             | `POST_MULTIPART of Http.params2 ]
-       (** These parameters are outside of OAuth signature creation *)
+       (*+ These parameters are outside of OAuth signature creation *)
     -> oauth_other_params: Http.params
-       (** These parameters are included in the targets for OAuth signature creation *)
-    -> t (** Auth *)
+       (*+ These parameters are included in the targets for OAuth signature creation *)
+    -> t (*+ Auth *)
 
     -> (string, [> Http.error]) Result.t 
   (** Access the service API. 

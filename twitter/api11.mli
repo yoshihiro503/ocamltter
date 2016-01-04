@@ -27,10 +27,10 @@ type 'a result = ('a, Error.t) Result.t
 
 val twitter :
   Oauth.t
-  -> ?host:string           (** Normally ["api.twitter.com"] *)
-  -> Http.meth              (** POST/GET *)
-  -> string                 (** URL path part *)
-  -> (string * string) list (** header *)
+  -> ?host:string           (*+ Normally ["api.twitter.com"] *)
+  -> Http.meth              (*+ POST/GET *)
+  -> string                 (*+ URL path part *)
+  -> (string * string) list (*+ header *)
   -> (Json.t, [> Error.http | Error.json_parse ]) Result.t
 
 type 'a json_converter = Json.t -> ('a, Json.t Meta_conv.Error.t) Result.t 
@@ -139,18 +139,18 @@ module Cursor : sig
     Http.meth 
 
     -> ( 'elem result Stream.t -> 'final_result) 
-    (** final kontinuation *)
+    (*+ final kontinuation *)
 
     -> 'sublist_record Json_conv.decoder 
-    (** how to decode the raw result of sublist records *)
+    (*+ how to decode the raw result of sublist records *)
 
     -> ('sublist_record -> 'elem list) 
-    (** how to get a sublist from a sublist record *)
+    (*+ how to get a sublist from a sublist record *)
 
-    -> string  (** url piece. CR jfuruse: no printf interface? *)
+    -> string  (*+ url piece. CR jfuruse: no printf interface? *)
 
     -> ((params -> Oauth.t -> 'final_result) -> params -> 'the_function_type)
-    (** argument accumulator *)
+    (*+ argument accumulator *)
 
     -> 'the_function_type
 

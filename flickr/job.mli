@@ -14,8 +14,8 @@ val empty : (unit, 'error) t
 val create : (unit -> ('a, 'error) Result.t) -> ('a, 'error) t
 
 val retry
-  : ('st -> 'error -> ('st, 'error) Result.t) (** called when failed. The Result is to retry or not *)
-  -> 'st (** initial state *)
+  : ('st -> 'error -> ('st, 'error) Result.t) (*+ called when failed. The Result is to retry or not *)
+  -> 'st (*+ initial state *)
   -> ('a, 'error) t
   -> ('a, 'error) t
 

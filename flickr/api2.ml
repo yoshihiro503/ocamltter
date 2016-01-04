@@ -194,7 +194,7 @@ module Upload = struct
       ?hidden
       ?title
       ?description
-      ?tags (** Must not contain white space chars, but not check performed yet *) 
+      ?tags (*+ Must not contain white space chars, but not check performed yet *) 
       img_file o =
     Job.create & fun () ->
       Api.Upload.upload 

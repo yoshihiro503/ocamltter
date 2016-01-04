@@ -57,7 +57,7 @@ type header = {
 type headers = (string * string) list
 type params = (string * string) list
 type params2 = (string * [ `String of string
-                         | `File   of string (** file contents *) ]) list
+                         | `File   of string (*+ file contents *) ]) list
 
 type meth = [ `GET | `POST ]
 
@@ -129,8 +129,8 @@ let conn ?(port=80) hostname meth ?headers  path ps ?(rawpost="") f =
 let () = Curl.global_init Curl.CURLINIT_GLOBALALL
 
 type error = 
-  [ `Http of int * string  (** HTTP status other than 200 *)
-  | `Curl of Curl.curlCode * int * string (** libcURL error *)
+  [ `Http of int * string  (*+ HTTP status other than 200 *)
+  | `Curl of Curl.curlCode * int * string (*+ libcURL error *)
   ]
 
 let string_of_error = function

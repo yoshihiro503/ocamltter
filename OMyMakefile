@@ -8,7 +8,8 @@ WithOMy=true
 
 #| The prefix. Equal to the PREFIX environment variable
 try
-  PREFIX=$(getenv PREFIX)
+  if $(not $(defined PREFIX)):
+    PREFIX=$(getenv PREFIX)
 default
   eprintln(Specify PREFIX or prefix environment variable.)
   exit 1 
@@ -55,10 +56,10 @@ BYTE_ENABLED = true
 OCAMLFLAGS = -g 
 
 #|Warnings not to be printed separted with space
-OCAMLWARNING_IGNORE[] = 3 4 9 40 42 44 45 48
+OCAMLWARNING_IGNORE[] = 3 4 9 40 42 44 45 48 50
 
 #|Warnings treated as non errors
-OCAMLWARNING_NON_ERROR[] = 4 9 40 42 44 45 48
+OCAMLWARNING_NON_ERROR[] = 4 9 40 42 44 45 48 50
 
 #|If it is false, warnings do not stop the compilation even if they are listed in OCAMLWARNING_NON_ERROR
 #If you are in developing something, override it to true!
@@ -67,14 +68,14 @@ OCAMLWARNING_STOP_AT_ERROR_WARNING=false
 #|The maximum warning value.
 # This is the maximum warning ID NOT of the current OCaml compiler,
 #                                BUT of the OCaml compiler used by the author of OMyMakefile.
-OCAMLWARNING_MAX= 49
+OCAMLWARNING_MAX= 50
 
 #|Function to build warning switches
 OCAMLWARNING_MAKE()=
     if $(OCAMLWARNING_STOP_AT_ERROR_WARNING)
-        return -w A-$(concat -,$(OCAMLWARNING_IGNORE)) -warn-error +1..$(OCAMLWARNING_MAX)-$(concat -, $(OCAMLWARNING_NON_ERROR))
+        return -w $(concat -,A $(OCAMLWARNING_IGNORE)) -warn-error +1..$(concat -, $(OCAMLWARNING_MAX) $(OCAMLWARNING_NON_ERROR))
     else
-        return -w A-$(concat -,$(OCAMLWARNING_IGNORE)) -warn-error a
+        return -w $(concat -,A $(OCAMLWARNING_IGNORE)) -warn-error a
 
 #|OMyMakefile assumes installation with .cmt files
 OCAMLANNOTFLAGS = -annot -bin-annot
@@ -404,7 +405,13 @@ MyOCamlPackage(library_name, files, cmodules, linkopts) =
   CMA=$(library_name).cma
   CMXA=$(library_name).cmxa
   CMXS=$(library_name).cmxs
-  findlib_name=$(lowercase $(library_name))
+
+  if $(not $(defined PACKAGE_NAME))
+    findlib_name=$(lowercase $(library_name))
+    export
+  else
+    findlib_name=$(PACKAGE_NAME)
+    export
 
   if $(not $(defined MyOCamlPackageExtras))
       MyOCamlPackageExtras[]=
@@ -525,11 +532,54 @@ MyOCamlProgram(name, files) =
   export # The above thing is local: need to be exported # really?
 
   if $(not $(defined NO_INSTALL))
-    install: $(name) $(name).run $(name).opt
-      install $(name) $(name).run $(name).opt $(PREFIX)/bin
+    install: $(name)$(EXE) $(name).run $(name).opt
+      install $(name)$(EXE) $(name).run $(name).opt $(PREFIX)/bin
     uninstall:
-      rm -f $(PREFIX)/bin/$(name) $(PREFIX)/bin/$(name).run $(PREFIX)/bin/$(name).opt
+      rm -f $(PREFIX)/bin/$(name)$(EXE) $(PREFIX)/bin/$(name).run $(PREFIX)/bin/$(name).opt
     export
+
+MyOCamlApplication(name, files) =
+  MyOCamlProgram($(name), $(files))
+
+# This does not install exe
+MyOCamlPPX(name, files) =
+  WithOCamlVeryClean()
+  MyOCamlGenericProgram($(name), $(files))
+  export
+  TARGETS[]=$(name).opt $(name).run $(name)$(EXE)
+  return $(TARGETS)
+
+# This does not install exe
+MyOCamlPPXTargets(name) =
+  return $(name).run $(name).opt $(name)$(EXE)
+
+MyOCamlFindPackage(findlib_name, files) =
+    targets[]= META $(files)
+
+    if $(defined INSTALLED)
+      $(Installed $(findlib_name)): $(targets)
+        $(OCAMLFIND) remove $(findlib_name)
+        section:
+              $(OCAMLFIND) install $(findlib_name) $(targets)
+              CreateInstalled($(findlib_name), $(targets))
+
+      install: $(Installed $(findlib_name))
+
+      uninstall:
+        rm -f $(Installed $(findlib_name))
+        $(OCAMLFIND) remove $(findlib_name)
+      export
+    else
+      install: $(targets)
+        $(OCAMLFIND) remove $(findlib_name)
+        $(OCAMLFIND) install $(findlib_name) $(targets)
+
+      uninstall:
+	$(OCAMLFIND) remove $(findlib_name)
+      export
+    export
+
+
 
 #| Add a rule to build a toplevel $(name)
 #      name
@@ -561,6 +611,7 @@ OCamlTop(name, files) =
    #
    $(BYTEPROG): $(CMAFILES) $(CMOFILES) $(CLIBS)
         $(OCAMLFIND) $(OCAMLMKTOP) $(LAZY_OCAMLFINDFLAGS) $(PREFIXED_OCAMLPACKS) $(OCAMLFLAGS) $(OCAMLCFLAGS)\
+                $(OCAMLWARNING_MAKE) \
                 $(PREFIXED_OCAMLINCLUDES) $(OCAML_BYTE_LINK_FLAGS)\
                 -o $@ $(CMA_OTHER_FILES) $(CMAFILES) $(OCamlLinkSort $(CMOFILES))\
                 $(CLIBS) $(OCAML_LINK_FLAGS)
@@ -605,6 +656,13 @@ MyOCamlLibrary(library_name, files) =
   protected.CMIFILES = $(addsuffix .cmi, $(files))
   targets = $(OCamlLibrary $(library_name), $(files)) $(CMIFILES) $(glob i, *.mli) 
 
+  if $(not $(defined PACKAGE_NAME))
+    findlib_name=$(lowercase $(library_name))
+    export
+  else
+    findlib_name=$(PACKAGE_NAME)
+    export
+
   .DEFAULT: $(targets)
 
   export # The above thing is local: need to be exported
@@ -614,25 +672,25 @@ MyOCamlLibrary(library_name, files) =
     cmts =  $(addsuffix .cmt,  $(removesuffix $(glob i, *.cmo)))
     cmts += $(addsuffix .cmti, $(removesuffix $(glob i, *.mli)))
     if $(defined INSTALLED)
-      $(Installed $(library_name)): $(targets)
-        $(OCAMLFIND) remove $(library_name)
+      $(Installed $(findlib_name)): $(targets)
+        $(OCAMLFIND) remove $(findlib_name)
         section:
-              $(OCAMLFIND) install $(library_name) $(targets) $(cmts)
-              CreateInstalled($(library_name), $(targets))
+              $(OCAMLFIND) install $(findlib_name) $(targets) $(cmts)
+              CreateInstalled($(findlib_name), $(targets))
 
-      install: $(Installed $(library_name))
+      install: $(Installed $(findlib_name))
 
       uninstall:
-        rm -f $(Installed $(library_name))
-        $(OCAMLFIND) remove $(library_name)
+        rm -f $(Installed $(findlib_name))
+        $(OCAMLFIND) remove $(findlib_name)
       export
     else
       install: $(targets)
-        $(OCAMLFIND) remove $(library_name)
-        $(OCAMLFIND) install $(library_name) $(targets) $(cmts)
+        $(OCAMLFIND) remove $(findlib_name)
+        $(OCAMLFIND) install $(findlib_name) $(targets) $(cmts)
 
       uninstall:
-	$(OCAMLFIND) remove $(library_name)
+	$(OCAMLFIND) remove $(findlib_name)
       export
     export
 
@@ -736,3 +794,15 @@ MyOCamlOUnitTest(LIB) =
     .PHONY:test
 
     test: inline_tests.log
+
+WithMerlin() =
+  .merlin:
+    section:
+      chan=$(fopen $@, w)
+      fprintln($(chan), "PKG $(string $(OCAMLPACKS))")
+      foreach(x, $(OCAMLINCLUDES))
+        fprintln($(chan), "S $(x)")
+      fprintln($(chan), FLG $(OCAMLWARNING_MAKE))
+      close($(chan))
+  .DEFAULT: .merlin
+  export

@@ -191,7 +191,7 @@ end
 module Hashtag = struct
   type t = <
     text    : string;
-    indices : (int * int) (** location in the tweet string *)
+    indices : (int * int) (*+ location in the tweet string *)
   > [@@deriving conv{ocaml; json}]
 end
 
@@ -304,7 +304,7 @@ module Rate_limit_status = struct
   type limit = <
       limit     : float;
       remaining : float;
-      reset     : float; (** unix epoch *)
+      reset     : float; (*+ unix epoch *)
     > [@@deriving conv{ocaml; json}]
 
   type t = <
