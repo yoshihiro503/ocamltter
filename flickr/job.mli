@@ -5,7 +5,7 @@ open Spotlib.Spot
 
 type (+'a, 'error) t
 
-include Monad_intf.T2 with type ('a, 'error) t := ('a, 'error) t
+include Monad.T2 with type ('a, 'error) t := ('a, 'error) t
 
 type ('a, 'error) job = ('a, 'error) t
 

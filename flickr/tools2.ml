@@ -105,7 +105,7 @@ let uploads ?(remove_non_local=false) ~photoset img_files o =
     (* maybe overridden later *)
     ref (
       List.find_opt (fun pset -> pset#title = photoset) psets 
-      |> Option.map (fun pset -> pset#id)
+      |> Option.fmap (fun pset -> pset#id)
     )
   in
 

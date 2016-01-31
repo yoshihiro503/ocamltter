@@ -655,8 +655,8 @@ A comma-delimited list of extra information to fetch for each returned record. C
       | `Contacts -> 2
       | `Everybody -> 3
     in
-    let perm_comment = Option.map get_perm perm_comment
-    and perm_addmeta = Option.map get_perm perm_addmeta
+    let perm_comment = Option.fmap get_perm perm_comment
+    and perm_addmeta = Option.fmap get_perm perm_addmeta
     in
     let bool k b = k, if b then "1" else "0" in
     json_api o `POST "flickr.photos.setPerm"
@@ -1113,14 +1113,14 @@ module Upload = struct
         let bool k b = k, Some (if b then "1" else "0") in
   	let fields = 
           List.filter_map (fun (k,vopt) ->
-            flip Option.map vopt & fun v -> k,v)
+            flip Option.fmap vopt & fun v -> k,v)
             [ bool "is_public" is_public
   	    ; bool "is_friend" is_friend
   	    ; bool "is_family" is_family
   	    ; "hidden", Some (if hidden then "2" else "1")
             ; "title", Some title
             ; "description", description
-            ; "tags", Option.map (String.concat " ") tags
+            ; "tags", Option.fmap (String.concat " ") tags
             ] 
   	in
   	raw_api fields img_file o >>= fun s -> 

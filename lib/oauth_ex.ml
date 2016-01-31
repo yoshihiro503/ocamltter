@@ -1,7 +1,7 @@
 (** High level oauth functions *)
 
 open Spotlib.Spot
-open Spotlib.Result.Open (* Monads are Result *)
+open Spotlib.Result.Infix (* Monads are Result *)
 open Util
 
 module Extra = struct

@@ -1,7 +1,7 @@
 open Meta_conv.Open
 
 open Spotlib.Spot
-open Spotlib.Result.Open (* Monads are Result *)
+open Spotlib.Result.Infix (* Monads are Result *)
 
 open OCamltter_oauth
 open Api_intf
@@ -93,7 +93,7 @@ let api' post meth name = fun params oauth ->
 
 module Arg = struct
 
-  let (>>|) v f = Option.map f v
+  let (>>|) = Option.(>>|)
 
   (** {7 to_string functions of option values} *)
 
@@ -517,10 +517,10 @@ module Friendships = struct
   let lookup ?screen_name ?user_id oauth =
     api ts_of_json `GET "friendships/lookup.json"
       [ "screen_name", 
-        Option.map (String.concat ",") screen_name
+        Option.fmap (String.concat ",") screen_name
 
       ; "user_id", 
-        Option.map (String.concat "," ** List.map Int64.to_string) user_id
+        Option.fmap (String.concat "," ** List.map Int64.to_string) user_id
       ]
       oauth
 
