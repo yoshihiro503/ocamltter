@@ -15,9 +15,9 @@ let get_current_user o =
 let uploadable_by_name s =
   let _, ext = Filename.split_extension s in
   match String.lowercase ext with
-  | ".jpg" | ".jpeg" | ".gif" | ".png" | ".tif" | ".tiff" -> true
-  | ".wmv" | ".mp4" | ".avi" | ".mpg" | ".mpeg" | ".mov" -> true
-  | _ -> false
+  | ".jpg" | ".jpeg" | ".gif" | ".png" | ".tif" | ".tiff" -> Some `Image
+  | ".wmv" | ".mp4" | ".avi" | ".mpg" | ".mpeg" | ".mov" -> Some `Movie
+  | _ -> None
 
 (* Remove the duped photos in each photoset.
    Here "duped" means photos with the same non-empty title.
@@ -95,7 +95,7 @@ let delete_dups_in_sets o =
      fails, the medium remains in the photoset with the tag. It is not critical
      but the function should clean the tag in later trials.
 *)
-let uploads ?(remove_non_local=false) ~photoset img_files o =
+let uploads ?(remove_non_local=false) ~photoset ~existing img_files o =
   let open Job in do_;
   (_info, psets) <-- Photosets.getList' o;
 
@@ -154,15 +154,16 @@ let uploads ?(remove_non_local=false) ~photoset img_files o =
       up ~title img_file >>| !!% "Uploaded as id = %s@."
     end);
 
-  let img_file_tbl = 
-    let tbl = Hashtbl.create 107 in
-    flip iter img_files (fun img_file ->
-      let title = Filename.(basename *> split_extension *> fst) img_file in
-      Hashtbl.replace tbl title img_file);
-    tbl
+  let gone = 
+    let img_file_tbl = 
+      let tbl = Hashtbl.create 107 in
+      flip iter existing (fun img_file ->
+        let title = Filename.(basename *> split_extension *> fst) img_file in
+        Hashtbl.replace tbl title img_file);
+      tbl
+    in
+    flip filter !photos (fun (title, _phid) -> not & Hashtbl.mem img_file_tbl title) 
   in
-
-  let gone = flip filter !photos (fun (title, _phid) -> not & Hashtbl.mem img_file_tbl title) in
   (); flip iter gone (fun (title, phid) ->
     !!% "Photo %s (%s) is gone from the local dir@." title phid);
   (); if gone <> [] && not remove_non_local then

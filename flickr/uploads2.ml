@@ -15,8 +15,11 @@ let rev_dirs = ref []
 
 let remove_non_local = ref false
 
+let upload_movie = ref false
+
 let () = Arg.parse 
   [ "-remove-non-local", Arg.Set remove_non_local, "remove photos not in local directory from photoset (the photo still exists in the flickr)"
+  ; "-upload-movie", Arg.Set upload_movie, "upload movies too"
   ] 
   (fun x -> rev_dirs := x :: !rev_dirs) "uploads dirs.."
 
@@ -37,14 +40,16 @@ let () =
         if p#kind = `Ok Unix.S_REG then acc +::= p#path);
       !acc
     in
-    let photos = 
+    let targets = 
       flip List.filter photos & fun s ->
-        let b = Tools2.uploadable_by_name s in
-        if not b then !!% "WARNING: %s is not uploadable I think. Therefore ignored@." s;
-        b
+        match Tools2.uploadable_by_name s with
+        | Some `Image -> true
+        | Some `Movie when !upload_movie -> true
+        | Some `Movie ->  !!% "WARNING: %s is a movie and therefore skipped@." s; false
+        | _ -> !!% "WARNING: %s is not uploadable I think. Therefore ignored@." s; false
     in
     (* not try to make an empty photoset *)
-    if photos <> [] then begin
+    if targets <> [] then begin (* CR jfuruse: impossible to remove locally removed photos with empty targets *)
       match 
         Job.run & Job.retry (fun conseq_fails e ->
           match e with
@@ -65,7 +70,7 @@ let () =
               `Ok (conseq_fails + 1)
             end) 0 
         & Tools2.uploads ~remove_non_local:!remove_non_local 
-          ~photoset photos o 
+          ~photoset ~existing:photos targets o 
       with
       | `Ok () -> ()
       | `Error (desc, _) -> Api2.error desc
