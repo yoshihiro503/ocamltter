@@ -16,7 +16,7 @@ let uploadable_by_name s =
   let _, ext = Filename.split_extension s in
   match String.lowercase ext with
   | ".jpg" | ".jpeg" | ".gif" | ".png" | ".tif" | ".tiff" -> Some `Image
-  | ".wmv" | ".mp4" | ".avi" | ".mpg" | ".mpeg" | ".mov" -> Some `Movie
+  | ".wmv" | ".mp4" | ".avi" | ".mpg" | ".mpeg" | ".mov" | ".3gp" -> Some `Movie
   | _ -> None
 
 (* Remove the duped photos in each photoset.
