@@ -2,7 +2,8 @@ open Spotlib.Spot
 open OCamltter_oauth
 open OCamltter_twitter
 open Api11
-open Ppx_orakuda.Regexp.Infix
+open Ppx_orakuda.Regexp.Re_pcre.Infix
+open Ppx_orakuda.Regexp.Re_pcre.Literal
 
 let auth_file = match Exn.catch Sys.getenv "HOME" with
   | `Ok home -> home ^/ ".ocamltter_auths"
