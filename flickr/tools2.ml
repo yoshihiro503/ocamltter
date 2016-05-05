@@ -122,6 +122,7 @@ let uploads ?(remove_non_local=false) ~photoset ~existing img_files o =
   let up ~title img_file = do_;
     (); !!% "Uploading %s@." img_file;
     photo_id <-- Upload.upload 
+      ~is_family:true
       ~title img_file 
       ~tags:["uploading"; "photoset_" ^ photoset] 
       o;
