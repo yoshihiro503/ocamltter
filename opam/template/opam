@@ -1,5 +1,7 @@
 authors: [ "Yoshihiro Imai" "Jun Furuse" ]
 homepage: "https://github.com/yoshihiro503/ocamltter"
+bug-reports: "https://github.com/yoshihiro503/ocamltter/issues"
+dev-repo: "https://github.com/yoshihiro503/ocamltter/ocamltter.git"
 depends: [
   "base64"
   "ocamlfind" { build }
