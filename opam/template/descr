@@ -1,7 +1,7 @@
-The OCAMLTTER twitter client
-OCAMLTTER is a Twitter client written in OCaml.
+The OCAMLTTER OAuth1 library and twitter, flickr clients
+OCAMLTTER is an OAuth1 library with a CUI twitter client and a flickr uploader.
 
-It is a CLI application, implemented as a custom OCaml toplevel (REPL). 
+OCAMLTTER Twitter client is a CLI application, implemented as a custom OCaml toplevel (REPL). 
 Common twitter commands are accessible via simple functions like:
 
            - l();;                 list timeline

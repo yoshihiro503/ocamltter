@@ -1,3 +1,11 @@
+4.1.0
+----------------
+
+- flickr: *.3gp files are considered as movies.
+* flickr: photos are now uploaded as "family"
+* flickr: -upload-movie option is added. Movies are not uploaded by default
+* port for OCaml 4.03.0, ppx_orakuda.3.0.0, ppx_meta_conv.2.3.0 and spotlib.3.0.0
+
 4.0.2
 ----------------
 

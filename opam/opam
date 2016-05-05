@@ -1,10 +1,11 @@
 opam-version: "1.2"
-version: "4.1.1"
+version: "4.1.0"
 authors: [
   "Yoshihiro Imai" "Jun Furuse"
 ]
 maintainer: "jun.furuse@gmail.com"
-bug-reports: "jun.furuse@gmail.com"
+homepage: "https://github.com/yoshihiro503/ocamltter"
+bug-reports: "https://bitbucket.org/camlspotter/ocamltter/issues?status=new&status=open"
 dev-repo: "hg://https://bitbucket.org/camlspotter/ocamltter"
 build: [
   [ "ocaml" "setup.ml" "-configure" "--prefix" prefix ]
@@ -17,17 +18,16 @@ remove: [
   [ "ocaml" "setup.ml" "-configure" "--prefix" prefix ]
   [ "ocaml" "setup.ml" "-uninstall" ]
 ]
-homepage: "https://github.com/yoshihiro503/ocamltter"
 depends: [
   "base64"
-  "ocamlfind"
-  "omake"
+  "ocamlfind" { build }
+  "omake" { build }
   "cryptokit"
   "ocurl" { >= "0.5.3" }
-  "spotlib" { >= "2.5.3" }
-  "orakuda" { >= "2.0.0" }
-  "ppx_meta_conv" { >= "2.0.2" }
+  "spotlib" { >= "3.0.0" }
+  "orakuda" { >= "3.0.0" }
+  "ppx_meta_conv" { >= "2.2.0" }
 ]
 available: [
-  ocaml-version >= "4.02.2" & ocaml-version < "4.03.0"
+  ocaml-version >= "4.03.0"
 ]
