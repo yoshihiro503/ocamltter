@@ -19,4 +19,4 @@ setup.ml.ba*
 *.exe
 *.opt
 *.run
-
+opam/generated
