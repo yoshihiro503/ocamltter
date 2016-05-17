@@ -8,7 +8,8 @@ WithOMy=true
 
 #| The prefix. Equal to the PREFIX environment variable
 try
-  PREFIX=$(getenv PREFIX)
+  if $(not $(defined PREFIX)):
+    PREFIX=$(getenv PREFIX)
 default
   eprintln(Specify PREFIX or prefix environment variable.)
   exit 1 

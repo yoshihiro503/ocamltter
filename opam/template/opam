@@ -1,5 +1,7 @@
 authors: [ "Yoshihiro Imai" ]
 homepage: "https://github.com/yoshihiro503/ocamltter"
+bug-reports: "https://github.com/yoshihiro503/ocamltter/issues"
+dev-repo: "git://https://github.com/yoshihiro503/ocamltter.git"
 depends: [
   "ocamlfind"
   "omake"
@@ -7,6 +9,7 @@ depends: [
   "ocurl" {>="0.5.3"}
   "spotlib" {>="2.5.3"}
   "orakuda" {>="2.0.0"}
-  "ppx_meta_conv" {>="2.0.2"}
+  "ppx_meta_conv" {>="2.0.2" & <= "2.1.0" }
+  "tiny_json"
 ]
 available: [ ocaml-version >= "4.02.2" & ocaml-version < "4.03.0" ]
