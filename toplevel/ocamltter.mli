@@ -34,6 +34,7 @@ val u : string -> status_id
 val rt : status_id -> status_id
 val re : status_id -> string -> status_id
 val qt : status_id -> string -> status_id
+val show : status_id -> Tweet.t
 val link : status_id -> string
 val qtlink : status_id -> string -> status_id
 val reqt : status_id -> string -> status_id
