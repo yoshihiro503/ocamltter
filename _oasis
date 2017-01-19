@@ -1,14 +1,14 @@
-OASISFormat: 0.2
+OASISFormat: 0.4
 Name:        ocamltter
-Version:     4.1.0
+Version:     4.1.1
 Synopsis:    The OCAMLTTER OAuth1 library and twitter, flickr clients
 Authors:     Jun FURUSE
 License:     LGPL-2.0 with OCaml linking exception
 Plugins:     StdFiles (0.2)
 BuildType:   Custom (0.2)
 InstallType: Custom (0.2)
-XCustomBuild:      sh -c "cp OMakeroot.in OMakeroot; omake PREFIX=$prefix"
-XCustomInstall:    sh -c "cp OMakeroot.in OMakeroot; omake PREFIX=$prefix install"
-XCustomUninstall:  sh -c "cp OMakeroot.in OMakeroot; omake PREFIX=$prefix uninstall"
-XCustomBuildClean: sh -c "cp OMakeroot.in OMakeroot; omake PREFIX=$prefix clean"
+XCustomBuild:      sh -c "cp OMakeroot.in OMakeroot; unset OCAMLPARAM; omake"
+XCustomInstall:    sh -c "cp OMakeroot.in OMakeroot; unset OCAMLPARAM; omake install"
+XCustomUninstall:  sh -c "cp OMakeroot.in OMakeroot; unset OCAMLPARAM; omake uninstall"
+XCustomBuildClean: sh -c "cp OMakeroot.in OMakeroot; unset OCAMLPARAM; omake clean"
 BuildTools: omake
