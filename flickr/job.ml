@@ -1,34 +1,43 @@
 open Spotlib.Spot
 
 module M = struct
-  type ('a, 'error) t = unit -> ('a, ('error * ('a, 'error) t)) Result.t
+  type ('a, 'error) t = Job of (unit -> ('a, ('error * ('a, 'error) t)) Result.t)
 
-  let return a = fun () -> `Ok a
+  let run (Job x) = x ()
+                  
+  let return a = Job (fun () -> Ok a)
 
-  let rec bind at f = fun () -> match at () with
-    | `Ok v -> f v ()
-    | `Error (e,at') -> `Error (e, bind at' f)
+  let rec bind j f = Job (fun () ->
+    match run j with
+    | Error (e, j') -> Error (e, bind j' f)
+    | Ok a -> run & f a)
 end
-  
+
 include M
 include Monad.Make2(M)
   
 type ('a, 'error) job = ('a, 'error) t
 
-let empty = fun () -> `Ok ()
+let empty = return ()
   
-let rec create f = fun () -> match f () with
-  | (`Ok _ as res) -> res
-  | `Error e -> `Error (e, create f)
+let rec create f = Job (fun () -> match f () with
+  | Ok _ as res -> res
+  | Error e -> Error (e, create f))
 
-let rec retry p st t = fun () -> match t () with
-  | `Ok _ as res -> res
-  | `Error (e, t') ->
-      match p st e with
-      | `Ok st' -> retry p st' t' ()
-      | `Error e -> `Error (e, t')
+let rec retry
+          (p : 'st -> 'error -> ('st, 'error2) result)
+          (st : 'st)
+          (j : ('a, 'error) t) : ('a, 'error2) t =
+  Job (fun () ->
+      match run j with
+      | Ok _ as res -> res
+      | Error (e, j') ->
+         match p st e with
+         | Error e -> (Error (e, j'))
+         | Ok st' ->
+            run & retry p st' j')
 
-let run t = t ()
+let run (Job t) = t ()
 
 module Seq = struct
   type ('a, 'error) t = ( [`None | `Some of 'a * ('a, 'error) t], 'error ) job

@@ -37,7 +37,7 @@ let () =
     let photos = 
       let acc = ref [] in
       Unix.Find.find ~follow_symlink:true [dir] ~f:(fun p ->
-        if p#kind = `Ok Unix.S_REG then acc +::= p#path);
+        if p#kind = Ok Unix.S_REG then acc +::= p#path);
       !acc
     in
     let targets = 
@@ -57,21 +57,21 @@ let () =
               !!% "Server side error (%d): %a@." n Api2.format_error e;
               !!% "Failed. Wait 1 min then retry...@.";
               Unix.sleep 60;
-              `Ok conseq_fails
+              Ok conseq_fails
           | _ ->
             if conseq_fails >= 3 then begin
               !!% "Failed 3 times! Check your setting!@.";
               (* CR jfuruse: we have no good way to reset conseq_fails *)
-              `Error e
+              Error e
             end else begin
               !!% "Error: %a@." Api2.format_error e;
               !!% "Failed. Wait 1 min then retry...@.";
               Unix.sleep 60;
-              `Ok (conseq_fails + 1)
+              Ok (conseq_fails + 1)
             end) 0 
         & Tools2.uploads ~remove_non_local:!remove_non_local 
           ~photoset ~existing:photos targets o 
       with
-      | `Ok () -> ()
-      | `Error (desc, _) -> Api2.error desc
+      | Ok () -> ()
+      | Error (desc, _) -> Api2.error desc
     end

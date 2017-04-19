@@ -23,22 +23,23 @@ FILES[] =
 
 MyOCamlPackage(oCamltter_flickr, $(FILES), $(EMPTY), $(EMPTY))
 
+# FILES[] = 
+#     app
+#     conf
+#     auth
+#     api
+#     tools
+#     test
+# 
+# NO_INSTALL=true
+# MyOCamlProgram(flickr_test, $(FILES))
+
 FILES[] = 
     app
     conf
     auth
     api
     tools
-    test
-
-NO_INSTALL=true
-MyOCamlProgram(flickr_test, $(FILES))
-
-FILES[] = 
-    app
-    conf
-    auth
-    api
     job
     api2
     tools2
@@ -47,16 +48,16 @@ FILES[] =
 NO_INSTALL=true
 MyOCamlProgram(flickr_test2, $(FILES))
 
-FILES[] = 
-    app
-    conf
-    auth
-    api
-    tools
-    uploads
-
-NO_INSTALL=true
-MyOCamlProgram(uploads, $(FILES))
+# FILES[] = 
+#     app
+#     conf
+#     auth
+#     api
+#     tools
+#     uploads
+# 
+# NO_INSTALL=true
+# MyOCamlProgram(uploads, $(FILES))
 
 FILES[] = 
     app
@@ -71,13 +72,12 @@ FILES[] =
 NO_INSTALL=true
 MyOCamlProgram(uploads2, $(FILES))
 
-FILES[] = 
-    app
-    conf
-    auth
-    api
-    simple_upload
-
-
-NO_INSTALL=true
-MyOCamlProgram(simple_upload, $(FILES))
+# FILES[] = 
+#     app
+#     conf
+#     auth
+#     api
+#     simple_upload
+# 
+# NO_INSTALL=true
+# MyOCamlProgram(simple_upload, $(FILES))

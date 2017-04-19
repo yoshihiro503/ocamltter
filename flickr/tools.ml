@@ -48,8 +48,11 @@ let delete_dups_in_sets o =
             flip List.iter (List.tl xs) & fun photo_id ->
               !!% "Deleting %s : %s@." title photo_id;
               match Photos.delete photo_id o with
-              | `Error e -> error e
-              | `Ok () -> !!% "Deleted@."
+              | Error e -> error e
+              | Ok () -> !!% "Deleted@."
+
+(***
+
 (* 
 
    This is an upload algorithm which suits the author's personal situation. 
@@ -125,8 +128,8 @@ let uploads ~photoset img_files o =
           ~tags:["uploading"; "photoset_" ^ photoset] 
           o
       with
-      | `Error e -> `Error (e, upload)
-      | `Ok photo_id -> 
+      | Error e -> Error (e, upload)
+      | Ok photo_id -> 
           photos := (title, photo_id) :: !photos;
           add_to_photoset photo_id
 
@@ -138,8 +141,8 @@ let uploads ~photoset img_files o =
           begin match 
             Photosets.create ~title:photoset ~primary_photo_id: photo_id o
           with
-          | `Error e -> `Error (e, fun () -> add_to_photoset photo_id)
-          | `Ok res -> 
+          | Error e -> Error (e, fun () -> add_to_photoset photo_id)
+          | Ok res -> 
               psid_opt := Some res#id;
               clean_uploading_tag photo_id
           end
@@ -148,8 +151,8 @@ let uploads ~photoset img_files o =
           begin match 
               Photosets.addPhoto psid ~photo_id o 
           with
-          | `Error e -> `Error (e, fun () -> add_to_photoset photo_id)
-          | `Ok () -> 
+          | Error e -> Error (e, fun () -> add_to_photoset photo_id)
+          | Ok () -> 
               clean_uploading_tag photo_id
           end              
 
@@ -158,8 +161,8 @@ let uploads ~photoset img_files o =
       match
         Photos.setTags photo_id ["photoset_" ^ photoset] o 
       with
-      | `Error e -> `Error (e, fun () -> clean_uploading_tag photo_id)
-      | `Ok () -> `Ok photo_id
+      | Error e -> Error (e, fun () -> clean_uploading_tag photo_id)
+      | Ok () -> Ok photo_id
     in
 
     let trial = 2 in
@@ -167,16 +170,16 @@ let uploads ~photoset img_files o =
 
     let rec try_ left f =
       match f () with
-      | `Error (e, _) when left = 0 -> 
+      | Error (e, _) when left = 0 -> 
           format_error Format.stderr e;
           !!% "No more retry@.";
-          `Error e
-      | `Error (e, retry) ->
+          Error e
+      | Error (e, retry) ->
           format_error Format.stderr e;
           !!% "Retrying (left=%d) after %d secs...@." left wait;
           Unix.sleep wait;
           try_ (left-1) retry
-      | (`Ok _ as ok) -> ok
+      | (Ok _ as ok) -> ok
     in
     try_ trial upload
   in
@@ -188,8 +191,9 @@ let uploads ~photoset img_files o =
       ()
     end else 
       match up ~title img_file with
-      | `Ok pid -> 
+      | Ok pid -> 
           !!% "Uploaded as id = %s@." pid
-      | `Error _e ->
+      | Error _e ->
           !!% "Errors reached critical level. Aborting.@.";
           exit 1
+ *)

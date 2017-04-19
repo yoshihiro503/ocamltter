@@ -35,7 +35,7 @@ module Auth = struct
         | [atoken] -> `Found (Oauth_ex.oauth consumer atoken)
         | _ -> failwithf "User %s has more than one entry for app %s" user app
 
-  let load path = match Ocaml.load_with (Util.to_result *< t_of_ocaml) path with
+  let load path = match Ocaml.load_with t_of_ocaml path with
     | Ok [x] -> x
     | _ -> assert false
 
@@ -50,7 +50,7 @@ end
 
 module Single = struct
   let load auth_file =
-    match Ocaml.load_with (Util.to_result *< Access_token.t_of_ocaml) auth_file with
+    match Ocaml.load_with Access_token.t_of_ocaml auth_file with
     | Ok [a] -> a
     | _ -> assert false
   

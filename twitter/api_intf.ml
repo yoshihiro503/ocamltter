@@ -6,7 +6,7 @@ open OCamltter_oauth
 module Json = struct
   include Tiny_json.Json
   let json_of_t x = x
-  let t_of_json ?trace:_ x = `Ok x
+  let t_of_json ?trace:_ x = Ok x
 
   let ocaml_of_t t = Ocaml.String (show t)
   let t_of_ocaml = Ocaml_conv.Helper.of_deconstr (function
@@ -106,10 +106,10 @@ end = struct
 end
 
 module Client : sig
-  type t = string * [`Ok of Xml.xml | `Error of exn] [@@deriving conv{ocaml; json}]
+  type t = string * (Xml.xml, exn) result [@@deriving conv{ocaml; json}]
   val name : t -> string
 end = struct
-  type t = string * [`Ok of Xml.xml | `Error of exn]
+  type t = string * (Xml.xml, exn) result
 
   open Meta_conv
   open Json
@@ -127,11 +127,11 @@ end = struct
   let ocaml_of_t (s, _) = Ocaml.String s   
 
   let name = function
-    | (_, `Ok (Xml.PCData client_name))
-    | (_, `Ok (Xml.Tag ("a", _, [Xml.PCData client_name]))) ->
+    | (_, Ok (Xml.PCData client_name))
+    | (_, Ok (Xml.Tag ("a", _, [Xml.PCData client_name]))) ->
         client_name
-    | (s, `Ok _) -> s
-    | (s, `Error _) -> s
+    | (s, Ok _) -> s
+    | (s, Error _) -> s
 
 end
 

@@ -1,5 +1,3 @@
-open Spotlib.Spot
-    
 module Extra : sig
 
   include module type of struct include Oauth end
@@ -69,7 +67,7 @@ module Make(Conf : Conf) : sig
 
   val fetch_request_token 
     : unit 
-    -> (Request_token.t, [> Http.error ]) Result.t
+    -> (Request_token.t, [> Http.error ]) result
   (** Fetch a request token from the service. 
 
       See the implementation of [authorize_cli_interactive]
@@ -79,7 +77,7 @@ module Make(Conf : Conf) : sig
   val fetch_access_token 
     : req_token:Request_token.t 
     -> verif:string 
-    -> ((string * string) list * Access_token.t, [> Http.error ]) Result.t
+    -> ((string * string) list * Access_token.t, [> Http.error ]) result
   (** Fetch an access token sending the request token 
       and the corresponding verification string from the service 
 
@@ -112,7 +110,7 @@ module Make(Conf : Conf) : sig
        (*+ These parameters are included in the targets for OAuth signature creation *)
     -> t (*+ Auth *)
 
-    -> (string, [> Http.error]) Result.t 
+    -> (string, [> Http.error]) result
   (** Access the service API. 
 
       Please note that [Http.params] and [Http.params2] of [meth]

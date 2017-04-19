@@ -221,6 +221,6 @@ let format_error = Api.format_error
 let error = Api.error
 
 let run_and_fail_at_error t = match Job.run t with
-  | `Ok v -> v
-  | `Error (e, _) -> error e
+  | Ok v -> v
+  | Error (e, _) -> error e
 

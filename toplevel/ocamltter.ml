@@ -13,7 +13,7 @@ module Oauth = struct
   end)
 
   let load auth_file =
-    match Ocaml.load_with (Util.to_result *< Access_token.t_of_ocaml) auth_file with
+    match Ocaml.load_with Access_token.t_of_ocaml auth_file with
     | Ok [a] -> a
     | _ -> assert false
   
@@ -87,8 +87,8 @@ let default def v = v |> Result.result id (fun e ->
   def)
 
 let from_Ok = function
-  | `Ok v -> v
-  | `Error e -> raise (Error e)
+  | Ok v -> v
+  | Error e -> raise (Error e)
 
 let from_Some = function
   | Some v -> v
@@ -158,8 +158,8 @@ let kwsk id =
   let o = get_oauth () in
   let rec iter store id =
     match Tweets.show o id with
-    | `Error _ -> store
-    | `Ok tw -> 
+    | Error _ -> store
+    | Ok tw -> 
         match tw#in_reply_to_status_id with
         | Some id -> iter (tw :: store) id
         | None -> tw :: store

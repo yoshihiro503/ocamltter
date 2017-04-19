@@ -44,4 +44,4 @@ val by_curl :
      | `POST of params (*+ POST *)
      | `POST_MULTIPART of params2 (*+ POST by multipart *)
      ]
-  -> (string, [> error]) Result.t
+  -> (string, [> error]) result

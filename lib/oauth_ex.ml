@@ -1,7 +1,7 @@
 (** High level oauth functions *)
 
 open Spotlib.Spot
-open Spotlib.Result.Infix (* Monads are Result *)
+open Result.Infix (* Monads are Result *)
 open Util
 
 module Extra = struct
@@ -123,14 +123,14 @@ module Make(Conf : Conf) = struct
         
   let authorize_cli_interactive () =
     match fetch_request_token () with
-    | `Error e -> error e
-    | `Ok req_token ->
+    | Error e -> error e
+    | Ok req_token ->
         Printf.printf "Please grant access at %s%s\n" authorize_url req_token.Request_token.token;
         print_string "Give me the PIN: "; flush stdout;
         let verif = read_line () in
         match fetch_access_token ~req_token ~verif with
-        | `Error e -> error e
-        | `Ok (res, acc_token) -> res, acc_token
+        | Error e -> error e
+        | Ok (res, acc_token) -> res, acc_token
 
   let access = Oauth.access
 end

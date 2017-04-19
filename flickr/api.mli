@@ -55,7 +55,7 @@ module Fail : sig
              stat : string >
   [@@deriving conv{ocaml; json}]
   val format : Format.formatter -> t -> unit
-  val check : Json.t -> [> `Error of [> `API of t ] | `Ok of Json.t ]
+  val check : Json.t -> (Json.t, [> `API of t ]) result
 end
 
 (** We see lots of records with only one field "content". 
@@ -94,12 +94,13 @@ val json_api :
     | `Json of Json.error * string ])
   Result.t
 
-type ('a, 'error) result = ('a, ([> Error.t] as 'error)) Result.t
-(** Common result *)
-
 module Auth : sig
   module Oauth : sig
-    val checkToken : Oauth.t -> (Json.t, 'error) result
+    val checkToken : Oauth.t -> (Json.t,
+                                 [> `API of Fail.t
+                                 | `Curl of Curl.curlCode * int * string
+                                 | `Http of int * string
+                                 | `Json of Json.error * string ]) result
     (** flickr.auth.oauth.checkToken *)
   end
 end
@@ -139,21 +140,20 @@ module Photos : sig
       page:int ->
       ?tags:bool ->
       Oauth.t ->
-      (GetNotInSet.photos, 'error) result
+      (GetNotInSet.photos, [> Error.t]) result
   (** flickr.photos.getNotInSet *)
 
   val getNotInSet :
     ?tags:bool ->
     Oauth.t ->
-    (< pages : int
-    ; perpage : int
-    ; stream : ((GetNotInSet.photo,
-                 ([> Error.t] as 'error) * (int -> 'a Stream.t) * int) Result.t as 'a) Stream.t
-    ; total : int 
-      >,
-     'error) Result.t
+    (< pages : int;
+     perpage : int;
+     stream : (GetNotInSet.photo,
+               ([> Error.t ] as 'err) * int) result Stream.t;
+     total : int >,
+     'err) result
   (** flickr.photos.getNotInSet, stream interface *)
-
+    
   module GetInfo : sig
     type owner =
         < location : string
@@ -207,7 +207,7 @@ module Photos : sig
   val getInfo :
     string ->
     Oauth.t ->
-    (GetInfo.photo, 'error) result
+    (GetInfo.photo, [> Error.t]) result
   (** flickr.photos.getInfo *)
 
   module GetExif :  sig
@@ -230,27 +230,27 @@ module Photos : sig
   val getExif :
     string ->
     Oauth.t ->
-    (GetExif.photo, 'error) result
+    (GetExif.photo, [> Error.t]) result
   (** flickr.photos.getExif *)
 
   val addTags :
     string ->
     string list ->
     Oauth.t ->
-    (unit, 'error) result
+    (unit, [> Error.t]) result
   (** flickr.photos.addTags *)
 
   val setTags :
     string ->
     string list ->
     Oauth.t ->
-    (unit, 'error) result
+    (unit, [> Error.t]) result
   (** flickr.photos.setTags *)
 
   val delete :
     string ->
     Oauth.t ->
-    (unit, 'error) result
+    (unit, [> Error.t]) result
   (** flickr.photos.delete *)
 
   module Search :
@@ -282,7 +282,7 @@ module Photos : sig
     ?per_page:int ->
     ?page:int ->
     Oauth.t ->
-    (Search.photos, 'error) result
+    (Search.photos, [> Error.t]) result
   (** flickr.photos.search *)
 
   val setPerms : string ->
@@ -298,7 +298,7 @@ module Photos : sig
                   | `Friends_and_family
                   | `Nobody ] ->
     Oauth.t ->
-    (unit, 'error) result
+    (unit, [> Error.t]) result
   (** flickr.photos.setPerms *)
 end
 
@@ -315,7 +315,7 @@ module Photosets : sig
     title:string ->
     primary_photo_id:string ->
     Oauth.t ->
-    (Create.photoset, 'error) result
+    (Create.photoset, [> Error.t]) result
   (** flickr.photosets.create *)
       
   module GetList : sig
@@ -357,7 +357,7 @@ module Photosets : sig
     per_page: int ->
     page:int ->
     Oauth.t ->
-    (GetList.photoset, 'error) result
+    (GetList.photoset, [> Error.t]) result
   (** flickr.photosets.getList *)
 
   val getList :
@@ -365,7 +365,7 @@ module Photosets : sig
     (< cancreate : bool
      ; photoset : GetList.set list
      ; total : int >,
-     'error) result
+     [> Error.t]) result
   (** flickr.photosets.getList, in stream api *)
 
   module GetPhotos : sig
@@ -403,7 +403,7 @@ module Photosets : sig
     page:int ->
     ?extras: string list ->
     Oauth.t ->
-    (GetPhotos.photoset, 'error) result
+    (GetPhotos.photoset, [> Error.t]) result
   (** flickr.photosets.getPhotos 
 
       extras: extra information to fetch for each returned record. Currently supported fields are: license, date_upload, date_taken, owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, o_dims, views, media, path_alias, url_sq, url_t, url_s, url_m, url_o
@@ -419,28 +419,28 @@ module Photosets : sig
      ; photo : GetPhotos.photo list
      ; primary : string
      ; title : string
-     ; total : int >, 'error) result
+     ; total : int >, [> Error.t]) result
   (** flickr.photosets.getPhotos, streamed *)
 
   val removePhotos :
     string ->
     string list ->
     Oauth.t ->
-    (unit, 'error) result
+    (unit, [> Error.t]) result
   (** flickr.photosets.removePhotos *)
 
   val addPhoto :
     string ->
     photo_id:string ->
     Oauth.t ->
-    (unit, 'error) result
+    (unit, [> Error.t]) result
   (** flickr.photosets.addPhoto *)
 
   val reorderPhotos : 
     string ->
     string list ->
     Oauth.t ->
-    (unit, 'error) result 
+    (unit, [> Error.t]) result 
 end
 
 module People : sig
@@ -487,7 +487,7 @@ module People : sig
 
   val getUploadStatus :
     Oauth.t ->
-    (GetUploadStatus.user, 'error) result
+    (GetUploadStatus.user, [> Error.t]) result
   (** flickr.people.getUploadStatus *)
 end
 
@@ -512,7 +512,7 @@ module Tags : sig
   val getListPhoto :
     string ->
     Oauth.t ->
-    (GetListPhoto.t, 'error) result
+    (GetListPhoto.t, [> Error.t]) result
   (** flickr.tags.getListPhoto *)
 end
 
@@ -527,7 +527,7 @@ module Test : sig
 
   val login :
     Oauth.t ->
-    (Login.t, 'error) result
+    (Login.t, [> Error.t]) result
   (** flickr.test.login *)
 end
     

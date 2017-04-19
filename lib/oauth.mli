@@ -5,8 +5,6 @@
 
 *)
 
-open Spotlib.Spot
-
 type signature_method = [ `Hmac_sha1
                         | `Plaintext
                         | `Rsa_sha1 of Cryptokit.RSA.key 
@@ -27,7 +25,7 @@ val fetch_request_token :
   -> oauth_consumer_secret:string 
 
   -> unit
-  -> (string, [> Http.error]) Result.t 
+  -> (string, [> Http.error]) result
 
 val fetch_access_token : 
   verif:string 
@@ -48,7 +46,7 @@ val fetch_access_token :
   -> oauth_consumer_secret:string 
 
   -> unit
-  -> (string, [> Http.error]) Result.t 
+  -> (string, [> Http.error]) result
 
 type t = {
   consumer_key        : string;
@@ -68,5 +66,5 @@ val access :
      (*+ These parameters are outside of OAuth signature creation *)
   -> oauth_other_params: Http.params
   -> t 
-  -> (string, [> Http.error]) Result.t 
+  -> (string, [> Http.error]) result
 
