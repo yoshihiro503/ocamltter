@@ -13,8 +13,8 @@ module Oauth = struct
   end)
 
   let load auth_file =
-    match Ocaml.load_with_exn Access_token.t_of_ocaml auth_file with
-    | [a] -> a
+    match Ocaml.load_with (Util.to_result *< Access_token.t_of_ocaml) auth_file with
+    | Ok [a] -> a
     | _ -> assert false
   
   let get_acc_token auth_file =

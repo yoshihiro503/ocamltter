@@ -71,3 +71,8 @@ module Date : sig
   val to_string : t -> string
   val pmonth : string -> int
 end
+
+val to_result : [`Ok of 'a | `Error of 'b] -> ('a, 'b) result
+(** Conversion function of the result types 
+    from the polymorphic variant version to the normal variants
+ *)

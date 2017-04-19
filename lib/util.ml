@@ -199,3 +199,7 @@ module Date = struct
     | unknown ->
 	raise (Invalid_argument ("Date.pmonth: unknown month ["^unknown^"]"))
 end
+
+let to_result = function
+  | `Ok x -> Ok x
+  | `Error x -> Error x

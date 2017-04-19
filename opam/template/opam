@@ -7,10 +7,11 @@ depends: [
   "ocamlfind" { build }
   "omake" { build }
   "cryptokit"
-  "ocurl" {>="0.5.3"}
-  "spotlib" {>="3.0.0"}
-  "ppx_orakuda" {>="3.0.0"}
-  "ppx_meta_conv" {>="2.4.0"}
+  "ocurl" { >= "0.5.3" }
+  "spotlib" { >= "3.0.0" }
+  "ppx_orakuda" { >= "3.0.0" }
+  "ppx_meta_conv" { >= "2.6.0" }
+  "camlon" { >= "1.0.1" }
   "tiny_json"
   "ppx_monadic" 
 ]
