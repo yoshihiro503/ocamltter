@@ -1,6 +1,6 @@
 OASISFormat: 0.4
 Name:        ocamltter
-Version:     4.1.1
+Version:     4.1.2
 Synopsis:    The OCAMLTTER OAuth1 library and twitter, flickr clients
 Authors:     Jun FURUSE
 License:     LGPL-2.0 with OCaml linking exception

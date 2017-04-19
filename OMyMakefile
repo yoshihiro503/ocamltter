@@ -22,8 +22,6 @@ default
     exit 1 
   export PREFIX
 
-eprintln(PREFIX=$(PREFIX))
-
 #| OMy requires OCamlFind!
 USE_OCAMLFIND = true
 OCAMLFIND_DESTDIR= $(shell ocamlfind printconf destdir)
@@ -749,9 +747,9 @@ WithMerlin() =
   .merlin:
     section:
       chan=$(fopen $@, wb)
-      fprintln($(chan), "PKG $(string $(OCAMLPACKS))")
+      fprintln($(chan), PKG $(string $(OCAMLPACKS)))
       foreach(x, $(OCAMLINCLUDES))
-        fprintln($(chan), "S $(x)")
+        fprintln($(chan), S $(x))
       fprintln($(chan), FLG $(OCAMLWARNING_MAKE))
       close($(chan))
   .DEFAULT: .merlin
