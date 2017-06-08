@@ -4,7 +4,7 @@ open Json_conv
 open Result
 
 open OCamltter_oauth
-
+  
 module Oauth = struct
   include Oauth_ex.Make(Conf)
 
@@ -46,7 +46,7 @@ module Json = struct
     | Ocaml.String s -> parse s
     | _ -> failwith "Ocaml.String expected")
  
-  let ocaml_of_exn = ocaml_of_string *< Spotlib.Spot.Exn.to_string
+  let ocaml_of_exn = ocaml_of_string *< Exn.to_string
 
   type error = 
     | NotObject of t
