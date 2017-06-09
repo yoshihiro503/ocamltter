@@ -1,5 +1,4 @@
 open Spotlib.Spot
-module Spot = Spotlib.Spot
 open OCamltter_oauth
 open Util
 open OCamltter_twitter
