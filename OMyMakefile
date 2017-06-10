@@ -648,7 +648,7 @@ MyOCamlLibrary(library_name, files) =
   AddLocalOCamlPackageDependencies()
   protected.CMIFILES = $(addsuffix .cmi, $(files))
   protected.CMXFILES = $(addsuffix .cmx, $(files))
-  targets = $(OCamlLibrary $(library_name), $(files)) $(CMIFILES) $(CMXFILES) $(glob i, *.mli) 
+  targets = $(OCamlLibrary $(library_name), $(files)) $(CMIFILES) $(CMXFILES) $(glob i, *.mli)
 
   if $(not $(defined PACKAGE_NAME))
     findlib_name=$(lowercase $(library_name))
@@ -667,6 +667,7 @@ MyOCamlLibrary(library_name, files) =
 
   if $(not $(defined NO_INSTALL))
     targets[] += META $(MyOCamlPackageExtras)
+    # println($(string $(targets)))
     cmts =  $(addsuffix .cmt,  $(removesuffix $(glob i, *.cmo)))
     cmts += $(addsuffix .cmti, $(removesuffix $(glob i, *.mli)))
     if $(defined INSTALLED)
