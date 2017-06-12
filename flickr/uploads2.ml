@@ -37,6 +37,7 @@ let () =
     let photos = 
       let acc = ref [] in
       Unix.Find.find ~follow_symlink:true [dir] ~f:(fun p ->
+        if p#base = "@eaDir" then Unix.Find.prune (); (* synology nas fix *)
         if p#kind = Ok Unix.S_REG then acc +::= p#path);
       !acc
     in
