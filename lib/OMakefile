@@ -10,4 +10,6 @@ LIBFILES[] =
     oauth_ex
     util
 
-MyOCamlPackage(oCamltter_oauth, $(LIBFILES), $(EMPTY), $(EMPTY))
+MyOCamlPackage(oCamltter_oauth, $(LIBFILES))
+MyOCamlfindInstall(oCamltter_oauth, $(EMPTY))
+

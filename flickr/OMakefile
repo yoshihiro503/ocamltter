@@ -21,7 +21,8 @@ FILES[] =
     api2
     tools2
 
-MyOCamlPackage(oCamltter_flickr, $(FILES), $(EMPTY), $(EMPTY))
+MyOCamlPackage(oCamltter_flickr, $(FILES))
+MyOCamlfindInstall(oCamltter_flickr, $(EMPTY))
 
 # FILES[] = 
 #     app

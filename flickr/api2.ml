@@ -14,13 +14,28 @@ module Page = struct
 
   (** Page to stream interface *)
 
+  let to_list_job
+        ~per_page
+        get
+        (f : (per_page: int -> page: int -> ('res, 'error) Job.t)) =
+    Job.fold (fun (page, acc) -> Job.do_;
+      res <-- f ~per_page ~page;
+      (); assert (res#perpage = per_page);
+      (); assert (res#page = page);
+      let acc = get res :: acc in
+      if per_page * page >= res#total then
+        return & `End (List.(flatten & rev acc))
+      else
+        return & `Continue (page + 1, acc))
+      (1, [])
+    
   let to_seq
-      : (per_page: int -> page: int -> ('res, 'error) Job.t)
-      -> per_page:int
-      -> ('res -> 'info)
-      -> ('res -> 'a list)
-      -> (('info * ('a, 'error) Job.Seq.t), 'error) Job.t
-    = fun f ~per_page get_info get_list ->
+        (f : (per_page: int -> page: int -> ('res, 'error) Job.t))
+        ~per_page
+        (get_info : 'res -> 'info)
+        (get_list : 'res -> 'a list)
+      : (('info * ('a, 'error) Job.Seq.t), 'error) Job.t
+    = 
     let open Job in
     let info = ref None in
     let rec loop page : ('a list, 'error) Job.Seq.t = do_;
@@ -85,13 +100,8 @@ module Photos = struct
     Job.create & fun () -> Api.Photos.raw_getNotInSet ~per_page ~page ?tags o
 
   let getNotInSet ?(per_page=100) ?tags o =
-    Page.to_seq (raw_getNotInSet ?tags o) ~per_page
-      (fun res -> res#total)
-      (fun res -> res#photo)
-
-  let getNotInSet' ?per_page ?tags o =
-    getNotInSet ?per_page ?tags o |> Page.to_list
-
+    Page.to_list_job ~per_page (fun x -> x#photo) (raw_getNotInSet ?tags o)
+    
   let getInfo photo_id o = Job.create & fun () -> Api.Photos.getInfo photo_id o
     
   let getExif photo_id o = Job.create & fun () -> Api.Photos.getExif photo_id o

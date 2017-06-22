@@ -4,10 +4,9 @@
 open Spotlib.Spot
 
 type (+'a, 'error) t
+type (+'a, 'error) job = ('a, 'error) t
 
 include Monad.T2 with type ('a, 'error) t := ('a, 'error) t
-
-type ('a, 'error) job = ('a, 'error) t
 
 val empty : (unit, 'error) t
 
@@ -21,6 +20,11 @@ val retry
 
 val run : ('a, 'error) t -> ('a, 'error * ('a, 'error) t) Result.t
 (** run the monad *)
+
+val fold :
+  ('acc -> ([< `Continue of 'acc | `End of 'res ], 'error) job)
+  -> 'acc 
+  -> ('res, 'error) job
 
 module Seq : sig
   type ('a, 'error) t = ( [`None | `Some of 'a * ('a, 'error) t], 'error ) job
