@@ -1,6 +1,6 @@
 name = "ocamltter"
 description = "OCamltter Twitter CLI client"
 
-version="4.1.2"
+version="5.0.0"
 requires="ocamltter_twitter"
 
