@@ -6,6 +6,8 @@ open Result.Infix (* Monads are Result *)
 open OCamltter_oauth
 open Api_intf
 
+open Ocaml_conv.Default
+open Json_conv.Default
 
 (** {6 HTTP parameters} *)
 
@@ -474,7 +476,7 @@ end) = struct
 
   type users = {
     users : User.t list
-  } [@@deriving conv{ocaml; json}]
+  } [@@deriving conv{of_json}]
 
   let list_stream, list =
     let f k =
@@ -560,8 +562,11 @@ end
 module Blocks = struct
   type users = {
     users : User.t list
-  } [@@deriving conv{ocaml; json}]
+  } [@@deriving conv{of_json}]
 
+  (* Workaround for a Warning 32 *)              
+  let _ = users_of_json_exn
+         
   let list_stream, list = 
     let f k = 
       Cursor.streaming `GET k
