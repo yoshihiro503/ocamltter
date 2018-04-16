@@ -43,18 +43,22 @@ let () = prerr_endline "oauth done"
 
 let is_ocaml_misspell = 
   let rex = {m|ocaml/i|m} in
-  let rec loop text = 
+  let rec get_ocamls text =
     match text =~ rex with
-    | None -> false
-    | Some res ->
-        match res#_0 with
-        | "ocaml" | "OCAML" | "OCaml" -> loop res#_right
-        | _ -> 
-            (* Ok it is like "Ocaml" *)
-            (* But we ignore the text just "Ocaml". *)
-            String.length ({s|\s//g|s} text) > 5
+    | None -> []
+    | Some res -> res#_0 :: get_ocamls res#_right
   in
-  loop 
+  fun text -> 
+    let ocamls = get_ocamls text in
+    let has_exact = List.mem "OCaml" ocamls in
+    let misspells = 
+      List.filter (function
+          | "ocaml" | "OCAML" | "OCaml" -> false
+          | _ -> true) ocamls
+    in
+    misspells <> []
+    && not has_exact
+    && String.length ({s|\s//g|s} text) > 5
 
 let do_ocaml_misspell tw =
   let text = tw#text in
