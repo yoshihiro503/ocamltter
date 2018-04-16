@@ -1,5 +1,7 @@
 open Spotlib.Spot
 open Api2
+open Camlon
+
 module Xml = OCamltter_oauth.Xml
 
 let auth_file = "ocaml_flickr.auth"
@@ -9,7 +11,7 @@ let o = Oauth.get_oauth auth_file
 let () =
   Format.eprintf "%a@."
     (Ocaml.format_with Api.People.GetUploadStatus.ocaml_of_user )
-    (Result.from_Ok & Job.run & People.getUploadStatus o)
+    (Poly_result.from_Ok & Job.run & People.getUploadStatus o)
 
 let rev_dirs = ref []
 
@@ -37,7 +39,7 @@ let () =
     let photos = 
       let acc = ref [] in
       Unix.Find.find ~follow_symlink:true [dir] ~f:(fun p ->
-        if p#kind = `Ok Unix.S_REG then acc +::= p#path);
+        if p#kind = Ok Unix.S_REG then acc +::= p#path);
       !acc
     in
     let targets = 

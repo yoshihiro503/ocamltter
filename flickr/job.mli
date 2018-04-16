@@ -14,12 +14,12 @@ val empty : (unit, 'error) t
 val create : (unit -> ('a, 'error) Result.t) -> ('a, 'error) t
 
 val retry
-  : ('st -> 'error -> ('st, 'error) Result.t) (*+ called when failed. The Result is to retry or not *)
+  : ('st -> 'error -> ('st, 'error) Poly_result.t) (*+ called when failed. The Result is to retry or not *)
   -> 'st (*+ initial state *)
   -> ('a, 'error) t
   -> ('a, 'error) t
 
-val run : ('a, 'error) t -> ('a, 'error * ('a, 'error) t) Result.t
+val run : ('a, 'error) t -> ('a, 'error * ('a, 'error) t) Poly_result.t
 (** run the monad *)
 
 module Seq : sig

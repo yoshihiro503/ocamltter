@@ -23,7 +23,7 @@ let () =
     let photos = 
       let acc = ref [] in
       Unix.Find.find ~follow_symlink:true [dir] ~f:(fun p ->
-        if p#kind = `Ok Unix.S_REG then acc +::= p#path);
+        if p#kind = Ok Unix.S_REG then acc +::= p#path);
       !acc
     in
     let photos = 

@@ -1,6 +1,8 @@
 open Spotlib.Spot
 open Api2
 open Tools2
+open Camlon
+
 module Xml = OCamltter_oauth.Xml
 
 let xml_parse () =

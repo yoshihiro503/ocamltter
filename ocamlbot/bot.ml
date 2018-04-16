@@ -2,12 +2,12 @@ open Spotlib.Spot
 open OCamltter_oauth
 open OCamltter_twitter
 open Api11
-open Ppx_orakuda.Regexp.Re_pcre.Infix
-open Ppx_orakuda.Regexp.Re_pcre.Literal
+open Ppx_orakuda.Regexp_pcre.Infix
+open Ppx_orakuda.Regexp_pcre.Literal
 
 let auth_file = match Exn.catch Sys.getenv "HOME" with
-  | `Ok home -> home ^/ ".ocamltter_auths"
-  | `Error _exn -> !!% "Env var HOME is not found@."; exit 1
+  | Ok home -> home ^/ ".ocamltter_auths"
+  | Error _exn -> !!% "Env var HOME is not found@."; exit 1
 
 let () =
   if not & File.Test._e auth_file then begin
@@ -61,27 +61,27 @@ let do_ocaml_misspell tw =
   if is_ocaml_misspell text then begin
     !!% "%Ld: %s@." tw#id text;
     begin match Tweets.show o tw#id with
-    | `Ok tw' ->
+    | Ok tw' ->
         !!% "%Ld: %s@." tw'#id tw'#text;
         assert (tw#id = tw'#id);
         assert (tw#text = tw'#text)
-    | `Error e ->
+    | Error e ->
         !!% "ERROR: @[%a@]@." Api11.Error.format e
     end;
     match Favorites.create o tw#id with
-    | `Ok _ -> !!% "OK@."
-    | `Error e ->
+    | Ok _ -> !!% "OK@."
+    | Error e ->
         !!% "ERROR: @[%a@]@." Api11.Error.format e
   end else 
     !!% "XXX: %s@." text
 
 let rec loop since_id = 
   match Search.tweets o ~count:100 ?since_id "ocaml" with
-  | `Error e ->
+  | Error e ->
       Format.eprintf "%a@." Api11.Error.format e;
       Unix.sleep 600;
       loop since_id
-  | `Ok res -> 
+  | Ok res -> 
       match res#statuses with
       | [] -> 
           Format.eprintf "no updates. scheduled@.";

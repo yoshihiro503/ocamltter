@@ -183,8 +183,8 @@ let by_curl_gen ?(proto=`HTTPS) hostname ?port path ~headers meth_params =
   let code = h#get_httpcode in
   h#cleanup; (* Need to flush out cookies *)
   let ok200 = function
-    | 200, v -> `Ok v
-    | n, mes -> `Error (`Http (n, mes))
+    | 200, v -> Ok v
+    | n, mes -> Error (`Http (n, mes))
   in	
   ok200 (code, Buffer.contents buf)
 
@@ -193,4 +193,4 @@ let by_curl ?proto hostname ?port path ~headers meth_params =
     by_curl_gen ?proto hostname ?port path ~headers meth_params
   with
   | Curl.CurlException (curlCode, int, mes) ->
-      `Error (`Curl (curlCode, int, mes))
+      Error (`Curl (curlCode, int, mes))

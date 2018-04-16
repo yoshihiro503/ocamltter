@@ -1,6 +1,8 @@
 open Spotlib.Spot
 open Api
 open Tools
+open Camlon
+
 module Xml = OCamltter_oauth.Xml
 
 let xml_parse () =
@@ -30,8 +32,8 @@ let _ = exit 0
 
 let getInfo pid o =
   match Photos.getInfo pid o with
-  | `Error e -> error e
-  | `Ok j -> ocaml_format_with Photos.GetInfo.ocaml_of_photo j
+  | Error e -> error e
+  | Ok j -> ocaml_format_with Photos.GetInfo.ocaml_of_photo j
 
 
 (*

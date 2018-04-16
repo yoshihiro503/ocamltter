@@ -1,11 +1,13 @@
 open Meta_conv.Open
 
 open Spotlib.Spot
-open Spotlib.Result.Infix (* Monads are Result *)
+open Result.Infix (* Monads are Result *)
 
 open OCamltter_oauth
 open Api_intf
-
+open Camlon
+open Ocaml_conv.Default
+open Json_conv.Default
 
 (** {6 HTTP parameters} *)
 
@@ -61,11 +63,11 @@ let twitter oauth ?(host="api.twitter.com") meth path params =
 (** To live with other errors like `HTTP, Json decoding erros are
     tagged with `Json. *)
 let json_error_wrap f v = match v with
-  | `Error e -> `Error e
-  | `Ok res ->
+  | Error e -> Error e
+  | Ok res ->
       match f res with
-      | `Ok v -> `Ok v
-      | `Error e -> `Error (`Json e)
+      | Ok v -> Ok v
+      | Error e -> Error (`Json e)
 
 type 'a json_converter = Json.t -> ('a, Json.t Meta_conv.Error.t) Result.t 
 (** The type of Json to OCaml converter *)
@@ -73,7 +75,7 @@ type 'a json_converter = Json.t -> ('a, Json.t Meta_conv.Error.t) Result.t
 (** 
   [api post meth fmt ...(format args)... params oauth] 
 
-  post : Postprocess: a parser of JSON. If you want to have the raw JSON, use [fun x -> `Ok x].
+  post : Postprocess: a parser of JSON. If you want to have the raw JSON, use [fun x -> Ok x].
   meth : GET or POST
   fmt  : piece of path, you can use Printf % format
   params : the type is [params]
@@ -278,13 +280,13 @@ end = struct
       let (!!) = Lazy.force in
       let rec loop cursor = lazy (
         let params = ("cursor", of_string cursor) :: params in
-        match api (fun x -> `Ok x) meth "%s" params (oauth : Oauth.t) s with
-        | `Error e -> !! (Stream.singleton (`Error e))
-        | `Ok json ->
+        match api (fun x -> Ok x) meth "%s" params (oauth : Oauth.t) s with
+        | Error e -> !! (Stream.singleton (Error e))
+        | Ok json ->
             match t_of_json dec json with
-            | `Error e -> !! (Stream.singleton (`Error (`Json e)))
-            | `Ok t -> 
-                let xs = Stream.of_list (List.map (fun x -> `Ok x) (acc t.contents)) in
+            | Error e -> !! (Stream.singleton (Error (`Json e)))
+            | Ok t -> 
+                let xs = Stream.of_list (List.map (fun x -> Ok x) (acc t.contents)) in
                 match t.next_cursor_str with
                 | "0" -> !!xs
                 | next -> !!(Stream.append xs (loop (Some next)))
@@ -307,12 +309,12 @@ module SinceMaxID = struct
       if Spotlib.Option.liftM2 (>) since_id max_id = Some true then !!null
       else begin
         match f ?count:(Some count) ?since_id ?max_id (o : Oauth.t) with
-        | `Error e -> !!(Stream.singleton (`Error e))
-        | `Ok [] ->  !!Stream.null
-        | `Ok xs ->
+        | Error e -> !!(Stream.singleton (Error e))
+        | Ok [] ->  !!Stream.null
+        | Ok xs ->
             let last_id = (List.last xs)#id in
             let since_id = Some (Int64.( last_id  + 1L )) in
-            let xs = Stream.of_list (List.map (fun x -> `Ok x) xs) in
+            let xs = Stream.of_list (List.map (fun x -> Ok x) xs) in
             !! (Stream.append xs (loop ~since_id ~max_id))
       end )
     in
@@ -336,7 +338,7 @@ end
    * This is called "show".
    * The method is GET.
    * The result JSON is parsed by Tweet.ts_of_json. If you want the raw JSON, 
-       use (fun x -> `Ok x).
+       use (fun x -> Ok x).
    * The URL piece is "statuses/show/%Ld.json" 
    * It has trim_user, include_my_tweet and include_entities parameters.
        They are defined in Arg module.
@@ -420,7 +422,7 @@ module Tweets = struct (* CR jfuruse: or Statuses ? *)
     ** include_entities
 
   (* CR jfuruse: id comes before the o *)    
-  let destroy = post (fun x -> `Ok x) "statuses/destroy/%Ld.json"
+  let destroy = post (fun x -> Ok x) "statuses/destroy/%Ld.json"
     &  trim_user 
 
   let update = post Tweet.t_of_json "statuses/update.json"
@@ -589,12 +591,12 @@ module Blocks = struct
     f id,
     f Stream.to_list
 
-  let create = post (fun x -> `Ok x) "blocks/create.json"
+  let create = post (fun x -> Ok x) "blocks/create.json"
     &  required_either_user_id_or_screen_name
     ** include_entities
     ** skip_status
 
-  let destroy = post (fun x -> `Ok x) "blocks/destroy.json"
+  let destroy = post (fun x -> Ok x) "blocks/destroy.json"
     &  required_either_user_id_or_screen_name
     ** include_entities
     ** skip_status

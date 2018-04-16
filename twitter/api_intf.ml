@@ -1,12 +1,14 @@
 open Spotlib.Spot
 open Meta_conv.Open
-open Ocaml_conv
 open OCamltter_oauth
+open Camlon
+open Ocaml_conv.Default
+open Json_conv.Default
 
 module Json = struct
   include Tiny_json.Json
   let json_of_t x = x
-  let t_of_json ?trace:_ x = `Ok x
+  let t_of_json ?trace:_ x = Ok x
 
   let ocaml_of_t t = Ocaml.String (show t)
   let t_of_ocaml = Ocaml_conv.Helper.of_deconstr (function
@@ -106,10 +108,10 @@ end = struct
 end
 
 module Client : sig
-  type t = string * [`Ok of Xml.xml | `Error of exn] [@@deriving conv{ocaml; json}]
+  type t = string * (Xml.xml, exn) Result.t [@@deriving conv{ocaml; json}]
   val name : t -> string
 end = struct
-  type t = string * [`Ok of Xml.xml | `Error of exn]
+  type t = string * (Xml.xml, exn) Result.t
 
   open Meta_conv
   open Json
@@ -127,11 +129,11 @@ end = struct
   let ocaml_of_t (s, _) = Ocaml.String s   
 
   let name = function
-    | (_, `Ok (Xml.PCData client_name))
-    | (_, `Ok (Xml.Tag ("a", _, [Xml.PCData client_name]))) ->
+    | (_, Ok (Xml.PCData client_name))
+    | (_, Ok (Xml.Tag ("a", _, [Xml.PCData client_name]))) ->
         client_name
-    | (s, `Ok _) -> s
-    | (s, `Error _) -> s
+    | (s, Ok _) -> s
+    | (s, Error _) -> s
 
 end
 
@@ -185,7 +187,7 @@ module User = struct
 
   type ts = t list [@@deriving conv{ocaml; json}]
 
-  let format x =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
+  let format x =  Ocaml.format_no_poly_with ocaml_of_t x
 end
 
 module Hashtag = struct
@@ -267,8 +269,8 @@ module Tweet = struct
 
   type ts = t list [@@deriving conv{ocaml; json}]
 
-  let format    x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
-  let format_ts x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_ts x
+  let format    x = Ocaml.format_no_poly_with ocaml_of_t x
+  let format_ts x = Ocaml.format_no_poly_with ocaml_of_ts x
 
 end
 
@@ -295,7 +297,7 @@ module Search_tweets = struct
     search_metadata : Search_metadata.t;
   > [@@deriving conv{ocaml; json}]
 
-  let format x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
+  let format x = Ocaml.format_no_poly_with ocaml_of_t x
 
 end
 
@@ -421,6 +423,6 @@ module Rate_limit_status = struct
      >
   > [@@deriving conv{ocaml; json}]
 
-  let format x =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
+  let format x =  Ocaml.format_no_poly_with ocaml_of_t x
 
 end

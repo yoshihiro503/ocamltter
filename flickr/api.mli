@@ -55,7 +55,7 @@ module Fail : sig
              stat : string >
   [@@deriving conv{ocaml; json}]
   val format : Format.formatter -> t -> unit
-  val check : Json.t -> [> `Error of [> `API of t ] | `Ok of Json.t ]
+  val check : Json.t -> (Json.t, [> `API of t ]) Result.t
 end
 
 (** We see lots of records with only one field "content". 
@@ -148,7 +148,7 @@ module Photos : sig
     (< pages : int
     ; perpage : int
     ; stream : ((GetNotInSet.photo,
-                 ([> Error.t] as 'error) * (int -> 'a Stream.t) * int) Result.t as 'a) Stream.t
+                 ([> Error.t] as 'error) * (int -> 'a Stream.t) * int) Poly_result.t as 'a) Stream.t
     ; total : int 
       >,
      'error) Result.t

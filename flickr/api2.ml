@@ -1,12 +1,18 @@
 open Spotlib.Spot
 open Json_conv
 open Result
+open Ocaml_conv.Default
 
 module Oauth = Api.Oauth
 
+let poly_result = function
+  | Ok x -> `Ok x
+  | Error x -> `Error x
+
 module Auth = struct
   module Oauth = struct
-    let checkToken (* _oauth_token *) o = Job.create & fun () -> Api.Auth.Oauth.checkToken o
+    let checkToken (* _oauth_token *) o = 
+      Job.create & fun () -> Api.Auth.Oauth.checkToken o
   end
 end
 

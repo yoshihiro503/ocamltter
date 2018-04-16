@@ -4,11 +4,11 @@ OCAML_LIBS= ../lib/oCamltter_oauth ../twitter/oCamltter_twitter
 OCamlRequire(../lib/oCamltter_oauth.cmo)
 OCamlRequire(../twitter/oCamltter_twitter.cmo)
 
-OCAMLPACKS[]  += ppx_orakuda
+OCAMLPACKS[]  += ppx_orakuda.runtime
 CAMLP4PACKS[] +=
 
-OCAMLDEPFLAGS= -package ppx_orakuda
-OCAMLPPFLAGS = -package ppx_orakuda
+OCAMLDEPFLAGS= -package ppx_orakuda.ppx
+OCAMLPPFLAGS = -package ppx_orakuda.ppx
 
 FILES[] = 
     ocauth

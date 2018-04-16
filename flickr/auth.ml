@@ -1,10 +1,11 @@
 open OCamltter_oauth
+open Camlon
 
 module Oauth = Oauth_ex.Make(Conf)
 
 let load_auth auth_file =
-  match Ocaml.load_with_exn Oauth.Access_token.t_of_ocaml auth_file with
-  | [a] -> a
+  match Ocaml.load_with Oauth.Access_token.t_of_ocaml auth_file with
+  | Ok [a] -> a
   | _ -> assert false
 
 let get_acc_token auth_file =

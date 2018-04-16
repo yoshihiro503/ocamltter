@@ -1,7 +1,7 @@
 open Spotlib.Spot
 
 module M = struct
-  type ('a, 'error) t = unit -> ('a, ('error * ('a, 'error) t)) Result.t
+  type ('a, 'error) t = unit -> ('a, ('error * ('a, 'error) t)) Poly_result.t
 
   let return a = fun () -> `Ok a
 
@@ -18,8 +18,8 @@ type ('a, 'error) job = ('a, 'error) t
 let empty = fun () -> `Ok ()
   
 let rec create f = fun () -> match f () with
-  | (`Ok _ as res) -> res
-  | `Error e -> `Error (e, create f)
+  | Ok res -> `Ok res
+  | Error e -> `Error (e, create f)
 
 let rec retry p st t = fun () -> match t () with
   | `Ok _ as res -> res

@@ -2,6 +2,8 @@
 open Spotlib.Spot
 open OCamltter_oauth
 open Oauth_ex
+open Ocaml_conv.Default
+open Camlon
 
 module Auth = struct
 
@@ -35,8 +37,8 @@ module Auth = struct
         | [atoken] -> `Found (Oauth_ex.oauth consumer atoken)
         | _ -> failwithf "User %s has more than one entry for app %s" user app
 
-  let load path = match Ocaml.load_with_exn t_of_ocaml path with
-    | [x] -> x
+  let load path = match Ocaml.load_with t_of_ocaml path with
+    | Ok [x] -> x
     | _ -> assert false
 
   let save path x = Ocaml.save_with ocaml_of_t ~perm:0o600 path [x]
@@ -50,8 +52,8 @@ end
 
 module Single = struct
   let load auth_file =
-    match Ocaml.load_with_exn Access_token.t_of_ocaml auth_file with
-    | [a] -> a
+    match Ocaml.load_with Access_token.t_of_ocaml auth_file with
+    | Ok [a] -> a
     | _ -> assert false
   
   let get auth_file authorize_cli_interactive =

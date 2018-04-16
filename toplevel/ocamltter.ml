@@ -1,8 +1,10 @@
 open Spotlib.Spot
-module Spot = Spotlib.Spot
 open OCamltter_oauth
 open Util
 open OCamltter_twitter
+open Camlon
+
+module Spot = Spotlib.Spot
 module TTS = GoogleTTS
 
 module Oauth = struct
@@ -13,8 +15,8 @@ module Oauth = struct
   end)
 
   let load auth_file =
-    match Ocaml.load_with_exn Access_token.t_of_ocaml auth_file with
-    | [a] -> a
+    match Ocaml.load_with Access_token.t_of_ocaml auth_file with
+    | Ok [a] -> a
     | _ -> assert false
   
   let get_acc_token auth_file =
@@ -87,8 +89,8 @@ let default def v = v |> Result.result id (fun e ->
   def)
 
 let from_Ok = function
-  | `Ok v -> v
-  | `Error e -> raise (Error e)
+  | Ok v -> v
+  | Error e -> raise (Error e)
 
 let from_Some = function
   | Some v -> v
@@ -158,8 +160,8 @@ let kwsk id =
   let o = get_oauth () in
   let rec iter store id =
     match Tweets.show o id with
-    | `Error _ -> store
-    | `Ok tw -> 
+    | Error _ -> store
+    | Ok tw -> 
         match tw#in_reply_to_status_id with
         | Some id -> iter (tw :: store) id
         | None -> tw :: store

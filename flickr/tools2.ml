@@ -1,9 +1,10 @@
 open Spotlib.Spot
 open Api2
 open List
+open Camlon
 
 let json_format = !!% "%a@." Tiny_json.Json.format
-let ocaml_format_with f = !!% "%a@." (Ocaml.format_with ~no_poly:true f)
+let ocaml_format_with f = !!% "%a@." (Ocaml.format_no_poly_with f)
 
 let get_current_user o =
   let open Job in do_;

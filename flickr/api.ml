@@ -2,15 +2,15 @@ open Spotlib.Spot
 open Ocaml_conv
 open Json_conv
 open Result
-
+open Camlon
 open OCamltter_oauth
 
 module Oauth = struct
   include Oauth_ex.Make(Conf)
 
   let load_acc_token auth_file =
-    match Ocaml.load_with_exn Access_token.t_of_ocaml auth_file with
-    | [a] -> a
+    match Ocaml.load_with Access_token.t_of_ocaml auth_file with
+    | Ok [a] -> a
     | _ -> assert false
   
   let get_acc_token auth_file =
@@ -66,17 +66,17 @@ module Json = struct
     | JSON_UnknownErr s -> UnknownErr s
     | exn -> NotJsonErr exn
 
-  let parse s = try `Ok (parse s) with exn -> `Error (`Json (of_exn exn, s))
+  let parse s = try Ok (parse s) with exn -> Error (`Json (of_exn exn, s))
 
   type sint = int [@@deriving conv{ocaml}]
 
   let sint_of_json ?(trace=[]) = function
     | (Number _ as j) -> int_of_json ~trace j
     | (String s as t) -> 
-        begin try `Ok (int_of_string s) with
-        | e -> `Error (`Exception e, t, `Node t :: trace)
+        begin try Ok (int_of_string s) with
+        | e -> Error (`Exception e, t, `Node t :: trace)
         end
-    | t -> `Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
+    | t -> Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
 
   let json_of_sint = json_of_int
 
@@ -85,24 +85,24 @@ module Json = struct
   let sint64_of_json ?(trace=[]) = function
     | (Number _ as j) -> int64_of_json ~trace j
     | (String s as t) -> 
-        begin try `Ok (Int64.of_string s) with
-        | e -> `Error (`Exception e, t, `Node t :: trace)
+        begin try Ok (Int64.of_string s) with
+        | e -> Error (`Exception e, t, `Node t :: trace)
         end
-    | t -> `Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
+    | t -> Error (`Exception (Failure "Number or String expected"), t, `Node t :: trace)
 
   let json_of_sint64 = json_of_int64
 
   type ibool = bool [@@deriving conv{ocaml}]
 
   let ibool_of_json ?trace j = 
-    sint_of_json ?trace j >>= fun n -> `Ok (n <> 0)
+    sint_of_json ?trace j >>= fun n -> Ok (n <> 0)
 
   let json_of_ibool b = Number (if b then "1" else "0")
 
   (** Lift x_of_json errors *)
   let lift_error f s = match f s with
-    | (`Ok _ as v) -> v
-    | `Error e -> `Error (`Json_conv e)
+    | (Ok _ as v) -> v
+    | Error e -> Error (`Json_conv e)
 end
 
 open Json
@@ -119,8 +119,8 @@ module Fail = struct
 
   let check j =
     match lift_error t_of_json j with
-    | `Ok e when e#stat = "fail" -> `Error (`API e)
-    | _ -> `Ok j
+    | Ok e when e#stat = "fail" -> Error (`API e)
+    | _ -> Ok j
 end
 
 module Content = struct
@@ -170,8 +170,8 @@ let json_api o meth m fields =
       | "jsonFlickrApi(", s, ')' -> 
           (* Result has always the top field "stat" *)
           Json.parse s >>= Fail.check
-      | exception _ -> `Error (`Json (Json.NoJsonResponse, s))
-      | _ -> `Error (`Json (Json.NoJsonResponse, s))
+      | exception _ -> Error (`Json (Json.NoJsonResponse, s))
+      | _ -> Error (`Json (Json.NoJsonResponse, s))
 
 type ('a, 'error) result = ('a, ([> Error.t] as 'error)) Result.t 
     
@@ -208,8 +208,8 @@ module Page = struct
            else begin
              let rec loop page = lazy begin
                match f ~per_page ~page with
-               | `Error e -> Cons (`Error (e, loop, page), null)
-               | `Ok res ->
+               | Error e -> Cons (`Error (e, loop, page), null)
+               | Ok res ->
                    Lazy.force &
                      if res#perpage * res#page >= res#total then
                        get_ok_stream res
@@ -783,7 +783,7 @@ A comma-delimited list of extra information to fetch for the primary photo. Curr
       >>= fun psets ->
         if psets#perpage * n > psets#total then
           (* last page *)
-          `Ok (object
+          Ok (object
             method cancreate = psets#cancreate
             method total = psets#total
             method photoset = st @ psets#photoset; 
@@ -864,7 +864,7 @@ Filter results by media type. Possible values are all (default), photos or video
       >>= fun pset ->
         if pset#per_page * n > pset#total then
           (* last page *)
-          `Ok (object
+          Ok (object
             method id        = pset#id
             method primary   = pset#primary
             method owner     = pset#owner
@@ -1034,7 +1034,7 @@ module Upload = struct
       ~meth: (`POST_MULTIPART ["photo", `File img])
       ~oauth_other_params: fields
       
-  let catch_with err f v = try `Ok (f v) with e -> `Error (err e)
+  let catch_with err f v = try Ok (f v) with e -> Error (err e)
 
   open Xml
 
@@ -1071,9 +1071,9 @@ module Upload = struct
       | [ PCData "ok" ] ->
           let photoids = (pcdata ^. children ^. tag_named "photoid" ^. children) xml in
           begin match photoids with
-          | [] -> `Error ("<photoid> is not found", xml)
-          | [PCData x] -> `Ok (`Ok x)
-          | _ -> `Error ("malformed <photoid>(s)", xml)
+          | [] -> Error ("<photoid> is not found", xml)
+          | [PCData x] -> Ok (Ok x)
+          | _ -> Error ("malformed <photoid>(s)", xml)
           end
           
       | [ PCData "fail" ] ->
@@ -1082,8 +1082,8 @@ module Upload = struct
               begin match assoc_attr "code" e, assoc_attr "msg" e with
               | Some code, Some msg -> 
                   begin try
-                    `Ok (`Error (`API (object method stat = "fail" method code = int_of_string code method  message=msg end)))
-                    with _ -> `Error ("error code is not int", xml)
+                    Ok (Error (`API (object method stat = "fail" method code = int_of_string code method  message=msg end)))
+                    with _ -> Error ("error code is not int", xml)
                   end
                           
               | _ -> assert false
@@ -1095,7 +1095,7 @@ module Upload = struct
       | [] -> assert false
       | _ -> assert false
     with
-    | _ -> `Error ("rsp parse failed", xml)
+    | _ -> Error ("rsp parse failed", xml)
 
 
   let upload 
@@ -1126,8 +1126,8 @@ module Upload = struct
   	raw_api fields img_file o >>= fun s -> 
         catch_with (fun exn -> `XML_parse (s, exn)) Xml.parse_string s >>= fun xml ->
         match parse_rsp xml with
-        | `Ok v -> v
-        | `Error (mes, xml) -> `Error (`XML_conv (mes, xml))
+        | Ok v -> v
+        | Error (mes, xml) -> Error (`XML_conv (mes, xml))
 
         
 (*
@@ -1162,6 +1162,6 @@ let error e =
   assert false
 
 let fail_at_error = function
-  | `Ok v -> v
-  | `Error e -> error e
+  | Ok v -> v
+  | Error e -> error e
 
