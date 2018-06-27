@@ -3,6 +3,7 @@ open Spotlib.Spot
 open Ocaml_conv.Default
 open OCamltter_oauth
 open Oauth_ex
+open Ocaml_conv.Default
 
 module Auth = struct
 
