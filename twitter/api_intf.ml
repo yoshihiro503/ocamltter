@@ -1,6 +1,7 @@
 open Spotlib.Spot
 open Meta_conv.Open
-open Ocaml_conv
+open Ocaml_conv.Default
+open Json_conv.Default
 open OCamltter_oauth
 
 module Json = struct

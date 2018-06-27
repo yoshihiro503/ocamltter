@@ -1,6 +1,8 @@
 open Meta_conv.Open
 
 open Spotlib.Spot
+open Ocaml_conv.Default
+open Json_conv.Default
 open Result.Infix (* Monads are Result *)
 
 open OCamltter_oauth

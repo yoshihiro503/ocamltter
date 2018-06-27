@@ -1,5 +1,6 @@
 (* application level library *)
 open Spotlib.Spot
+open Ocaml_conv.Default
 open OCamltter_oauth
 open Oauth_ex
 

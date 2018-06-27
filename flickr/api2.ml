@@ -1,5 +1,6 @@
 open Spotlib.Spot
-open Json_conv
+open Ocaml_conv.Default
+open Json_conv.Default
 open Result
 
 module Oauth = Api.Oauth
