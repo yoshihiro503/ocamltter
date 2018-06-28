@@ -4,12 +4,8 @@ open Spotlib.Spot
 open Ocaml_conv.Default
 open Json_conv.Default
 open Result.Infix (* Monads are Result *)
-
 open OCamltter_oauth
 open Api_intf
-
-open Ocaml_conv.Default
-open Json_conv.Default
 
 (** {6 HTTP parameters} *)
 

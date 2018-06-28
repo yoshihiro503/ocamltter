@@ -15,7 +15,7 @@ val const : 'a -> 'b -> 'a
 val ( !% ) : ('a, unit, string) format -> 'a
 val ( !$ ) : 'a Lazy.t -> 'a
 val ( -- ) : int -> int -> int list
-val repeat : int -> ('a -> 'b) -> 'a -> unit
+val repeat : int -> ('a -> unit) -> 'a -> unit
 val list_concatmap : ('a -> 'b list) -> 'a list -> 'b list
 val list_head : 'a list -> 'a
 val list_last : 'a list -> 'a
@@ -28,7 +28,7 @@ val chars_of_string : string -> char list
 val string_of_chars : char list -> string
 val string1 : char -> string
 val mapi : (int -> 'a -> 'b) -> 'a list -> 'b list
-val iteri : (int -> 'a -> 'b) -> 'a list -> unit
+val iteri : (int -> 'a -> unit) -> 'a list -> unit
 type ('a, 'b) either = Inl of 'a | Inr of 'b
 val list_of_hash : ('a, 'b) Hashtbl.t -> ('a * 'b) list
 val list_filter_map : ('a -> 'b option) -> 'a list -> 'b list

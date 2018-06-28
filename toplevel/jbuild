@@ -1,0 +1,6 @@
+(executable
+ ((public_name ocamltter_top)
+  (name ocamltter_top)
+  (libraries (ocamltter.toplevel compiler-libs.toplevel))
+  (link_flags (-linkall))
+  (modes (byte))))

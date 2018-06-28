@@ -1,0 +1,21 @@
+opam-version: "1.2"
+version: "5.0.0"
+maintainer: "jun.furuse@gmail.com"
+authors: ["Yoshihiro Imai" "Jun Furuse"]
+homepage: "https://github.com/yoshihiro503/ocamltter"
+bug-reports: "https://github.com/yoshihiro503/ocamltter/issues"
+dev-repo: "https://github.com/yoshihiro503/ocamltter/ocamltter.git"
+build: ["jbuilder" "build" "-p" name "-j" jobs]
+depends: [
+  "base64"
+  "jbuilder" {build}
+  "cryptokit"
+  "ocurl" {>= "0.5.3"}
+  "spotlib" {>= "3.0.0"}
+  "ppx_orakuda" {>= "3.0.0"}
+  "ppx_meta_conv" {>= "4.0.0"}
+  "camlon" {>= "1.0.1"}
+  "tiny_json"
+  "ppx_monadic"
+]
+available: [ocaml-version >= "4.03.0"]

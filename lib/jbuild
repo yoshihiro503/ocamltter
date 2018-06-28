@@ -1,0 +1,6 @@
+(library
+ ((name oCamltter_oauth)
+  (public_name ocamltter.oauth)
+  (flags (:standard -w -9))
+  (preprocess (pps (ppx_meta_conv.ppx)))
+  (libraries ( cryptokit str ppx_meta_conv.ocaml spotlib curl))))

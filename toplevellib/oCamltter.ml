@@ -2,6 +2,9 @@ open Spotlib.Spot
 open OCamltter_oauth
 open Util
 open OCamltter_twitter
+open Camlon
+
+module Spot = Spotlib.Spot
 module TTS = GoogleTTS
 
 module Oauth = struct
@@ -316,5 +319,3 @@ let start_polling () =
   t ()
 
 (* see .ocamlinit *)
-
-

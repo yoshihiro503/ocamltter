@@ -1,8 +1,0 @@
-name="ocamltter_flickr"
-description="OCamltter Flickr API"
-
-version="@version@"
-
-requires="ocamltter_oauth,ppx_meta_conv_tiny_json"
-archive(byte) = "oCamltter_flickr.cmo"
-archive(native) = "oCamltter_flickr.cmx"

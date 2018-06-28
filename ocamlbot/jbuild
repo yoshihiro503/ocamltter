@@ -1,0 +1,6 @@
+(executables
+ ((public_names (ocamlbot))
+  (names (bot))
+  (flags (:standard -w -9-50))
+  (preprocess (pps (ppx_meta_conv.ppx ppx_orakuda.ppx)))
+  (libraries (ocamltter.twitter ppx_orakuda.runtime))))

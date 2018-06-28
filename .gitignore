@@ -20,3 +20,5 @@ setup.ml.ba*
 *.opt
 *.run
 opam/generated
+.merlin
+*.install

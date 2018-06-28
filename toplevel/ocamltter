@@ -1,11 +1,14 @@
 #!/bin/sh
+
+# ../../_build/default/ocamltter/toplevel/ocamltter_top.bc -I ~/.opam/default/lib/ocamltter/oauth -I ~/.opam/default/lib/ocamltter/twitter -I ~/.opam/default/lib/ocamltter/toplevel/
+
 prevdir=`pwd`
 ocamltterhome=`dirname $0`
 cd $ocamltterhome
 
 with_pkgs=""
 # for pkg in cryptokit tiny_json tiny_json_conv ocaml_conv meta_conv spotlib curl ocamltter_oauth ocamltter_twitter
-for pkg in cryptokit tiny_json spotlib curl ocamltter_oauth ocamltter_twitter
+for pkg in cryptokit tiny_json spotlib curl ocamltter.oauth ocamltter.twitter
 do
     res=`ocamlfind query $pkg`
     if [ res != "" ]; then
@@ -33,6 +36,6 @@ if [ $# -ne 1 ]; then
 else
     initfile=$1
 fi
-echo ./ocamltter_top $incl -init $initfile
-./ocamltter_top $incl -init $initfile
+echo jbuilder exec ocamltter_top -- $incl -init $initfile
+jbuilder exec ocamltter_top -- $incl -init $initfile
 cd $prevdir

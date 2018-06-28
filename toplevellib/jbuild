@@ -1,0 +1,5 @@
+(library
+ ((name oCamltter_toplevel)
+  (public_name ocamltter.toplevel)
+  (flags (:standard -w -9))
+  (libraries ( ocamltter.twitter threads ))))

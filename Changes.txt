@@ -2,6 +2,9 @@
 ----------------
 
 - ported to spotlib.4.0.0
+- port to ppx_meta_conv.4.0.0
+- jbuilder port
+- removed flickr support
 
 4.1.2
 ----------------

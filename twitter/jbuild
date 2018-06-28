@@ -1,0 +1,9 @@
+(library
+ ((name oCamltter_twitter)
+  (public_name ocamltter.twitter)
+  (flags (:standard -w -9))
+  (preprocess (pps (ppx_meta_conv.ppx)))
+  (libraries ( oCamltter_oauth ppx_meta_conv.tiny_json ))))
+
+
+

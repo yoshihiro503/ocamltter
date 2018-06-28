@@ -1,7 +1,0 @@
-open build/C
-open build/OCaml
-open build/LaTeX
-
-DefineCommandVars()
-
-.SUBDIRS: .

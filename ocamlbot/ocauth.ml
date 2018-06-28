@@ -1,9 +1,9 @@
 (* application level library *)
 open Spotlib.Spot
-open Ocaml_conv.Default
 open OCamltter_oauth
 open Oauth_ex
 open Ocaml_conv.Default
+open Camlon
 
 module Auth = struct
 
@@ -15,7 +15,6 @@ module Auth = struct
   and app = { consumer : Consumer.t;
               users : (string, Access_token.t) hashtbl }
   [@@deriving conv{ocaml}]
-
   let dummy = 
     Hashtbl.of_list 17
       [ "dummy_app", 

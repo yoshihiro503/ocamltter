@@ -3,6 +3,7 @@ open Meta_conv.Open
 open Ocaml_conv.Default
 open Json_conv.Default
 open OCamltter_oauth
+open Camlon
 
 module Json = struct
   include Tiny_json.Json
@@ -186,7 +187,7 @@ module User = struct
 
   type ts = t list [@@deriving conv{ocaml; json}]
 
-  let format x =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
+  let format x =  Ocaml.format_no_poly_with ocaml_of_t x
 end
 
 module Hashtag = struct
@@ -268,8 +269,8 @@ module Tweet = struct
 
   type ts = t list [@@deriving conv{ocaml; json}]
 
-  let format    x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
-  let format_ts x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_ts x
+  let format    x = Ocaml.format_no_poly_with ocaml_of_t x
+  let format_ts x = Ocaml.format_no_poly_with ocaml_of_ts x
 
 end
 
@@ -296,7 +297,7 @@ module Search_tweets = struct
     search_metadata : Search_metadata.t;
   > [@@deriving conv{ocaml; json}]
 
-  let format x = Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
+  let format x = Ocaml.format_no_poly_with ocaml_of_t x
 
 end
 
@@ -422,6 +423,6 @@ module Rate_limit_status = struct
      >
   > [@@deriving conv{ocaml; json}]
 
-  let format x =  Ocaml.format_with ~no_poly:true ~raw_string:true ocaml_of_t x
+  let format x =  Ocaml.format_no_poly_with ocaml_of_t x
 
 end

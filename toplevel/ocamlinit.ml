@@ -3,7 +3,7 @@ open OCamltter_twitter
 open Util;;
 open Http;;
 open Api11;;
-open Ocamltter;;
+open OCamltter_toplevel.OCamltter;;
 
 (* Surpress String escaping of OCaml toplevel printer to see UTF-8 string in console *)
 let print_string_literal p s = Format.print_string ("\"" ^ s ^ "\"");;
