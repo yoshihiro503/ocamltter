@@ -5,7 +5,6 @@
 *.glob
 *~
 .ocamltter
-ocamltter_top*
 *.omc
 *.o
 *.a
